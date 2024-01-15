@@ -1,17 +1,20 @@
 ﻿using ADP.Portal.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace ADP.Portal.Core.AdoProject
 {
     public class AdoProjectService : IAdoProjectService
     {
-        public Task<Guid> GetProjectAsync(string projectName)
+        private readonly Task<VssConnection> vssConnection;
+
+        public AdoProjectService(Task<VssConnection> vssConnection)
         {
-            throw new NotImplementedException();
+            this.vssConnection = vssConnection;
+        }
+
+        public async Task<Guid> GetProjectAsync(string projectName)
+        {
+            return await Task.FromResult(Guid.NewGuid());
         }
     }
 }

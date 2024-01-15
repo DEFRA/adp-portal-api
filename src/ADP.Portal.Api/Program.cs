@@ -1,7 +1,12 @@
 
+using ADP.Portal.Api.Config;
 using ADP.Portal.Core.AdoProject;
 using ADP.Portal.Core.Interfaces;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Azure.Identity;
+using Microsoft.Extensions.Options;
+using Microsoft.Identity.Client;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace ADP.Portal.Api
 {
@@ -11,8 +16,18 @@ namespace ADP.Portal.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
             builder.Services.AddLogging();
+            builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
+            builder.Services.AddScoped(async provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var env = provider.GetRequiredService<IHostEnvironment>();
+
+                var adoAzureAdConfig = provider.GetRequiredService<IOptions<AdoConfig>>().Value;
+                var vssConnectionProvider = new VssConnectionProvider(env, adoAzureAdConfig);
+                var connection = await vssConnectionProvider.GetConnectionAsync();
+                return connection;
+            });
             builder.Services.AddScoped<IAdoProjectService, AdoProjectService>();
 
             builder.Services.AddControllers();
