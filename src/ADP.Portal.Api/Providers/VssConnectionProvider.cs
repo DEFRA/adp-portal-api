@@ -4,7 +4,7 @@ using Microsoft.Identity.Client;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 
-namespace ADP.Portal.Api
+namespace ADP.Portal.Api.Providers
 {
     public class VssConnectionProvider
     {

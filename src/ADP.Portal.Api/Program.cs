@@ -1,12 +1,9 @@
 
 using ADP.Portal.Api.Config;
+using ADP.Portal.Api.Providers;
 using ADP.Portal.Core.AdoProject;
 using ADP.Portal.Core.Interfaces;
-using Azure.Identity;
 using Microsoft.Extensions.Options;
-using Microsoft.Identity.Client;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
 
 namespace ADP.Portal.Api
 {
@@ -47,7 +44,6 @@ namespace ADP.Portal.Api
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 
