@@ -1,4 +1,8 @@
 
+using ADP.Portal.Core.AdoProject;
+using ADP.Portal.Core.Interfaces;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace ADP.Portal.Api
 {
     public class Program
@@ -8,6 +12,8 @@ namespace ADP.Portal.Api
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddLogging();
+            builder.Services.AddScoped<IAdoProjectService, AdoProjectService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
