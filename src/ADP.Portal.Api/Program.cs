@@ -14,14 +14,16 @@ namespace ADP.Portal.Api
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddLogging();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            builder.Services.AddProblemDetails();
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.AddScoped(async provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
-                var env = provider.GetRequiredService<IHostEnvironment>();
+                var keyVaultName = config["KeyVaultName"]?? string.Empty;
 
                 var adoAzureAdConfig = provider.GetRequiredService<IOptions<AdoConfig>>().Value;
-                var vssConnectionProvider = new VssConnectionProvider(env, adoAzureAdConfig);
+                var vssConnectionProvider = new VssConnectionProvider(keyVaultName, adoAzureAdConfig);
                 var connection = await vssConnectionProvider.GetConnectionAsync();
                 return connection;
             });
@@ -40,6 +42,8 @@ namespace ADP.Portal.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            
+            app.UseExceptionHandler();
 
             app.UseHttpsRedirection();
 

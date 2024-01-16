@@ -6,12 +6,18 @@ namespace ADP.Portal.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AdoProjectController(ILogger<AdoProjectController> logger, IAdoProjectService adoProjectService) : ControllerBase
+    public class AdoProjectController: ControllerBase
     {
-        private readonly ILogger<AdoProjectController> logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly IAdoProjectService adoProjectService = adoProjectService?? throw new ArgumentNullException(nameof(adoProjectService));
+        private readonly ILogger<AdoProjectController> logger;
+        private readonly IAdoProjectService adoProjectService;
 
-        [HttpGet(Name = "GetAdoProject")]
+        public AdoProjectController(ILogger<AdoProjectController> logger, IAdoProjectService adoProjectService)
+        {
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger)); 
+            this.adoProjectService = adoProjectService ?? throw new ArgumentNullException(nameof(adoProjectService));
+        }
+
+        [HttpGet("{projectName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<AdoProject>> GetAdoProject(string projectName)
@@ -25,5 +31,18 @@ namespace ADP.Portal.Api.Controllers
             }
             return Ok(project);
         }
+
+        [HttpPut("{projectName}/onboard")]
+        public async Task<ActionResult> OnBoardAsync(string projectName)
+        {
+            var project = await adoProjectService.GetProjectAsync(projectName);
+            if (project == Guid.Empty)
+            {
+                logger.LogWarning($"Project {projectName} not found");
+                return NotFound();
+            }
+            return Ok(project);
+        }
+
     }
 }

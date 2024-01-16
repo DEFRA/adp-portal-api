@@ -3,13 +3,8 @@
     public class AdoConfig
     {
         public string OrganizationUrl { get; set; }
-        public AzureAd AzureAd { get; set; }
-    }
-
-    public class AzureAd
-    {
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
-        public string TenantId { get; set; }
+        public bool UsePatToken { get; set; }
+        public string PatToken { get; set; }
+        public string PatTokenSecretName { get; set; }
     }
 }
