@@ -9,29 +9,29 @@ namespace ADP.Portal.Api.Providers
 {
     public class VssConnectionProvider
     {
-        private readonly string keyValutName;
-        private readonly AdoConfig adoConfig;
-        private const string azureDevOpsScope = "https://app.vssps.visualstudio.com/.default";
+        private readonly string _keyValutName;
+        private readonly AdoConfig _adoConfig;
+        private const string _azureDevOpsScope = "https://app.vssps.visualstudio.com/.default";
 
         public VssConnectionProvider(string keyValutName, AdoConfig adoConfig)
         {
-            this.keyValutName = keyValutName;
-            this.adoConfig = adoConfig;
+            _keyValutName = keyValutName;
+            _adoConfig = adoConfig;
         }
 
         public async Task<VssConnection> GetConnectionAsync()
         {
             VssConnection connection;
 
-            if (adoConfig.UsePatToken)
+            if (_adoConfig.UsePatToken)
             {
-                var patToken = await GetPatTokenAsync(keyValutName, adoConfig);
-                connection = new VssConnection(new Uri(adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
+                var patToken = await GetPatTokenAsync(_keyValutName, _adoConfig);
+                connection = new VssConnection(new Uri(_adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
             }
             else
             {
-                var accessToken = await GetAccessTokenAsync(azureDevOpsScope);
-                connection = new VssConnection(new Uri(adoConfig.OrganizationUrl), new VssOAuthAccessTokenCredential(accessToken));
+                var accessToken = await GetAccessTokenAsync(_azureDevOpsScope);
+                connection = new VssConnection(new Uri(_adoConfig.OrganizationUrl), new VssOAuthAccessTokenCredential(accessToken));
             }
 
             return connection;

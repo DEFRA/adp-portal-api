@@ -1,8 +1,7 @@
 
 using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Providers;
-using ADP.Portal.Core.AdoProject;
-using ADP.Portal.Core.Interfaces;
+using ADP.Portal.Core.Application;
 using Microsoft.Extensions.Options;
 
 namespace ADP.Portal.Api
@@ -17,6 +16,7 @@ namespace ADP.Portal.Api
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails();
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
+            builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
             builder.Services.AddScoped(async provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
@@ -43,7 +43,7 @@ namespace ADP.Portal.Api
                 app.UseSwaggerUI();
             }
             
-            app.UseExceptionHandler();
+            //app.UseExceptionHandler();
 
             app.UseHttpsRedirection();
 
