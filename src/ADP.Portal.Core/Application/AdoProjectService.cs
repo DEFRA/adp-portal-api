@@ -24,7 +24,7 @@ namespace ADP.Portal.Core.Application
             try
             {
                 _logger.LogInformation($"Getting project {projectName}");
-                var projectClient = await _vssConnection.GetClientAsync<ProjectHttpClient>();
+                using var projectClient = await _vssConnection.GetClientAsync<ProjectHttpClient>();
 
                 var project = await projectClient.GetProject(projectName);
                 return project;
@@ -37,7 +37,7 @@ namespace ADP.Portal.Core.Application
 
         public async Task OnBoardAsync(TeamProjectReference onBoardProject, AdoProject adpProject)
         {
-            var serviceEndpointClient = await _vssConnection.GetClientAsync<ServiceEndpointHttpClient>();
+            using var serviceEndpointClient = await _vssConnection.GetClientAsync<ServiceEndpointHttpClient>();
 
             _logger.LogInformation($"Getting service endpoints for project {adpProject.Name}");
 
@@ -45,37 +45,42 @@ namespace ADP.Portal.Core.Application
 
             foreach (var serviceConnection in adpProject.ServiceConnections)
             {
-                var endpoint = endpoints.FirstOrDefault(e => e.Name.Equals(serviceConnection, StringComparison.OrdinalIgnoreCase));
+                await ShareServiceEndpointAsync(serviceConnection, onBoardProject, endpoints, serviceEndpointClient);
+            }
+        }
 
-                if (endpoint != null)
+        private async Task ShareServiceEndpointAsync(string serviceConnection, TeamProjectReference onBoardProject, List<ServiceEndpoint> endpoints, ServiceEndpointHttpClient serviceEndpointClient)
+        {
+            var endpoint = endpoints.FirstOrDefault(e => e.Name.Equals(serviceConnection, StringComparison.OrdinalIgnoreCase));
+
+            if (endpoint != null)
+            {
+                var isAlreadyShared = endpoint.ServiceEndpointProjectReferences.Any(r => r.ProjectReference.Id == onBoardProject.Id);
+                if (!isAlreadyShared)
                 {
-                    var isAlreadyShared = endpoint.ServiceEndpointProjectReferences.Any(r => r.ProjectReference.Id == onBoardProject.Id);
-                    if (!isAlreadyShared)
-                    {
-                        _logger.LogInformation($"Sharing service endpoint {serviceConnection} with project {onBoardProject.Name}");
+                    _logger.LogInformation($"Sharing service endpoint {serviceConnection} with project {onBoardProject.Name}");
 
-                        var serviceEndpointProjectReferences = new List<ServiceEndpointProjectReference>();
-                        var projectReference = new ServiceEndpointProjectReference
-                        {
-                            Name = serviceConnection,
-                            ProjectReference = new ProjectReference
-                            {
-                                Name = onBoardProject.Name,
-                                Id = onBoardProject.Id
-                            }
-                        };
-                        serviceEndpointProjectReferences.Add(projectReference);
-                        await serviceEndpointClient.ShareServiceEndpointAsync(endpoint.Id, serviceEndpointProjectReferences);
-                    }
-                    else
+                    var serviceEndpointProjectReferences = new List<ServiceEndpointProjectReference>();
+                    var projectReference = new ServiceEndpointProjectReference
                     {
-                        _logger.LogInformation($"Service endpoint {serviceConnection} already shared with project {onBoardProject.Name}");
-                    }
+                        Name = serviceConnection,
+                        ProjectReference = new ProjectReference
+                        {
+                            Name = onBoardProject.Name,
+                            Id = onBoardProject.Id
+                        }
+                    };
+                    serviceEndpointProjectReferences.Add(projectReference);
+                    await serviceEndpointClient.ShareServiceEndpointAsync(endpoint.Id, serviceEndpointProjectReferences);
                 }
                 else
                 {
-                    _logger.LogWarning($"Service endpoint {serviceConnection} not found");
+                    _logger.LogInformation($"Service endpoint {serviceConnection} already shared with project {onBoardProject.Name}");
                 }
+            }
+            else
+            {
+                _logger.LogWarning($"Service endpoint {serviceConnection} not found");
             }
         }
     }

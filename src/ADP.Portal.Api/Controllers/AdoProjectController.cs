@@ -1,7 +1,7 @@
 ﻿using ADP.Portal.Api.Config;
-using ADP.Portal.Api.Models;
 using ADP.Portal.Core.Application;
 using ADP.Portal.Core.Domain;
+using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -25,7 +25,7 @@ namespace ADP.Portal.Api.Controllers
         [HttpGet("{projectName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Models.AdoProject>> GetAdoProject(string projectName)
+        public async Task<ActionResult> GetAdoProject(string projectName)
         {
             _logger.LogInformation($"Getting project {projectName}");
             var project = await _adoProjectService.GetProjectAsync(projectName);
@@ -55,11 +55,7 @@ namespace ADP.Portal.Api.Controllers
                 return BadRequest("ADP Project configuration not found");
             }
 
-            await _adoProjectService.OnBoardAsync(project, new Core.Domain.AdoProject
-            {
-                Name = config.Name,
-                ServiceConnections = config.ServiceConnections
-            });
+            await _adoProjectService.OnBoardAsync(project, config.Adapt<AdoProject>());
 
             return Ok(project);
         }
