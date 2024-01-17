@@ -13,12 +13,15 @@ namespace ADP.Portal.Api.Controllers
     {
         private readonly ILogger<AdoProjectController> _logger;
         private readonly IOptions<AdpAdoProjectConfig> _adpProjectConfig;
+        private readonly IOptions<OnBoardingProjectConfig> _onBoardingProjectConfig;
         private readonly IAdoProjectService _adoProjectService;
 
-        public AdoProjectController(ILogger<AdoProjectController> logger, IOptions<AdpAdoProjectConfig> adpProjectConfig, IAdoProjectService adoProjectService)
+        public AdoProjectController(ILogger<AdoProjectController> logger, IAdoProjectService adoProjectService, 
+            IOptions<AdpAdoProjectConfig> adpProjectConfig, IOptions<OnBoardingProjectConfig> onBoardingProjectConfig)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _adpProjectConfig = adpProjectConfig ?? throw new ArgumentNullException(nameof(adpProjectConfig));
+            _onBoardingProjectConfig = onBoardingProjectConfig;
             _adoProjectService = adoProjectService ?? throw new ArgumentNullException(nameof(adoProjectService));
         }
 
@@ -55,7 +58,9 @@ namespace ADP.Portal.Api.Controllers
                 return BadRequest("ADP Project configuration not found");
             }
 
-            await _adoProjectService.OnBoardAsync(project, config.Adapt<AdoProject>());
+            var environments = _onBoardingProjectConfig.Value.Environments;
+
+            await _adoProjectService.OnBoardAsync(project, config.Adapt<AdoProject>(), environments.Adapt<List<AdoEnvironment>>());
 
             return NoContent();
         }

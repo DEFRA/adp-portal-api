@@ -1,6 +1,7 @@
 
 using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Providers;
+using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
 using Microsoft.Extensions.Options;
 
@@ -17,6 +18,7 @@ namespace ADP.Portal.Api
             builder.Services.AddProblemDetails();
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
+            builder.Services.Configure<OnBoardingProjectConfig>(builder.Configuration.GetSection("OnBoardingProject"));
             builder.Services.AddScoped(async provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
@@ -28,6 +30,7 @@ namespace ADP.Portal.Api
                 return connection;
             });
             builder.Services.AddScoped<IAdoProjectService, AdoProjectService>();
+            builder.Services.AddScoped<IAdoService, AdoService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -43,7 +46,7 @@ namespace ADP.Portal.Api
                 app.UseSwaggerUI();
             }
             
-            //app.UseExceptionHandler();
+            app.UseExceptionHandler();
 
             app.UseHttpsRedirection();
 
