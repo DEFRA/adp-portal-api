@@ -1,7 +1,7 @@
-﻿using ADP.Portal.Core.Domain;
+﻿using ADP.Portal.Core.Ado.Entities;
 using Microsoft.TeamFoundation.Core.WebApi;
 
-namespace ADP.Portal.Core.Application
+namespace ADP.Portal.Core.Ado.Services
 {
     public interface IAdoProjectService
     {

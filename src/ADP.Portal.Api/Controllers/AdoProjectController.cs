@@ -1,6 +1,6 @@
 ﻿using ADP.Portal.Api.Config;
-using ADP.Portal.Core.Application;
-using ADP.Portal.Core.Domain;
+using ADP.Portal.Core.Ado.Entities;
+using ADP.Portal.Core.Ado.Services;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -37,7 +37,7 @@ namespace ADP.Portal.Api.Controllers
             return Ok(project);
         }
 
-        [HttpPut("{projectName}/onboard")]
+        [HttpPatch("{projectName}/onboard")]
         public async Task<ActionResult> OnBoardAsync(string projectName)
         {
             var project = await _adoProjectService.GetProjectAsync(projectName);
@@ -57,7 +57,7 @@ namespace ADP.Portal.Api.Controllers
 
             await _adoProjectService.OnBoardAsync(project, config.Adapt<AdoProject>());
 
-            return Ok(project);
+            return NoContent();
         }
 
     }

@@ -1,4 +1,4 @@
-﻿namespace ADP.Portal.Core.Domain
+﻿namespace ADP.Portal.Core.Ado.Entities
 {
 
     public class AdoProject

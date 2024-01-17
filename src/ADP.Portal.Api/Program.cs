@@ -1,7 +1,7 @@
 
 using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Providers;
-using ADP.Portal.Core.Application;
+using ADP.Portal.Core.Ado.Services;
 using Microsoft.Extensions.Options;
 
 namespace ADP.Portal.Api
