@@ -7,39 +7,39 @@ namespace ADP.Portal.Core.Ado.Services
 {
     public class AdoProjectService : IAdoProjectService
     {
-        private readonly ILogger<AdoProjectService> _logger;
-        private readonly IAdoService _adoService;
+        private readonly ILogger<AdoProjectService> logger;
+        private readonly IAdoService adoService;
 
         public AdoProjectService(IAdoService adoService, ILogger<AdoProjectService> logger)
         {
-            _adoService = adoService;
-            _logger = logger;
+            this.adoService = adoService;
+            this.logger = logger;
         }
 
         public async Task<TeamProjectReference?> GetProjectAsync(string projectName)
         {
             try
             {
-                return await _adoService.GetTeamProjectAsync(projectName);
+                return await adoService.GetTeamProjectAsync(projectName);
             }
             catch (ProjectDoesNotExistWithNameException)
             {
-                _logger.LogWarning($"Project {projectName} does not exist");
+                logger.LogWarning($"Project {projectName} does not exist");
                 return null;
             }
         }
 
         public async Task OnBoardAsync(string adpProjectName, AdoProject onboardProject)
         {
-            await _adoService.ShareServiceEndpointsAsync(adpProjectName, onboardProject.ServiceConnections, onboardProject.ProjectReference);
+            await adoService.ShareServiceEndpointsAsync(adpProjectName, onboardProject.ServiceConnections, onboardProject.ProjectReference);
 
-            await _adoService.AddEnvironmentsAsync(onboardProject.Environments, onboardProject.ProjectReference);
+            await adoService.AddEnvironmentsAsync(onboardProject.Environments, onboardProject.ProjectReference);
 
-            await _adoService.ShareAgentPoolsAsync(adpProjectName, onboardProject.AgentPools, onboardProject.ProjectReference);
+            await adoService.ShareAgentPoolsAsync(adpProjectName, onboardProject.AgentPools, onboardProject.ProjectReference);
 
             if(onboardProject.VariableGroups != null)
             {
-                await _adoService.AddOrUpdateVariableGroupsAsync(onboardProject.VariableGroups, onboardProject.ProjectReference);
+                await adoService.AddOrUpdateVariableGroupsAsync(onboardProject.VariableGroups, onboardProject.ProjectReference);
             }
         }
     }
