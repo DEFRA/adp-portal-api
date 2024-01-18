@@ -29,12 +29,18 @@ namespace ADP.Portal.Core.Ado.Services
             }
         }
 
-        public async Task OnBoardAsync(TeamProjectReference onBoardProject, AdoProject adpProject, List<AdoEnvironment> adoEnvironments)
+        public async Task OnBoardAsync(string adpProjectName, AdoProject onboardProject)
         {
-            await _adoService.ShareServiceEndpointsAsync(adpProject, onBoardProject);
+            await _adoService.ShareServiceEndpointsAsync(adpProjectName, onboardProject.ServiceConnections, onboardProject.ProjectReference);
 
-            await _adoService.AddEnvironments(adoEnvironments, onBoardProject);
+            await _adoService.AddEnvironmentsAsync(onboardProject.Environments, onboardProject.ProjectReference);
+
+            await _adoService.ShareAgentPoolsAsync(adpProjectName, onboardProject.AgentPools, onboardProject.ProjectReference);
+
+            if(onboardProject.VariableGroups != null)
+            {
+                await _adoService.AddOrUpdateVariableGroupsAsync(onboardProject.VariableGroups, onboardProject.ProjectReference);
+            }
         }
-
     }
 }

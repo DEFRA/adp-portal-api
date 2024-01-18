@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using ADP.Portal.Core.Ado.Entities;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using ProjectReference = Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ProjectReference;
+using Mapster;
 
 namespace ADP.Portal.Core.Ado.Infrastructure
 {
@@ -20,15 +21,24 @@ namespace ADP.Portal.Core.Ado.Infrastructure
             _vssConnection = vssConnection.Result;
         }
 
-        public async Task ShareServiceEndpointsAsync(AdoProject adpProject, TeamProjectReference onBoardProject)
+        public async Task<TeamProject> GetTeamProjectAsync(string projectName)
         {
-            using var serviceEndpointClient = await _vssConnection.GetClientAsync<ServiceEndpointHttpClient>();
+            _logger.LogInformation($"Getting project {projectName}");
+            using var projectClient = await _vssConnection.GetClientAsync<ProjectHttpClient>();
 
-            _logger.LogInformation($"Getting service endpoints for project {adpProject.Name}");
+            var project = await projectClient.GetProject(projectName);
+            return project;
+        }
 
-            var endpoints = await serviceEndpointClient.GetServiceEndpointsAsync(adpProject.Name);
+        public async Task ShareServiceEndpointsAsync(string adpProjectName, List<string> serviceConnections, TeamProjectReference onBoardProject)
+        {
+            var serviceEndpointClient = await _vssConnection.GetClientAsync<ServiceEndpointHttpClient>();
 
-            foreach (var serviceConnection in adpProject.ServiceConnections)
+            _logger.LogInformation($"Getting service endpoints for project {adpProjectName}");
+
+            var endpoints = await serviceEndpointClient.GetServiceEndpointsAsync(adpProjectName);
+
+            foreach (var serviceConnection in serviceConnections)
             {
                 var endpoint = endpoints.FirstOrDefault(e => e.Name.Equals(serviceConnection, StringComparison.OrdinalIgnoreCase));
 
@@ -39,17 +49,10 @@ namespace ADP.Portal.Core.Ado.Infrastructure
                     {
                         _logger.LogInformation($"Sharing service endpoint {serviceConnection} with project {onBoardProject.Name}");
 
-                        var serviceEndpointProjectReferences = new List<ServiceEndpointProjectReference>();
-                        var projectReference = new ServiceEndpointProjectReference
-                        {
-                            Name = serviceConnection,
-                            ProjectReference = new ProjectReference
-                            {
-                                Name = onBoardProject.Name,
-                                Id = onBoardProject.Id
-                            }
+                        var serviceEndpointProjectReferences = new List<ServiceEndpointProjectReference>() {
+                            new() { Name = onBoardProject.Name,ProjectReference = onBoardProject.Adapt<ProjectReference>() }
                         };
-                        serviceEndpointProjectReferences.Add(projectReference);
+
                         await serviceEndpointClient.ShareServiceEndpointAsync(endpoint.Id, serviceEndpointProjectReferences);
                     }
                     else
@@ -64,45 +67,98 @@ namespace ADP.Portal.Core.Ado.Infrastructure
             }
         }
 
-        public async Task AddEnvironments(List<AdoEnvironment> adoEnvironments, TeamProjectReference onBoardProject)
+        public async Task AddEnvironmentsAsync(List<AdoEnvironment> adoEnvironments, TeamProjectReference onBoardProject)
         {
-            using var environmentClient = await _vssConnection.GetClientAsync<TaskAgentHttpClient>();
+            var taskAgentClient = await _vssConnection.GetClientAsync<TaskAgentHttpClient>();
 
             _logger.LogInformation($"Getting environments for project {onBoardProject.Name}");
 
-            var environments = await environmentClient.GetEnvironmentsAsync(onBoardProject.Id);
+            var environments = await taskAgentClient.GetEnvironmentsAsync(onBoardProject.Id);
 
             foreach (var environment in adoEnvironments)
             {
-
                 var IsEnvironmentExists = environments.Any(e => e.Name.Equals(environment.Name, StringComparison.OrdinalIgnoreCase));
 
                 if (IsEnvironmentExists)
                 {
                     _logger.LogInformation($"Environment {environment.Name} already exists");
-                    return;
+                    continue;
                 }
 
                 _logger.LogInformation($"Creating environment {environment.Name}");
 
-                var environmentParameter = new EnvironmentCreateParameter()
-                {
-                    Name = environment.Name
-                };
+                var environmentParameter = environment.Adapt<EnvironmentCreateParameter>();
 
-                await environmentClient.AddEnvironmentAsync(onBoardProject.Id, environmentParameter);
+                await taskAgentClient.AddEnvironmentAsync(onBoardProject.Id, environmentParameter);
 
                 _logger.LogInformation($"Environment {environment.Name} created");
             }
         }
 
-        public async Task<TeamProject> GetTeamProjectAsync(string projectName)
+        public async Task ShareAgentPoolsAsync(string adpPrjectName, List<string> adoAgentPoolsToShare, TeamProjectReference onBoardProject)
         {
-            _logger.LogInformation($"Getting project {projectName}");
-            using var projectClient = await _vssConnection.GetClientAsync<ProjectHttpClient>();
+            var taskAgentClient = await _vssConnection.GetClientAsync<TaskAgentHttpClient>();
 
-            var project = await projectClient.GetProject(projectName);
-            return project;
+            _logger.LogInformation($"Getting agent pools for project {onBoardProject.Name}");
+
+            var adpAgentQueues = await taskAgentClient.GetAgentQueuesAsync(adpPrjectName, string.Empty);
+
+            var agentPools = await taskAgentClient.GetAgentQueuesAsync(onBoardProject.Id);
+
+            foreach (var agentPool in adoAgentPoolsToShare)
+            {
+                var adpAgentQueue = adpAgentQueues.FirstOrDefault(a => a.Name.Equals(agentPool, StringComparison.OrdinalIgnoreCase));
+                if (adpAgentQueue != null)
+                {
+                    var IsAgentPoolExists = agentPools.Any(e => e.Name.Equals(agentPool, StringComparison.OrdinalIgnoreCase));
+
+                    if (IsAgentPoolExists)
+                    {
+                        _logger.LogInformation($"Agent pool {agentPool} already exists in the {onBoardProject.Name} project");
+                        continue;
+                    }
+
+                    _logger.LogInformation($"Adding agent pool {agentPool} to the {onBoardProject.Name} project");
+
+                    await taskAgentClient.AddAgentQueueAsync(onBoardProject.Id, adpAgentQueue);
+
+                    _logger.LogInformation($"Agent pool {agentPool} created");
+                }
+                else
+                {
+                    _logger.LogWarning($"Agent pool {agentPool} not found in the adp project.");
+                }
+            }
+        }
+
+        public async Task AddOrUpdateVariableGroupsAsync(List<AdoVariableGroup> adoVariableGroups, TeamProjectReference onBoardProject)
+        {
+            var taskAgentClient = await _vssConnection.GetClientAsync<TaskAgentHttpClient>();
+
+            _logger.LogInformation($"Getting variable groups for project {onBoardProject.Name}");
+
+            var variableGroups = await taskAgentClient.GetVariableGroupsAsync(onBoardProject.Id);
+
+            foreach (var variableGroup in adoVariableGroups)
+            {
+                var existingVariableGroup = variableGroups.First(e => e.Name.Equals(variableGroup.Name, StringComparison.OrdinalIgnoreCase));
+                
+                var variableGroupParameters = new VariableGroupParameters();
+                variableGroupParameters = variableGroup.Adapt<VariableGroupParameters>();
+                variableGroupParameters.VariableGroupProjectReferences[0].ProjectReference = onBoardProject.Adapt<Microsoft.TeamFoundation.DistributedTask.WebApi.ProjectReference>();
+
+                if (existingVariableGroup == null)
+                {
+                    _logger.LogInformation($"Creating variable group {variableGroup.Name}");
+                    await taskAgentClient.AddVariableGroupAsync(variableGroupParameters);
+                }
+                else
+                {
+                    _logger.LogInformation($"Updating variable group {variableGroup.Name}");
+                    await taskAgentClient.UpdateVariableGroupAsync(existingVariableGroup.Id, variableGroupParameters);
+                }
+            }
+
         }
     }
 }

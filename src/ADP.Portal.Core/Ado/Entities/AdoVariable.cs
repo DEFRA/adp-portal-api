@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace ADP.Portal.Core.Ado.Entities
 {
-    public class AdoEnvironment
+    public class AdoVariable
     {
         public string Name { get; set; }
-
-        public string? Description { get; set; }
+        public string Value { get; set; }
+        public bool IsSecret { get; set; }
     }
 }

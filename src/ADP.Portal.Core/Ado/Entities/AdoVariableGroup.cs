@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace ADP.Portal.Core.Ado.Entities
 {
-    public class AdoEnvironment
+    public class AdoVariableGroup
     {
         public string Name { get; set; }
 
-        public string? Description { get; set; }
+        public List<AdoVariable> Variables { get; set; }
+        public string Description { get; internal set; }
     }
 }

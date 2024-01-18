@@ -7,7 +7,7 @@ namespace ADP.Portal.Core.Ado.Services
     {
         public Task<TeamProjectReference?> GetProjectAsync(string projectName);
 
-        public Task OnBoardAsync(TeamProjectReference onBoardProject, AdoProject adpProject, List<AdoEnvironment> adoEnvironments);
+        public Task OnBoardAsync(string adpProjectName, AdoProject onboardProject);
 
     }
 }

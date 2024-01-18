@@ -8,8 +8,12 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
         Task<TeamProject> GetTeamProjectAsync(string projectName);
 
-        Task ShareServiceEndpointsAsync(AdoProject adpProject, TeamProjectReference onBoardProject);
+        Task ShareServiceEndpointsAsync(string adpProjectName, List<string> serviceConnections, TeamProjectReference onBoardProject);
 
-        Task AddEnvironments(List<AdoEnvironment> adoEnvironments, TeamProjectReference onBoardProject);
+        Task AddEnvironmentsAsync(List<AdoEnvironment> adoEnvironments, TeamProjectReference onBoardProject);
+
+        Task ShareAgentPoolsAsync(string adpPrjectName, List<string> adoAgentPoolsToShare, TeamProjectReference onBoardProject);
+
+        Task AddOrUpdateVariableGroupsAsync(List<AdoVariableGroup> adoVariableGroups, TeamProjectReference onBoardProject);
     }
 }

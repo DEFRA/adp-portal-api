@@ -1,4 +1,5 @@
 ﻿using ADP.Portal.Api.Config;
+using ADP.Portal.Api.Models;
 using ADP.Portal.Core.Ado.Entities;
 using ADP.Portal.Core.Ado.Services;
 using Mapster;
@@ -12,16 +13,13 @@ namespace ADP.Portal.Api.Controllers
     public class AdoProjectController : ControllerBase
     {
         private readonly ILogger<AdoProjectController> _logger;
-        private readonly IOptions<AdpAdoProjectConfig> _adpProjectConfig;
-        private readonly IOptions<OnBoardingProjectConfig> _onBoardingProjectConfig;
+        private readonly IOptions<AdpAdoProjectConfig> _adpAdpProjectConfig;
         private readonly IAdoProjectService _adoProjectService;
 
-        public AdoProjectController(ILogger<AdoProjectController> logger, IAdoProjectService adoProjectService, 
-            IOptions<AdpAdoProjectConfig> adpProjectConfig, IOptions<OnBoardingProjectConfig> onBoardingProjectConfig)
+        public AdoProjectController(ILogger<AdoProjectController> logger, IOptions<AdpAdoProjectConfig> adpAdpProjectConfig, IAdoProjectService adoProjectService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _adpProjectConfig = adpProjectConfig ?? throw new ArgumentNullException(nameof(adpProjectConfig));
-            _onBoardingProjectConfig = onBoardingProjectConfig;
+            _adpAdpProjectConfig = adpAdpProjectConfig ?? throw new ArgumentNullException(nameof(adpAdpProjectConfig));
             _adoProjectService = adoProjectService ?? throw new ArgumentNullException(nameof(adoProjectService));
         }
 
@@ -41,7 +39,7 @@ namespace ADP.Portal.Api.Controllers
         }
 
         [HttpPatch("{projectName}/onboard")]
-        public async Task<ActionResult> OnBoardAsync(string projectName)
+        public async Task<ActionResult> OnBoardAsync(string projectName, [FromBody] OnBoardAdoProjectRequest onBoardRequest)
         {
             var project = await _adoProjectService.GetProjectAsync(projectName);
             if (project == null)
@@ -50,17 +48,10 @@ namespace ADP.Portal.Api.Controllers
                 return NotFound();
             }
 
-            var config = _adpProjectConfig.Value;
+            var adoProject = onBoardRequest.Adapt<AdoProject>();
+            adoProject.ProjectReference = project;
 
-            if (config == null)
-            {
-                _logger.LogError("ADP Project configuration not found");
-                return BadRequest("ADP Project configuration not found");
-            }
-
-            var environments = _onBoardingProjectConfig.Value.Environments;
-
-            await _adoProjectService.OnBoardAsync(project, config.Adapt<AdoProject>(), environments.Adapt<List<AdoEnvironment>>());
+            await _adoProjectService.OnBoardAsync(_adpAdpProjectConfig.Value.Name, adoProject);
 
             return NoContent();
         }
