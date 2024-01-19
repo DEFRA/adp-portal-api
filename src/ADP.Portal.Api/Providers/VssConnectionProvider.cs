@@ -1,9 +1,9 @@
 ﻿using ADP.Portal.Api.Config;
+using ADP.Portal.Core.Ado.Infrastructure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.OAuth;
-using Microsoft.VisualStudio.Services.WebApi;
 
 namespace ADP.Portal.Api.Providers
 {
@@ -19,19 +19,19 @@ namespace ADP.Portal.Api.Providers
             this.adoConfig = adoConfig;
         }
 
-        public async Task<VssConnection> GetConnectionAsync()
+        public async Task<IVssConnection> GetConnectionAsync()
         {
-            VssConnection connection;
+            IVssConnection connection;
 
             if (adoConfig.UsePatToken)
             {
                 var patToken = await GetPatTokenAsync(keyValutName, adoConfig);
-                connection = new VssConnection(new Uri(adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
+                connection = new VssConnectionWrapper(new Uri(adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
             }
             else
             {
                 var accessToken = await GetAccessTokenAsync(azureDevOpsScope);
-                connection = new VssConnection(new Uri(adoConfig.OrganizationUrl), new VssOAuthAccessTokenCredential(accessToken));
+                connection = new VssConnectionWrapper(new Uri(adoConfig.OrganizationUrl), new VssOAuthAccessTokenCredential(accessToken));
             }
 
             return connection;

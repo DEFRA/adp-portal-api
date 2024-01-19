@@ -12,8 +12,8 @@ namespace ADP.Portal.Core.Ado.Services
 
         public AdoProjectService(IAdoService adoService, ILogger<AdoProjectService> logger)
         {
-            this.adoService = adoService;
-            this.logger = logger;
+            this.adoService = adoService ?? throw new ArgumentNullException(nameof(adoService));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<TeamProjectReference?> GetProjectAsync(string projectName)

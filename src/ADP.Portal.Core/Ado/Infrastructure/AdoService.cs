@@ -2,7 +2,6 @@
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi;
 using Microsoft.VisualStudio.Services.ServiceEndpoints;
-using Microsoft.VisualStudio.Services.WebApi;
 using ADP.Portal.Core.Ado.Entities;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using ProjectReference = Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ProjectReference;
@@ -13,12 +12,12 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 {
     public class AdoService : IAdoService
     {
-        private readonly ILogger logger;
-        private readonly VssConnection vssConnection;
+        private readonly ILogger<AdoService> logger;
+        private readonly IVssConnection vssConnection;
 
-        public AdoService(ILogger<AdoService> logger, Task<VssConnection> vssConnection)
+        public AdoService(ILogger<AdoService> logger, Task<IVssConnection> vssConnection)
         {
-            this.logger = logger;
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.vssConnection = vssConnection.Result;
         }
 

@@ -23,43 +23,35 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         [Fact]
         public async Task GetProjectAsync_ReturnsProject_WhenProjectExists()
         {
-            // Arrange
             var projectName = "TestProject";
             var project = new TeamProject();
             adoServiceMock.Setup(x => x.GetTeamProjectAsync(projectName)).ReturnsAsync(project);
 
-            // Act
             var result = await adoProjectService.GetProjectAsync(projectName);
 
-            // Assert
             Assert.Equal(project, result);
         }
 
         [Fact]
         public async Task GetProjectAsync_ReturnsNull_WhenProjectDoesNotExist()
         {
-            // Arrange
+
             var projectName = "TestProject";
             adoServiceMock.Setup(x => x.GetTeamProjectAsync(projectName)).Throws<ProjectDoesNotExistWithNameException>();
 
-            // Act
             var result = await adoProjectService.GetProjectAsync(projectName);
 
-            // Assert
             Assert.Null(result);
         }
 
         [Fact]
         public async Task OnBoardAsync_CallsAdoServiceMethods()
         {
-            // Arrange
             var adpProjectName = "TestProject";
             var onboardProject = new AdoProject();
 
-            // Act
             await adoProjectService.OnBoardAsync(adpProjectName, onboardProject);
 
-            // Assert
             adoServiceMock.Verify(x => x.ShareServiceEndpointsAsync(adpProjectName, onboardProject.ServiceConnections, onboardProject.ProjectReference), Times.Once);
             adoServiceMock.Verify(x => x.AddEnvironmentsAsync(onboardProject.Environments, onboardProject.ProjectReference), Times.Once);
             adoServiceMock.Verify(x => x.ShareAgentPoolsAsync(adpProjectName, onboardProject.AgentPools, onboardProject.ProjectReference), Times.Once);
