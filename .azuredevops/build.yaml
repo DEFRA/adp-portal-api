@@ -43,6 +43,6 @@ extends:
       appFrameworkType: "dotnet"
       frameworkVersion: "8.x"   
       appPath: "/src"
-      projectPath: "../src/ADP.Portal.Api/ADP.Portal.Api.csproj"
+      projectPath: "ADP.Portal.Api/ADP.Portal.Api.csproj"
     appDeployConfig:
       filepath: ".azuredevops/backstage.yaml"  
