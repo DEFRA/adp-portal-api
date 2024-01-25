@@ -1,0 +1,45 @@
+parameters:
+  - name: deployFromFeature
+    displayName: "Deploy from Feature Branch"
+    type: boolean
+    default: false
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - test-output/*
+      - bin/*
+      - obj/*
+  drafts: false
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - "main"
+  paths:
+    exclude:
+      - test-output/*
+      - bin/*
+      - obj/*
+
+resources:
+  repositories:
+    - repository: DEFRA-ADPPipelineCommon
+      name: DEFRA/adp-pipeline-common
+      endpoint: DEFRA
+      type: github
+      ref: pp/portal-pipeline
+
+extends:
+  template: /pipelines/common-aca-app-build.yaml@DEFRA-ADPPipelineCommon
+  parameters:
+    serviceName: "adp-portal-api"
+    deployFromFeature: ${{ parameters.deployFromFeature }}
+    appBuildConfig:
+      imageRepoName: "adp-portal-api"
+      appFrameworkType: "dotnet"
+    appDeployConfig:
+      filepath: ".azuredevops/backstage.yaml"  

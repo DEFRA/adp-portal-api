@@ -50,7 +50,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
                         logger.LogInformation($"Sharing service endpoint {serviceConnection} with project {onBoardProject.Name}");
 
                         var serviceEndpointProjectReferences = new List<ServiceEndpointProjectReference>() {
-                            new() { Name = onBoardProject.Name,ProjectReference = onBoardProject.Adapt<ProjectReference>() }
+                            new() { Name = serviceConnection,ProjectReference = onBoardProject.Adapt<ProjectReference>() }
                         };
 
                         await serviceEndpointClient.ShareServiceEndpointAsync(endpoint.Id, serviceEndpointProjectReferences);
@@ -142,7 +142,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
             foreach (var variableGroup in adoVariableGroups)
             {
                 var existingVariableGroup = variableGroups.First(e => e.Name.Equals(variableGroup.Name, StringComparison.OrdinalIgnoreCase));
-                
+
                 var variableGroupParameters = new VariableGroupParameters();
                 variableGroupParameters = variableGroup.Adapt<VariableGroupParameters>();
                 variableGroupParameters.VariableGroupProjectReferences[0].ProjectReference = onBoardProject.Adapt<DistributedTaskProjectReference>();

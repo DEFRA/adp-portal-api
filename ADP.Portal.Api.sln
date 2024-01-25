@@ -7,11 +7,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{96D7E03D-EB8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ADP.Portal.Api", "src\ADP.Portal.Api\ADP.Portal.Api.csproj", "{9BBBBB95-849F-49B2-B387-6DC6F4A567EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ADP.Portal.Core", "src\ADP.Portal.Core\ADP.Portal.Core.csproj", "{ECEFC306-07C3-461A-A996-54F9E87BE682}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ADP.Portal.Core", "src\ADP.Portal.Core\ADP.Portal.Core.csproj", "{ECEFC306-07C3-461A-A996-54F9E87BE682}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{00227A2B-A8A9-45EF-BDC7-4FD7C9FA962D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ADP.Portal.Core.Tests", "test\ADP.Portal.Core.Tests\ADP.Portal.Core.Tests.csproj", "{D21A94F8-A73F-486C-8D87-F85B17ADB815}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ADP.Portal.Core.Tests", "test\ADP.Portal.Core.Tests\ADP.Portal.Core.Tests.csproj", "{D21A94F8-A73F-486C-8D87-F85B17ADB815}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".azuredevops", ".azuredevops", "{E621FA50-64ED-4745-821A-C52B68571D07}"
+	ProjectSection(SolutionItems) = preProject
+		.azuredevops\build.yaml = .azuredevops\build.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

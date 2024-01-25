@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace ADP.Portal.Api.Mapster
 {
-    public static class MaspsterEntitiesConfig
+    public static class MapsterEntitiesConfig
     {
         public static void EntitiesConfigure(this IServiceCollection services)
         {
