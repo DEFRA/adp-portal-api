@@ -41,7 +41,7 @@ extends:
     appBuildConfig:
       imageRepoName: "adp-portal-api"
       appFrameworkType: "dotnet"
-      frameworkVersion: "6.x"   
+      frameworkVersion: "8.x"   
       projectPath: "/src/ADP.Portal.Api/ADP.Portal.Api.csproj"
       appPath: "/src/ADP.Portal.Api"
     appDeployConfig:
