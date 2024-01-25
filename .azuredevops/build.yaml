@@ -41,6 +41,6 @@ extends:
     appBuildConfig:
       imageRepoName: "adp-portal-api"
       appFrameworkType: "dotnet"
-      appPath: "src/ADP.Portal.Api"
+      appPath: "/src/ADP.Portal.Api"
     appDeployConfig:
       filepath: ".azuredevops/backstage.yaml"  
