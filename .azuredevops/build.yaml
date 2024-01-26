@@ -38,6 +38,7 @@ extends:
   parameters:
     serviceName: "adp-portal-api"
     deployFromFeature: ${{ parameters.deployFromFeature }}
+    privateAgentName: ''
     appBuildConfig:
       imageRepoName: "adp-portal-api"
       appFrameworkType: "dotnet"
