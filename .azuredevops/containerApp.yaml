@@ -1,0 +1,30 @@
+type: Microsoft.App/containerApps
+identity:
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+     {{userAssignedIdentity}}
+  }
+properties:
+  managedEnvironmentId: {{managedEnvironmentId}}
+  configuration:
+    ingress:
+      external: true
+      allowInsecure: false
+      targetPort: 8080
+      traffic:
+        - latestRevision: true
+          weight: 100
+      transport: Auto
+    registries:
+      - server: {{acrName}}.azurecr.io
+        identity: {{userAssignedIdentity}}
+  template:
+    containers:
+      - image: {{acrName}}.azurecr.io/image/{{imageRepoName}}:{{appVersion}}
+        name: {{imageRepoName}}
+        resources:
+          cpu: 0.5
+          memory: 1Gi
+    scale:
+      minReplicas: 1
+      maxReplicas: 3  
