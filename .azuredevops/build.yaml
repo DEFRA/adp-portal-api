@@ -38,6 +38,7 @@ extends:
   parameters:
     deployFromFeature: ${{ parameters.deployFromFeature }}
     privateAgentName: ''
+    containerAppName: 'adp-portal-api'
     appBuildConfig:
       imageRepoName: "adp-portal-api"
       appFrameworkType: "dotnet"
