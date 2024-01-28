@@ -36,7 +36,6 @@ resources:
 extends:
   template: /pipelines/common-aca-app-build.yaml@DEFRA-ADPPipelineCommon
   parameters:
-    serviceName: "adp-portal-api"
     deployFromFeature: ${{ parameters.deployFromFeature }}
     privateAgentName: ''
     appBuildConfig:
