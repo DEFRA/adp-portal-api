@@ -40,7 +40,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
             foreach (var serviceConnection in serviceConnections)
             {
-                var endpoint = endpoints.FirstOrDefault(e => e.Name.Equals(serviceConnection, StringComparison.OrdinalIgnoreCase));
+                var endpoint = endpoints.Find(e => e.Name.Equals(serviceConnection, StringComparison.OrdinalIgnoreCase));
 
                 if (endpoint != null)
                 {
@@ -77,7 +77,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
             foreach (var environment in adoEnvironments)
             {
-                var IsEnvironmentExists = environments.Any(e => e.Name.Equals(environment.Name, StringComparison.OrdinalIgnoreCase));
+                var IsEnvironmentExists = environments.Exists(e => e.Name.Equals(environment.Name, StringComparison.OrdinalIgnoreCase));
 
                 if (IsEnvironmentExists)
                 {
@@ -107,10 +107,10 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
             foreach (var agentPool in adoAgentPoolsToShare)
             {
-                var adpAgentQueue = adpAgentQueues.FirstOrDefault(a => a.Name.Equals(agentPool, StringComparison.OrdinalIgnoreCase));
+                var adpAgentQueue = adpAgentQueues.Find(a => a.Name.Equals(agentPool, StringComparison.OrdinalIgnoreCase));
                 if (adpAgentQueue != null)
                 {
-                    var IsAgentPoolExists = agentPools.Any(e => e.Name.Equals(agentPool, StringComparison.OrdinalIgnoreCase));
+                    var IsAgentPoolExists = agentPools.Exists(e => e.Name.Equals(agentPool, StringComparison.OrdinalIgnoreCase));
 
                     if (IsAgentPoolExists)
                     {
@@ -143,8 +143,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
             {
                 var existingVariableGroup = variableGroups.First(e => e.Name.Equals(variableGroup.Name, StringComparison.OrdinalIgnoreCase));
 
-                var variableGroupParameters = new VariableGroupParameters();
-                variableGroupParameters = variableGroup.Adapt<VariableGroupParameters>();
+                var variableGroupParameters = variableGroup.Adapt<VariableGroupParameters>();
                 variableGroupParameters.VariableGroupProjectReferences[0].ProjectReference = onBoardProject.Adapt<DistributedTaskProjectReference>();
 
                 if (existingVariableGroup == null)
