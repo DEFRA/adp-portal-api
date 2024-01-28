@@ -26,6 +26,10 @@ namespace ADP.Portal.Api.Providers
             if (adoConfig.UsePatToken)
             {
                 var patToken = await GetPatTokenAsync(keyValutName, adoConfig);
+                if (string.IsNullOrEmpty(patToken))
+                {
+                    throw new ArgumentNullException(nameof(patToken));
+                }
                 connection = new VssConnectionWrapper(new Uri(adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
             }
             else
@@ -43,20 +47,9 @@ namespace ADP.Portal.Api.Providers
 
             if (string.IsNullOrEmpty(patToken))
             {
-                if (string.IsNullOrEmpty(keyValutName))
-                    throw new Exception("Key Vault Name is not set");
-
-                if (string.IsNullOrEmpty(adoConfig.PatTokenSecretName))
-                    throw new Exception("Personal Access Token Secret Name is not set");
-
                 var secretClient = new SecretClient(new Uri(keyValutName), new DefaultAzureCredential());
                 var secret = await secretClient.GetSecretAsync(adoConfig.PatTokenSecretName);
                 patToken = secret.Value.Value;
-
-                if (string.IsNullOrEmpty(patToken))
-                {
-                    throw new Exception("Personal Access Token is not set in the Key Vault");
-                }
             }
 
             return patToken;
