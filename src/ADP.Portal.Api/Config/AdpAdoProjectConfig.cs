@@ -1,7 +1,7 @@
 ﻿namespace ADP.Portal.Api.Config
 {
-    public class AdpAdoProjectConfig(string name)
+    public class AdpAdoProjectConfig
     {
-        public string Name { get; set; } = name;
+        public required string Name { get; set; } 
     }
 }
