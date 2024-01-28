@@ -5,18 +5,18 @@ EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["./ADP.Portal.Api/ADP.Portal.Api.csproj", "./ADP.Portal.Api"]
-COPY ["./ADP.Portal.Core/ADP.Portal.Core.csproj", "./ADP.Portal.Core"]
+COPY ["./ADP.Portal.Api/ADP.Portal.Api.csproj", "./ADP.Portal.Api/"]
+COPY ["./ADP.Portal.Core/ADP.Portal.Core.csproj", "./ADP.Portal.Core/"]
 RUN dotnet restore "./ADP.Portal.Api/ADP.Portal.Api.csproj"
 COPY . .
-WORKDIR "/src"
-RUN dotnet build "./ADP.Portal.Api/ADP.Portal.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/ADP.Portal.Api"
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet build "./ADP.Portal.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./ADP.Portal.Api/ADP.Portal.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./ADP.Portal.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
