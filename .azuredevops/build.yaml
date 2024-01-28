@@ -38,7 +38,7 @@ extends:
   parameters:
     deployFromFeature: ${{ parameters.deployFromFeature }}
     privateAgentName: ''
-    containerAppName: 'adp-portal-api'
+    containerAppName: 'ssvadpinfca3402'
     appBuildConfig:
       imageRepoName: "adp-portal-api"
       appFrameworkType: "dotnet"
@@ -49,4 +49,4 @@ extends:
       testProjectPath: "**/*Tests.csproj"
       dockerfilePath: "../src/Dockerfile"
     appDeployConfig:
-      filepath: ".azuredevops/backstage.yaml"  
+      filepath: ".azuredevops/containerApp.yaml"  

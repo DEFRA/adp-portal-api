@@ -20,6 +20,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".azuredevops", ".azuredevops", "{E621FA50-64ED-4745-821A-C52B68571D07}"
 	ProjectSection(SolutionItems) = preProject
 		.azuredevops\build.yaml = .azuredevops\build.yaml
+		.azuredevops\containerApp.yaml = .azuredevops\containerApp.yaml
 	EndProjectSection
 EndProject
 Global
