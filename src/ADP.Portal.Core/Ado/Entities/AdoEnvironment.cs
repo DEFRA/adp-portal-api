@@ -1,9 +1,9 @@
 ﻿namespace ADP.Portal.Core.Ado.Entities
 {
-    public class AdoEnvironment
+    public class AdoEnvironment(string name, string? description)
     {
-        public required string Name { get; set; }
+        public string Name { get; set; } = name;
 
-        public string? Description { get; set; }
+        public string? Description { get; set; } = description;
     }
 }

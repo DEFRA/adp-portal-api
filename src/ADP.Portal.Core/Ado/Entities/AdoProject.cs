@@ -3,16 +3,18 @@
 namespace ADP.Portal.Core.Ado.Entities
 {
 
-    public class AdoProject
+    public class AdoProject(TeamProjectReference projectReference,
+        List<string> serviceConnections, List<string> agentPools,
+        List<AdoEnvironment> environments, List<AdoVariableGroup>? variableGroups)
     {
-        public required TeamProjectReference ProjectReference { get; set; }
+        public TeamProjectReference ProjectReference { get; set; } = projectReference;
 
-        public required List<string> ServiceConnections { get; set; }
+        public List<string> ServiceConnections { get; set; } = serviceConnections;
 
-        public required List<string> AgentPools { get; set; }
+        public List<string> AgentPools { get; set; } = agentPools;
 
-        public required List<AdoEnvironment> Environments { get; set; }
+        public List<AdoEnvironment> Environments { get; set; } = environments;
 
-        public List<AdoVariableGroup>? VariableGroups { get; set; }
+        public List<AdoVariableGroup>? VariableGroups { get; set; } = variableGroups;
     }
 }

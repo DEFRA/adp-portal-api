@@ -48,7 +48,9 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         public async Task OnBoardAsync_CallsAdoServiceMethods()
         {
             var adpProjectName = "TestProject";
-            var onboardProject = new AdoProject();
+            var onboardProject = new AdoProject(It.IsAny<TeamProjectReference>(),
+                It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<List<AdoEnvironment>>() , It.IsAny<List<AdoVariableGroup>?>()
+                );
 
             await adoProjectService.OnBoardAsync(adpProjectName, onboardProject);
 
