@@ -26,10 +26,6 @@ namespace ADP.Portal.Api.Providers
             if (adoConfig.UsePatToken)
             {
                 var patToken = await GetPatTokenAsync(keyValutName, adoConfig);
-                if (string.IsNullOrEmpty(patToken))
-                {
-                    throw new Exception("PAT token is empty");
-                }
                 connection = new VssConnectionWrapper(new Uri(adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
             }
             else
