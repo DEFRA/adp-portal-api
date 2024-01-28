@@ -47,5 +47,6 @@ extends:
       projectPath: "./ADP.Portal.Api/ADP.Portal.Api.csproj"
       projectToBuild: "**/ADP.Portal.Api.csproj"
       testProjectPath: "**/*Tests.csproj"
+      dockerfilePath: "../src/ADP.Portal.Api/Dockerfile"
     appDeployConfig:
       filepath: ".azuredevops/backstage.yaml"  
