@@ -10,7 +10,7 @@ properties:
     ingress:
       external: true
       allowInsecure: false
-      targetPort: 7007
+      targetPort: 8081
       traffic:
         - latestRevision: true
           weight: 100
