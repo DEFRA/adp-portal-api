@@ -24,7 +24,7 @@ namespace ADP.Portal.Core.Ado.Services
             }
             catch (ProjectDoesNotExistWithNameException)
             {
-                logger.LogWarning($"Project {projectName} does not exist");
+                logger.LogWarning("Project {projectName} does not exist", projectName);
                 return null;
             }
         }

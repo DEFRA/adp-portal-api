@@ -85,7 +85,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
                     continue;
                 }
 
-                logger.LogInformation($"Creating environment {environment.Name}");
+                logger.LogInformation("Creating environment {Name}", environment.Name);
 
                 var environmentParameter = environment.Adapt<EnvironmentCreateParameter>();
 

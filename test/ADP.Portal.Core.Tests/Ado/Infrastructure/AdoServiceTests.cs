@@ -41,12 +41,12 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
         public async Task GetTeamProjectAsync_WithNonexistentProject_ReturnsNull()
         {
             var mockProjectClient = new Mock<ProjectHttpClient>(new Uri("https://mock"), new VssCredentials());
-            mockProjectClient.Setup(client => client.GetProject(It.IsAny<string>(), null, false, null)).ReturnsAsync((TeamProject)null);
+            mockProjectClient.Setup(client => client.GetProject(It.IsAny<string>(), null, false, null))
+                .ThrowsAsync(new ProjectDoesNotExistWithNameException());
+
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ProjectHttpClient>(It.IsAny<CancellationToken>())).ReturnsAsync(mockProjectClient.Object);
 
-            var result = await adoService.GetTeamProjectAsync("NonexistentProject");
-
-            Assert.Null(result);
+            await Assert.ThrowsAsync<ProjectDoesNotExistWithNameException>(async () => await adoService.GetTeamProjectAsync("NonexistentProject"));
         }
 
         [Fact]
@@ -65,17 +65,17 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
                 .With(endpoint => endpoint.Name, "TestServiceEndpoint")
                 .With(endpoint => endpoint.Type, "git")
                 .With(endpoint => endpoint.Url, new Uri("https://example.com"))
-                .With(endpoint=> endpoint.ServiceEndpointProjectReferences, serviceEndpointProjectReferences)
+                .With(endpoint => endpoint.ServiceEndpointProjectReferences, serviceEndpointProjectReferences)
                 .OmitAutoProperties()
                 .CreateMany(1).ToList();
 
             var mockServiceEndpointProjectReference = new Mock<ServiceEndpointProjectReference>();
             mockServiceEndpointClient.Setup(client => client.GetServiceEndpointsAsync(It.IsAny<string>(), null, null, null, null, null, null, null, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(serviceEndpoint);
-            
+
             mockServiceEndpointClient.Setup(client => client.ShareServiceEndpointAsync(It.IsAny<Guid>(), It.IsAny<List<ServiceEndpointProjectReference>>(), null, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-            
+
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ServiceEndpointHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockServiceEndpointClient.Object);
 
