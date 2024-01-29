@@ -4,9 +4,11 @@ using ADP.Portal.Core.Ado.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Moq;
+using NUnit.Framework;
 
 namespace ADP.Portal.Core.Tests.Ado.Services
 {
+    [TestFixture]
     public class AdoProjectServiceTests
     {
         private readonly Mock<IAdoService> adoServiceMock;
@@ -20,7 +22,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             adoProjectService = new AdoProjectService(adoServiceMock.Object, loggerMock.Object);
         }
 
-        [Fact]
+        [Test]
         public async Task GetProjectAsync_ReturnsProject_WhenProjectExists()
         {
             var projectName = "TestProject";
@@ -29,10 +31,11 @@ namespace ADP.Portal.Core.Tests.Ado.Services
 
             var result = await adoProjectService.GetProjectAsync(projectName);
 
-            Assert.Equal(project, result);
+            Assert.That(result,Is.EqualTo(project));
+
         }
 
-        [Fact]
+        [Test]
         public async Task GetProjectAsync_ReturnsNull_WhenProjectDoesNotExist()
         {
 
@@ -41,10 +44,11 @@ namespace ADP.Portal.Core.Tests.Ado.Services
 
             var result = await adoProjectService.GetProjectAsync(projectName);
 
-            Assert.Null(result);
+            Assert.That(result, Is.Null);
+
         }
 
-        [Fact]
+        [Test]
         public async Task OnBoardAsync_CallsAdoServiceMethods()
         {
             var adpProjectName = "TestProject";

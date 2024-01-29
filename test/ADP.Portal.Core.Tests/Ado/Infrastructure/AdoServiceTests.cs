@@ -6,10 +6,12 @@ using Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi;
 using Microsoft.VisualStudio.Services.ServiceEndpoints;
 using Moq;
 using AutoFixture;
+using NUnit.Framework;
 
 
 namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 {
+    [TestFixture]
     public class AdoServiceTests
     {
         private readonly AdoService adoService;
@@ -23,7 +25,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
         }
 
-        [Fact]
+        [Test]
         public async Task GetTeamProjectAsync_ReturnsTeamProject()
         {
             var expectedProject = new TeamProject { Name = "TestProject" };
@@ -33,12 +35,12 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 
             var result = await adoService.GetTeamProjectAsync("TestProject");
 
-            Assert.NotNull(result);
-            Assert.Equal(expectedProject.Name, result.Name);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(expectedProject.Name, Is.EqualTo(result.Name));
         }
 
-        [Fact]
-        public async Task GetTeamProjectAsync_WithNonexistentProject_ReturnsNull()
+        [Test]
+        public void GetTeamProjectAsync_WithNonexistentProject_ReturnsNull()
         {
             var mockProjectClient = new Mock<ProjectHttpClient>(new Uri("https://mock"), new VssCredentials());
             mockProjectClient.Setup(client => client.GetProject(It.IsAny<string>(), null, false, null))
@@ -46,10 +48,10 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ProjectHttpClient>(It.IsAny<CancellationToken>())).ReturnsAsync(mockProjectClient.Object);
 
-            await Assert.ThrowsAsync<ProjectDoesNotExistWithNameException>(async () => await adoService.GetTeamProjectAsync("NonexistentProject"));
+            Assert.ThrowsAsync<ProjectDoesNotExistWithNameException>(async () => await adoService.GetTeamProjectAsync("NonexistentProject"));
         }
 
-        [Fact]
+        [Test]
         public async Task ShareServiceEndpointsAsync_CallsShareServiceEndpointAsync()
         {
             // Arrange
@@ -69,7 +71,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
                 .OmitAutoProperties()
                 .CreateMany(1).ToList();
 
-            var mockServiceEndpointProjectReference = new Mock<ServiceEndpointProjectReference>();
+            
             mockServiceEndpointClient.Setup(client => client.GetServiceEndpointsAsync(It.IsAny<string>(), null, null, null, null, null, null, null, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(serviceEndpoint);
 
