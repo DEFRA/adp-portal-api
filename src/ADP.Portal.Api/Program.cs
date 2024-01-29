@@ -43,9 +43,11 @@ namespace ADP.Portal.Api
 
             app.UseSwagger();
             app.UseSwaggerUI();
-            
-            app.UseExceptionHandler();
 
+            if (app.Environment.IsProduction())
+            {
+                app.UseExceptionHandler();
+            }
             app.UseHttpsRedirection();
 
             app.UseAuthorization();

@@ -37,7 +37,6 @@ extends:
   template: /pipelines/common-aca-app-build.yaml@DEFRA-ADPPipelineCommon
   parameters:
     deployFromFeature: ${{ parameters.deployFromFeature }}
-    #privateAgentName: ''
     containerAppName: 'ssvadpinfca3402'
     appBuildConfig:
       appFrameworkType: "dotnet"

@@ -25,4 +25,8 @@
     <ProjectReference Include="..\ADP.Portal.Core\ADP.Portal.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
 </Project>
