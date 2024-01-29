@@ -5,7 +5,7 @@ VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{96D7E03D-EB83-46B9-8C18-B3FD2886C742}"
 	ProjectSection(SolutionItems) = preProject
-		src\ADP.Portal.Api\.dockerignore = src\ADP.Portal.Api\.dockerignore
+		src\.dockerignore = src\.dockerignore
 		src\Dockerfile = src\Dockerfile
 	EndProjectSection
 EndProject
