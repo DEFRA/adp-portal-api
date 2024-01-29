@@ -17,7 +17,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
         public AdoService(ILogger<AdoService> logger, Task<IVssConnection> vssConnection)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.logger = logger;
             this.vssConnection = vssConnection.Result;
         }
 
@@ -141,7 +141,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
             foreach (var variableGroup in adoVariableGroups)
             {
-                var existingVariableGroup = variableGroups.First(e => e.Name.Equals(variableGroup.Name, StringComparison.OrdinalIgnoreCase));
+                var existingVariableGroup = variableGroups.Find(e => e.Name.Equals(variableGroup.Name, StringComparison.OrdinalIgnoreCase));
 
                 var variableGroupParameters = variableGroup.Adapt<VariableGroupParameters>();
                 variableGroupParameters.VariableGroupProjectReferences[0].ProjectReference = onBoardProject.Adapt<DistributedTaskProjectReference>();

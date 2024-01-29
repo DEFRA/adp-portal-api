@@ -1,10 +1,12 @@
 ﻿using ADP.Portal.Core.Ado.Entities;
 using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
+using AutoFixture;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Moq;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace ADP.Portal.Core.Tests.Ado.Services
 {
@@ -20,6 +22,18 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             adoServiceMock = new Mock<IAdoService>();
             loggerMock = new Mock<ILogger<AdoProjectService>>();
             adoProjectService = new AdoProjectService(adoServiceMock.Object, loggerMock.Object);
+        }
+
+        [Test]
+        public void Constructor_WithValidParameters_SetsAdoService()
+        {
+
+            var adoService = adoServiceMock.Object;
+            var logger = loggerMock.Object;
+
+            var projectService = new AdoProjectService(adoService, logger);
+
+            Assert.That(projectService, Is.Not.Null);
         }
 
         [Test]
@@ -55,6 +69,10 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             var onboardProject = new AdoProject(It.IsAny<TeamProjectReference>(),
                 It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<List<AdoEnvironment>>() , It.IsAny<List<AdoVariableGroup>?>()
                 );
+
+            var fixture = new Fixture();
+            onboardProject.VariableGroups = fixture.Build<AdoVariableGroup>()
+                .CreateMany(2).ToList();
 
             await adoProjectService.OnBoardAsync(adpProjectName, onboardProject);
 
