@@ -12,11 +12,11 @@ RUN dotnet restore "./ADP.Portal.Api/ADP.Portal.Api.csproj"
 COPY . .
 WORKDIR "/src/ADP.Portal.Api"
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet build "./ADP.Portal.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./ADP.Portal.Api.csproj" -c "$BUILD_CONFIGURATION" -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./ADP.Portal.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./ADP.Portal.Api.csproj" -c "$BUILD_CONFIGURATION" -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

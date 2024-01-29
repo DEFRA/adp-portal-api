@@ -37,7 +37,7 @@ namespace ADP.Portal.Api.Providers
             return connection;
         }
 
-        private async Task<string> GetPatTokenAsync(string keyValutName, AdoConfig adoConfig)
+        private static async Task<string> GetPatTokenAsync(string keyValutName, AdoConfig adoConfig)
         {
             var patToken = adoConfig.PatToken;
 
@@ -51,7 +51,7 @@ namespace ADP.Portal.Api.Providers
             return patToken;
         }
 
-        private async Task<string> GetAccessTokenAsync(string azureDevOpsScope)
+        private static async Task<string> GetAccessTokenAsync(string azureDevOpsScope)
         {
             var credential = new DefaultAzureCredential();
             var token = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { azureDevOpsScope }));
