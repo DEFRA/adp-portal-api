@@ -5,7 +5,6 @@ using ADP.Portal.Core.Ado.Entities;
 using ADP.Portal.Core.Ado.Services;
 using AutoFixture;
 using Mapster;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

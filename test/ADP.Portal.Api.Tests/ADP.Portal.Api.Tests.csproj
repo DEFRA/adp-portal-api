@@ -31,4 +31,8 @@
     <ProjectReference Include="..\..\src\ADP.Portal.Api\ADP.Portal.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Wrappers\" />
+  </ItemGroup>
+
 </Project>

@@ -1,19 +1,9 @@
-﻿using ADP.Portal.Api.Config;
-using ADP.Portal.Api.Mapster;
-using ADP.Portal.Api.Wrappers;
+﻿using ADP.Portal.Api.Wrappers;
 using ADP.Portal.Core.Ado.Infrastructure;
-using ADP.Portal.Core.Ado.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.Services.WebApi;
-using Moq;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ADP.Portal.Api.Tests
 {
@@ -24,7 +14,7 @@ namespace ADP.Portal.Api.Tests
 
         public ProgramTests()
         {
-            builder =  WebApplication.CreateBuilder();
+            builder = WebApplication.CreateBuilder();
         }
 
         [Test]
@@ -38,6 +28,47 @@ namespace ADP.Portal.Api.Tests
 
             // Assert
             Assert.That(app, Is.Not.Null);
+        }
+
+        [Test]
+        public void TestAzureCredentialResolution()
+        {
+            // Arrange
+            Program.ConfigureApp(builder);
+
+            // Act
+            var app = builder.Build();
+            var azureCredential = app.Services.GetService<IAzureCredential>();
+
+            // Assert
+            Assert.That(azureCredential, Is.Not.Null);
+        }
+
+        [Test]
+        public void TestVssConnectionResolution()
+        {
+            // Arrange
+            KeyValuePair<string, string?>[] adoConfig =
+                [
+                   new KeyValuePair<string, string?>("Ado:UsePatToken", "true"),
+                   new KeyValuePair<string, string?>("Ado:PatToken", "TestPatToken")
+                ];
+
+            IEnumerable<KeyValuePair<string, string?>> adoConfigList = adoConfig;
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(adoConfigList)
+                .Build();
+
+            builder.Configuration.AddConfiguration(configuration);
+            Program.ConfigureApp(builder);
+
+
+            // Act
+            var app = builder.Build();
+            var vssConnection = app.Services.GetService<Task<IVssConnection>>();
+
+            // Assert
+            Assert.That(vssConnection, Is.Not.Null);
         }
     }
 }

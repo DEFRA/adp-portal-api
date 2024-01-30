@@ -46,7 +46,6 @@ namespace ADP.Portal.Api
             });
             builder.Services.AddScoped(async provider =>
             {
-                var config = provider.GetRequiredService<IConfiguration>();
                 var azureCredentialsService = provider.GetRequiredService<IAzureCredential>();
                 var adoAzureAdConfig = provider.GetRequiredService<IOptions<AdoConfig>>().Value;
                 var vssConnectionProvider = new VssConnectionProvider(azureCredentialsService,adoAzureAdConfig);
