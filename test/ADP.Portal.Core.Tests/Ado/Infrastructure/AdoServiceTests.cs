@@ -12,6 +12,7 @@ using ProjectReference = Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi
 using DistributedTask = Microsoft.TeamFoundation.DistributedTask.WebApi;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Mapster;
+using Microsoft.Azure.Pipelines.WebApi;
 
 
 
@@ -138,7 +139,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 
             var adpProjectName = "TestProject";
             var serviceConnections = new List<string> { "TestServiceConnection" };
-            var onBoardProject = new TeamProjectReference { Id = Guid.NewGuid() };
+            var onBoardProject = new TeamProjectReference { Name="TestOnBoardProject", Id = Guid.NewGuid() };
             var serviceEndpoint = new ServiceEndpoint
             {
                 Name = "TestServiceConnection",
@@ -161,14 +162,13 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             await adoService.ShareServiceEndpointsAsync(adpProjectName, serviceConnections, onBoardProject);
 
             // Assert
-            loggerMock.Verify(
-                x => x.Log(
+            loggerMock.Verify(x => x.Log(
                     It.Is<LogLevel>(l => l == LogLevel.Information),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("already shared")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"Service endpoint {serviceEndpoint.Name} already shared with project {onBoardProject.Name}"),
                     It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-                Times.Once);
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
+                    Times.Once);
         }
 
         [Test]
@@ -203,9 +203,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
                 x => x.Log(
                     It.Is<LogLevel>(l => l == LogLevel.Warning),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("not found")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"Service endpoint {serviceConnections[0]} not found"),
                     It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
                 Times.Once);
         }
 
@@ -234,9 +234,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
                 x => x.Log(
                     It.Is<LogLevel>(l => l == LogLevel.Information),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("already exists")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"Environment {adoEnvironments[0].Name} already exists"),
                     It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
                 Times.Once);
         }
 
@@ -285,9 +285,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
                 x => x.Log(
                     It.Is<LogLevel>(l => l == LogLevel.Information),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("already exists")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"Agent pool {adoAgentPoolsToShare[0]} already exists in the {onBoardProject.Name} project"),
                     It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
                 Times.Once);
         }
 
@@ -320,12 +320,12 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             // Arrange
             var onBoardProject = new TeamProjectReference { Id = Guid.NewGuid(), Name = "TestProject" };
             var fixture = new Fixture();
-            
+
             var adoVariables = fixture.Build<AdoVariable>().CreateMany(2).ToList();
             var adoVariableGroup = new AdoVariableGroup("TestVariableGroup", adoVariables, "TestVariableGroup Description");
             var adoVariableGroups = new List<AdoVariableGroup> { adoVariableGroup };
             var variableGroups = new List<DistributedTask.VariableGroup>();
-            taskAgentClientMock.Setup(x => x.GetVariableGroupsAsync(onBoardProject.Id,null,null,null,null,null,null, It.IsAny<CancellationToken>())).ReturnsAsync(variableGroups);
+            taskAgentClientMock.Setup(x => x.GetVariableGroupsAsync(onBoardProject.Id, null, null, null, null, null, null, It.IsAny<CancellationToken>())).ReturnsAsync(variableGroups);
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(taskAgentClientMock.Object);
 
@@ -336,7 +336,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             await adoService.AddOrUpdateVariableGroupsAsync(adoVariableGroups, onBoardProject);
 
             // Assert
-            taskAgentClientMock.Verify(x => x.AddVariableGroupAsync(It.IsAny<DistributedTask.VariableGroupParameters>(),null, It.IsAny<CancellationToken>()), Times.Once);
+            taskAgentClientMock.Verify(x => x.AddVariableGroupAsync(It.IsAny<DistributedTask.VariableGroupParameters>(), null, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -360,7 +360,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             await adoService.AddOrUpdateVariableGroupsAsync(adoVariableGroups, onBoardProject);
 
             // Assert
-            taskAgentClientMock.Verify(x => x.UpdateVariableGroupAsync(It.IsAny<int>(), It.IsAny<DistributedTask.VariableGroupParameters>(),null, It.IsAny<CancellationToken>()), Times.Once);
+            taskAgentClientMock.Verify(x => x.UpdateVariableGroupAsync(It.IsAny<int>(), It.IsAny<DistributedTask.VariableGroupParameters>(), null, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
