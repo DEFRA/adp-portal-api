@@ -10,17 +10,13 @@ namespace ADP.Portal.Api.Tests
     [TestFixture]
     public class ProgramTests
     {
-        private readonly WebApplicationBuilder builder;
-
-        public ProgramTests()
-        {
-            builder = WebApplication.CreateBuilder();
-        }
+    
 
         [Test]
         public void TestConfigureApp()
         {
             // Arrange
+            var builder = WebApplication.CreateBuilder();
             Program.ConfigureApp(builder);
 
             // Act
@@ -34,6 +30,7 @@ namespace ADP.Portal.Api.Tests
         public void TestAzureCredentialResolution()
         {
             // Arrange
+            var builder = WebApplication.CreateBuilder();
             Program.ConfigureApp(builder);
 
             // Act
@@ -48,6 +45,7 @@ namespace ADP.Portal.Api.Tests
         public void TestVssConnectionResolution()
         {
             // Arrange
+            var builder = WebApplication.CreateBuilder();
             KeyValuePair<string, string?>[] adoConfig =
                 [
                    new KeyValuePair<string, string?>("Ado:UsePatToken", "true"),
