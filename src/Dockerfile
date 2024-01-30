@@ -9,7 +9,7 @@ WORKDIR /src
 COPY ["./ADP.Portal.Api/ADP.Portal.Api.csproj", "./ADP.Portal.Api/"]
 COPY ["./ADP.Portal.Core/ADP.Portal.Core.csproj", "./ADP.Portal.Core/"]
 RUN dotnet restore "./ADP.Portal.Api/ADP.Portal.Api.csproj"
-COPY ./src .
+COPY . .
 WORKDIR "/src/ADP.Portal.Api"
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet build "./ADP.Portal.Api.csproj" -c "$BUILD_CONFIGURATION" -o /app/build
