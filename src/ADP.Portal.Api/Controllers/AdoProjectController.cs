@@ -18,9 +18,9 @@ namespace ADP.Portal.Api.Controllers
 
         public AdoProjectController(ILogger<AdoProjectController> logger, IOptions<AdpAdoProjectConfig> adpAdpProjectConfig, IAdoProjectService adoProjectService)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.adpAdpProjectConfig = adpAdpProjectConfig ?? throw new ArgumentNullException(nameof(adpAdpProjectConfig));
-            this.adoProjectService = adoProjectService ?? throw new ArgumentNullException(nameof(adoProjectService));
+            this.logger = logger;
+            this.adpAdpProjectConfig = adpAdpProjectConfig;
+            this.adoProjectService = adoProjectService;
         }
 
         [HttpGet("{projectName}")]
@@ -55,6 +55,5 @@ namespace ADP.Portal.Api.Controllers
 
             return NoContent();
         }
-
     }
 }

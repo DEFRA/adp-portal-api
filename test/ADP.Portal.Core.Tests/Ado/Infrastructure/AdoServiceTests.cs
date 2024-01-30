@@ -12,9 +12,6 @@ using ProjectReference = Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi
 using DistributedTask = Microsoft.TeamFoundation.DistributedTask.WebApi;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Mapster;
-using Microsoft.Azure.Pipelines.WebApi;
-
-
 
 
 namespace ADP.Portal.Core.Tests.Ado.Infrastructure
