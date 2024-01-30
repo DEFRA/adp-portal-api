@@ -6,6 +6,7 @@ EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
+RUN apt-get update && apt-get upgrade -y zlib1g
 COPY ["./ADP.Portal.Api/ADP.Portal.Api.csproj", "./ADP.Portal.Api/"]
 COPY ["./ADP.Portal.Core/ADP.Portal.Core.csproj", "./ADP.Portal.Core/"]
 RUN dotnet restore "./ADP.Portal.Api/ADP.Portal.Api.csproj"
