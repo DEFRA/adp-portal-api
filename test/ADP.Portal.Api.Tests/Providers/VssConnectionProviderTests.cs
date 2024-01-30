@@ -3,7 +3,6 @@ using ADP.Portal.Api.Providers;
 using ADP.Portal.Api.Wrappers;
 using AutoFixture;
 using Azure.Core;
-using Azure.Identity;
 using Moq;
 using NUnit.Framework;
 
@@ -14,12 +13,10 @@ namespace ADP.Portal.Api.Tests.Providers
     {
         private readonly Mock<IAzureCredential> azureCredentialMock;
         private readonly string organizationUrl = "http://localhost";
-        private readonly Mock<DefaultAzureCredential> defaultAzureCredentialMock;
 
         public VssConnectionProviderTests()
         {
             azureCredentialMock = new Mock<IAzureCredential>();
-            defaultAzureCredentialMock = new Mock<DefaultAzureCredential>();
         }
 
         [Test]
