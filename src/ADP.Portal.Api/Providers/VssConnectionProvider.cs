@@ -1,7 +1,7 @@
 ﻿using ADP.Portal.Api.Config;
+using ADP.Portal.Api.Wrappers;
 using ADP.Portal.Core.Ado.Infrastructure;
 using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.OAuth;
 
@@ -9,13 +9,13 @@ namespace ADP.Portal.Api.Providers
 {
     public class VssConnectionProvider
     {
-        private readonly string keyValutName;
         private readonly AdoConfig adoConfig;
+        private readonly IAzureCredential azureCredential;
         private const string azureDevOpsScope = "https://app.vssps.visualstudio.com/.default";
 
-        public VssConnectionProvider(string keyValutName, AdoConfig adoConfig)
+        public VssConnectionProvider(IAzureCredential azureCredential, AdoConfig adoConfig)
         {
-            this.keyValutName = keyValutName;
+            this.azureCredential = azureCredential;
             this.adoConfig = adoConfig;
         }
 
@@ -25,7 +25,7 @@ namespace ADP.Portal.Api.Providers
 
             if (adoConfig.UsePatToken)
             {
-                var patToken = await GetPatTokenAsync(keyValutName, adoConfig);
+                var patToken =  adoConfig.PatToken;
                 connection = new VssConnectionWrapper(new Uri(adoConfig.OrganizationUrl), new VssBasicCredential(string.Empty, patToken));
             }
             else
@@ -37,24 +37,9 @@ namespace ADP.Portal.Api.Providers
             return connection;
         }
 
-        private static async Task<string> GetPatTokenAsync(string keyValutName, AdoConfig adoConfig)
+        private async Task<string> GetAccessTokenAsync(string azureDevOpsScope)
         {
-            var patToken = adoConfig.PatToken;
-
-            if (string.IsNullOrEmpty(patToken))
-            {
-                var secretClient = new SecretClient(new Uri(keyValutName), new DefaultAzureCredential());
-                var secret = await secretClient.GetSecretAsync(adoConfig.PatTokenSecretName);
-                patToken = secret.Value.Value;
-            }
-
-            return patToken;
-        }
-
-        private static async Task<string> GetAccessTokenAsync(string azureDevOpsScope)
-        {
-            var credential = new DefaultAzureCredential();
-            var token = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { azureDevOpsScope }));
+            var token = await azureCredential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { azureDevOpsScope }));
             return token.Token;
         }
     }

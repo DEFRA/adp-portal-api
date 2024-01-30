@@ -2,6 +2,7 @@
 using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Mapster;
 using ADP.Portal.Api.Providers;
+using ADP.Portal.Api.Wrappers;
 using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
 using Microsoft.Extensions.Options;
@@ -39,13 +40,16 @@ namespace ADP.Portal.Api
             builder.Services.AddProblemDetails();
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
+            builder.Services.AddScoped<IAzureCredential>(provider =>
+            {
+                return new DefaultAzureCredentialWrapper();
+            });
             builder.Services.AddScoped(async provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
-                var keyVaultName = config["KeyVaultName"] ?? string.Empty;
-
+                var azureCredentialsService = provider.GetRequiredService<IAzureCredential>();
                 var adoAzureAdConfig = provider.GetRequiredService<IOptions<AdoConfig>>().Value;
-                var vssConnectionProvider = new VssConnectionProvider(keyVaultName, adoAzureAdConfig);
+                var vssConnectionProvider = new VssConnectionProvider(azureCredentialsService,adoAzureAdConfig);
                 var connection = await vssConnectionProvider.GetConnectionAsync();
                 return connection;
             });
