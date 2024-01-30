@@ -43,11 +43,14 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
         [Test]
         public void Constructor_WithValidParameters_SetsAdoService()
         {
+            // Arrange
             var loggerMock = new Mock<ILogger<AdoService>>();
             var logger = loggerMock.Object;
 
+            // Act
             var projectService = new AdoService(logger, Task.FromResult(vssConnectionMock.Object));
 
+            // Assert
             Assert.That(projectService, Is.Not.Null);
         }
 
@@ -62,9 +65,10 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             var loggerMock = new Mock<ILogger<AdoService>>();
             var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
-
+            // Act
             var result = await adoService.GetTeamProjectAsync("TestProject");
 
+            // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(expectedProject.Name, Is.EqualTo(result.Name));
         }
@@ -79,8 +83,10 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             var loggerMock = new Mock<ILogger<AdoService>>();
             var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
+            // Act
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ProjectHttpClient>(It.IsAny<CancellationToken>())).ReturnsAsync(mockProjectClient.Object);
 
+            // Assert
             Assert.ThrowsAsync<ProjectDoesNotExistWithNameException>(async () => await adoService.GetTeamProjectAsync("NonexistentProject"));
         }
 
