@@ -21,8 +21,6 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
     [TestFixture]
     public class AdoServiceTests
     {
-        private readonly AdoService adoService;
-        private readonly Mock<ILogger<AdoService>> loggerMock;
         private readonly Mock<IVssConnection> vssConnectionMock;
         private readonly Mock<ServiceEndpointHttpClient> serviceEndpointClientMock;
         private readonly Mock<DistributedTask.TaskAgentHttpClient> taskAgentClientMock;
@@ -37,9 +35,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 
         public AdoServiceTests()
         {
-            loggerMock = new Mock<ILogger<AdoService>>();
             vssConnectionMock = new Mock<IVssConnection>();
-            adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
             serviceEndpointClientMock = new Mock<ServiceEndpointHttpClient>(new Uri("https://mock"), new VssCredentials());
             taskAgentClientMock = new Mock<DistributedTask.TaskAgentHttpClient>(new Uri("https://mock"), new VssCredentials());
         }
@@ -47,6 +43,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
         [Test]
         public void Constructor_WithValidParameters_SetsAdoService()
         {
+            var loggerMock = new Mock<ILogger<AdoService>>();
             var logger = loggerMock.Object;
 
             var projectService = new AdoService(logger, Task.FromResult(vssConnectionMock.Object));
@@ -57,10 +54,14 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
         [Test]
         public async Task GetTeamProjectAsync_ReturnsTeamProject()
         {
+            // Arrange
             var expectedProject = new TeamProject { Name = "TestProject" };
             var mockProjectClient = new Mock<ProjectHttpClient>(new Uri("https://mock"), new VssCredentials());
             mockProjectClient.Setup(client => client.GetProject(It.IsAny<string>(), null, false, null)).ReturnsAsync(expectedProject);
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ProjectHttpClient>(It.IsAny<CancellationToken>())).ReturnsAsync(mockProjectClient.Object);
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
+
 
             var result = await adoService.GetTeamProjectAsync("TestProject");
 
@@ -71,9 +72,12 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
         [Test]
         public void GetTeamProjectAsync_WithNonexistentProject_ReturnsNull()
         {
+            // Arrange
             var mockProjectClient = new Mock<ProjectHttpClient>(new Uri("https://mock"), new VssCredentials());
             mockProjectClient.Setup(client => client.GetProject(It.IsAny<string>(), null, false, null))
                 .ThrowsAsync(new ProjectDoesNotExistWithNameException());
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ProjectHttpClient>(It.IsAny<CancellationToken>())).ReturnsAsync(mockProjectClient.Object);
 
@@ -110,6 +114,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ServiceEndpointHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(serviceEndpointClientMock.Object);
 
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
+
 
             // Act
             await adoService.ShareServiceEndpointsAsync("TestProject", new List<string> { "TestServiceEndpoint" }, new TeamProjectReference { Id = Guid.NewGuid() });
@@ -140,6 +147,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ServiceEndpointHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(serviceEndpointClientMock.Object);
+
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
             // Act
             await adoService.ShareServiceEndpointsAsync(adpProjectName, serviceConnections, onBoardProject);
@@ -176,6 +186,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             vssConnectionMock.Setup(conn => conn.GetClientAsync<ServiceEndpointHttpClient>(It.IsAny<CancellationToken>()))
                .ReturnsAsync(serviceEndpointClientMock.Object);
 
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
+
             // Act
             await adoService.ShareServiceEndpointsAsync(adpProjectName, serviceConnections, onBoardProject);
 
@@ -204,6 +217,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
                .ReturnsAsync(taskAgentClientMock.Object);
 
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
+
             // Act
             await adoService.AddEnvironmentsAsync(adoEnvironments, onBoardProject);
 
@@ -228,6 +244,8 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             taskAgentClientMock.Setup(x => x.GetEnvironmentsAsync(onBoardProject.Id, null, null, null, null, It.IsAny<CancellationToken>())).ReturnsAsync(environments);
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
              .ReturnsAsync(taskAgentClientMock.Object);
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
             // Act
             await adoService.AddEnvironmentsAsync(adoEnvironments, onBoardProject);
@@ -249,6 +267,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             taskAgentClientMock.Setup(x => x.GetAgentQueuesAsync(onBoardProject.Id, null, null, null, It.IsAny<CancellationToken>())).ReturnsAsync(agentPools);
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(taskAgentClientMock.Object);
+
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
             // Act
             await adoService.ShareAgentPoolsAsync(adpProjectName, adoAgentPoolsToShare, onBoardProject);
@@ -277,6 +298,8 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             taskAgentClientMock.Setup(x => x.GetAgentQueuesAsync(onBoardProject.Id, null, null, null, It.IsAny<CancellationToken>())).ReturnsAsync(agentPools);
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(taskAgentClientMock.Object);
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
             // Act
             await adoService.ShareAgentPoolsAsync(adpProjectName, adoAgentPoolsToShare, onBoardProject);
@@ -300,6 +323,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(taskAgentClientMock.Object);
 
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
+
             // Act
             await adoService.AddOrUpdateVariableGroupsAsync(adoVariableGroups, onBoardProject);
 
@@ -320,6 +346,9 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
             taskAgentClientMock.Setup(x => x.GetVariableGroupsAsync(onBoardProject.Id, null, null, null, null, null, null, It.IsAny<CancellationToken>())).ReturnsAsync(variableGroups);
             vssConnectionMock.Setup(conn => conn.GetClientAsync<DistributedTask.TaskAgentHttpClient>(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(taskAgentClientMock.Object);
+
+            var loggerMock = new Mock<ILogger<AdoService>>();
+            var adoService = new AdoService(loggerMock.Object, Task.FromResult(vssConnectionMock.Object));
 
             // Act
             await adoService.AddOrUpdateVariableGroupsAsync(adoVariableGroups, onBoardProject);
