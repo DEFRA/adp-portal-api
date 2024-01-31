@@ -4,7 +4,7 @@ using AutoFixture;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
-using Moq;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace ADP.Portal.Api.Tests.Mapster
@@ -12,11 +12,11 @@ namespace ADP.Portal.Api.Tests.Mapster
     [TestFixture]
     public class MapsterEntitiesConfigTests
     {
-        private readonly Mock<IServiceCollection> servicesMock;
-        
+        private readonly IServiceCollection servicesMock;
+
         public MapsterEntitiesConfigTests()
         {
-            servicesMock = new Mock<IServiceCollection>();
+            servicesMock = Substitute.For<IServiceCollection>();
         }
 
         [Test]
@@ -27,11 +27,11 @@ namespace ADP.Portal.Api.Tests.Mapster
             var adoVariableGroup = fixture.Build<AdoVariableGroup>().Create();
 
             // Act
-            servicesMock.Object.EntitiesConfigure();
+            servicesMock.EntitiesConfigure();
             var results = adoVariableGroup.Adapt<VariableGroupParameters>();
 
             // Assert
-            Assert.That(results,Is.Not.Null);
+            Assert.That(results, Is.Not.Null);
             Assert.That(results.VariableGroupProjectReferences, Is.Not.Null);
             Assert.That(results.Variables, Is.Not.Null);
         }

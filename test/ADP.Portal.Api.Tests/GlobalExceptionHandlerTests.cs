@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Moq;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace ADP.Portal.Api.Tests
@@ -8,12 +8,12 @@ namespace ADP.Portal.Api.Tests
     [TestFixture]
     public class GlobalExceptionHandlerTests
     {
-        private readonly Mock<ILogger<GlobalExceptionHandler>> loggerMock;
+        private readonly ILogger<GlobalExceptionHandler> loggerMock;
         private readonly GlobalExceptionHandler handler;
         public GlobalExceptionHandlerTests()
         {
-            loggerMock = new Mock<ILogger<GlobalExceptionHandler>>();
-            handler = new GlobalExceptionHandler(loggerMock.Object);
+            loggerMock = Substitute.For<ILogger<GlobalExceptionHandler>>();
+            handler = new GlobalExceptionHandler(loggerMock);
         }
 
         [Test]
@@ -30,14 +30,12 @@ namespace ADP.Portal.Api.Tests
             // Assert
             Assert.That(result, Is.True);
 
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => true),
-                    exception,
-                    It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
-                Times.Once);
+            loggerMock.Received().Log(
+                LogLevel.Error,
+                Arg.Any<EventId>(),
+                Arg.Any<object>(),
+                exception,
+                Arg.Any<Func<object, Exception?, string>>());
 
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
             var responseBody = new StreamReader(httpContext.Response.Body).ReadToEnd();

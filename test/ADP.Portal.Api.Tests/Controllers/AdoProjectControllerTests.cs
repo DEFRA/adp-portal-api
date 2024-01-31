@@ -9,9 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Core.WebApi;
-using Moq;
+using NSubstitute;
 using NUnit.Framework;
 using System.Reflection;
+
 
 namespace ADP.Portal.Api.Tests.Controllers
 {
@@ -19,9 +20,9 @@ namespace ADP.Portal.Api.Tests.Controllers
     public class AdoProjectControllerTests
     {
         private readonly AdoProjectController controller;
-        private readonly Mock<ILogger<AdoProjectController>> loggerMock;
-        private readonly Mock<IOptions<AdpAdoProjectConfig>> configMock;
-        private readonly Mock<IAdoProjectService> serviceMock;
+        private readonly ILogger<AdoProjectController> loggerMock;
+        private readonly IOptions<AdpAdoProjectConfig> configMock;
+        private readonly IAdoProjectService serviceMock;
 
         [SetUp]
         public void SetUp()
@@ -31,10 +32,10 @@ namespace ADP.Portal.Api.Tests.Controllers
 
         public AdoProjectControllerTests()
         {
-            loggerMock = new Mock<ILogger<AdoProjectController>>();
-            configMock = new Mock<IOptions<AdpAdoProjectConfig>>();
-            serviceMock = new Mock<IAdoProjectService>();
-            controller = new AdoProjectController(loggerMock.Object, configMock.Object, serviceMock.Object);
+            loggerMock = Substitute.For<ILogger<AdoProjectController>>();
+            configMock = Substitute.For<IOptions<AdpAdoProjectConfig>>();
+            serviceMock = Substitute.For<IAdoProjectService>();
+            controller = new AdoProjectController(loggerMock, configMock, serviceMock);
         }
 
         [Test]
@@ -43,7 +44,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             string projectName = "test";
             TeamProjectReference? project = null;
-            serviceMock.Setup(s => s.GetProjectAsync(projectName)).ReturnsAsync(project);
+            serviceMock.GetProjectAsync(projectName).Returns(project);
 
             // Act
             var result = await controller.GetAdoProject(projectName);
@@ -55,7 +56,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             {
                 Assert.That(notFoundResults.StatusCode, Is.EqualTo(404));
             }
-            
+
         }
 
         [Test]
@@ -65,7 +66,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             string projectName = "test";
             var fixture = new Fixture();
             var project = fixture.Build<TeamProjectReference>().Create();
-            serviceMock.Setup(s => s.GetProjectAsync(projectName)).ReturnsAsync(project);
+            serviceMock.GetProjectAsync(projectName).Returns(project);
 
             // Act
             var result = await controller.GetAdoProject(projectName);
@@ -73,7 +74,7 @@ namespace ADP.Portal.Api.Tests.Controllers
 
             // Assert
             Assert.That(okFoundResults, Is.Not.Null);
-            if(okFoundResults != null)
+            if (okFoundResults != null)
             {
                 Assert.That(okFoundResults.StatusCode, Is.EqualTo(200));
             }
@@ -87,7 +88,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var fixture = new Fixture();
             var onBoardRequest = fixture.Build<OnBoardAdoProjectRequest>().Create();
             TeamProjectReference? project = null;
-            serviceMock.Setup(s => s.GetProjectAsync(projectName)).ReturnsAsync(project);
+            serviceMock.GetProjectAsync(projectName).Returns(project);
 
             // Act
             var result = await controller.OnBoardAsync(projectName, onBoardRequest);
@@ -110,9 +111,9 @@ namespace ADP.Portal.Api.Tests.Controllers
             var onBoardRequest = fixture.Build<OnBoardAdoProjectRequest>().Create();
             var project = fixture.Build<TeamProjectReference>().Create();
             var adpAdoProjectConfig = fixture.Build<AdpAdoProjectConfig>().Create();
-            serviceMock.Setup(s => s.GetProjectAsync(projectName)).ReturnsAsync(project);
-            serviceMock.Setup(s => s.OnBoardAsync(projectName, It.IsAny<AdoProject>())).Returns(Task.CompletedTask);
-            configMock.Setup(c => c.Value).Returns(adpAdoProjectConfig);
+            serviceMock.GetProjectAsync(projectName).Returns(project);
+            serviceMock.OnBoardAsync(projectName, Arg.Any<AdoProject>()).Returns(Task.CompletedTask);
+            configMock.Value.Returns(adpAdoProjectConfig);
 
             // Act
             var result = await controller.OnBoardAsync(projectName, onBoardRequest);
@@ -120,7 +121,7 @@ namespace ADP.Portal.Api.Tests.Controllers
 
             // Assert
             Assert.That(noContentResult, Is.Not.Null);
-            serviceMock.Verify(client => client.OnBoardAsync(It.IsAny<string>(), It.IsAny<AdoProject>()), Times.Once);
+            await serviceMock.Received().OnBoardAsync(Arg.Any<string>(), Arg.Any<AdoProject>());
             if (noContentResult != null)
             {
                 Assert.That(noContentResult.StatusCode, Is.EqualTo(204));

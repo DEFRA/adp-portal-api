@@ -17,7 +17,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
-	<PackageReference Include="Moq" Version="4.20.70" />	  
+	<PackageReference Include="NSubstitute" Version="5.1.0" />	  
     <PackageReference Include="NUnit" Version="4.0.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="9.18.0.83559">
@@ -29,10 +29,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ADP.Portal.Api\ADP.Portal.Api.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Wrappers\" />
   </ItemGroup>
 
 </Project>
