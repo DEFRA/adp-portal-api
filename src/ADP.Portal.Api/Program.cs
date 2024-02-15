@@ -2,10 +2,12 @@
 using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Mapster;
 using ADP.Portal.Api.Providers;
+using ADP.Portal.Api.Services;
 using ADP.Portal.Api.Wrappers;
 using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace ADP.Portal.Api
 {
@@ -59,6 +61,10 @@ namespace ADP.Portal.Api
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+   
+            builder.Services.AddTransient<IGraphClient, GraphClient>();
+            builder.Services.AddTransient<IUserService, UserService>();
+
         }
     }
 }
