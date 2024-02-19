@@ -59,7 +59,7 @@ namespace ADP.Portal.Core.Ado.Services
             graphClient = new GraphServiceClient(graphAPIEndpoint, _authProvider);
             return graphClient;
         }
-        public string GetGroupId()
+        public string? GetGroupId()
         {
             return groupId;
         }

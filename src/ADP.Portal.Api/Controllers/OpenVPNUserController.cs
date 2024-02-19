@@ -10,17 +10,14 @@ namespace ADP.Portal.Api.Controllers
     public class OpenVPNUserController : ControllerBase
     {
         private readonly IUserService _UserService;
-        private readonly ILogger<OpenVPNUserController> _logger;
-
         public OpenVPNUserController(IUserService userService, ILogger<OpenVPNUserController> logger)
         {
             _UserService = userService;
-            _logger = logger;
         }        
 
         // POST api/<UserController>
         [HttpPost()]
-        public async Task AddOpenVPNUser(string userPrincipalName)
+        public void AddOpenVPNUser(string userPrincipalName)
         {
             _UserService.AddOpenVPNUser(userPrincipalName);
         }             
