@@ -5,6 +5,6 @@ namespace ADP.Portal.Core.Ado.Services
     internal interface IGraphClient
     {
         Task<GraphServiceClient> GetServiceClient();
-        public string GetGroupId();
+        public string? GetGroupId();
     }
 }

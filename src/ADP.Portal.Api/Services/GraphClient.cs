@@ -8,16 +8,16 @@ namespace ADP.Portal.Core.Ado.Services
 {
     internal class GraphClient : IGraphClient
     {
-        private static GraphServiceClient? graphClient;
-        private static IConfiguration? configuration;
-        private static string? clientId;
-        private static string? clientSecret;
-        private static string? tenantId;
-        private static string? aadInstance;
-        private static string? graphResource;
-        private static string? graphAPIEndpoint;
-        private static string? authority;
-        private string? groupId;
+        private static GraphServiceClient? graphClient = null;
+        private static IConfiguration? configuration = null;
+        private static string? clientId = null;
+        private static string? clientSecret = null;
+        private static string? tenantId = null;
+        private static string? aadInstance = null;
+        private static string? graphResource = null;
+        private static string? graphAPIEndpoint = null;
+        private static string? authority = null;
+        private readonly string? groupId = null;
 
         public GraphClient()
         {
