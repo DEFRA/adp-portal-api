@@ -7,22 +7,22 @@ namespace ADP.Portal.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AddUserController : ControllerBase
+    public class OpenVPNUserController : ControllerBase
     {
         private readonly IUserService _UserService;
-        private readonly ILogger<AddUserController> _logger;
+        private readonly ILogger<OpenVPNUserController> _logger;
 
-        public AddUserController(IUserService userService, ILogger<AddUserController> logger)
+        public OpenVPNUserController(IUserService userService, ILogger<OpenVPNUserController> logger)
         {
             _UserService = userService;
             _logger = logger;
         }        
 
         // POST api/<UserController>
-        [HttpPost]
-        public async Task AddUser([FromBody] string userPrincipalName)
+        [HttpPost()]
+        public async Task AddOpenVPNUser(string userPrincipalName)
         {
-            _UserService.AddUser(userPrincipalName);
+            _UserService.AddOpenVPNUser(userPrincipalName);
         }             
     }
 }

@@ -23,16 +23,12 @@ namespace ADP.Portal.Core.Ado.Services
         {
             configuration = new ConfigurationBuilder().SetBasePath(System.IO.Directory.GetCurrentDirectory())
                                         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                                        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+                                        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
                                         .AddEnvironmentVariables()
                                         .Build();
-            ConfigureAzureAD();
-        }
 
-        public void ConfigureAzureAD()
-        {
             var serviceConnectcion = new ADConfig();
-            configuration.Bind("AzureAD", serviceConnectcion);
+            configuration.Bind("OpenVPN", serviceConnectcion);
             clientId = serviceConnectcion.ClientId;
             clientSecret = serviceConnectcion.ClientSecret;
             tenantId = serviceConnectcion.TenantId;
@@ -63,7 +59,7 @@ namespace ADP.Portal.Core.Ado.Services
             graphClient = new GraphServiceClient(graphAPIEndpoint, _authProvider);
             return graphClient;
         }
-        public string GetGroupObjectId()
+        public string GetGroupId()
         {
             return groupId;
         }

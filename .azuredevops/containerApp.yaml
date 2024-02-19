@@ -22,6 +22,9 @@ properties:
       - name: ado-pat
         keyVaultUrl: https://{{keyvaultName}}.vault.azure.net/secrets/ADO-PAT
         identity: {{userAssignedIdentity}}
+      - name: clientsecret
+        keyVaultUrl: https://{{keyvaultName}}.vault.azure.net/secrets/adp-portal-api-ClientSecret
+        identity: {{userAssignedIdentity}}
   template:
     containers:
       - image: {{acrName}}.azurecr.io/image/{{imageRepoName}}:{{appVersion}}
@@ -41,6 +44,22 @@ properties:
             value: true
           - name: Ado__PatToken
             secretRef: ado-pat
+
+          - name: OpenVPN__TenantId
+            value: {{tenantid}}            
+          - name: OpenVPN__ClientId
+            value: {{clientid}}
+          - name: OpenVPN__ClientSecret
+            secretRef: clientsecret
+          - name: OpenVPN__GroupId
+            value: {{groupid}}
+          - name: OpenVPN__Instance
+            value: {{instance}}    
+          - name: OpenVPN__GraphResource
+            value: {{graphresource}}    
+          - name: OpenVPN__GraphResourceEndPoint
+            value: {{graphendpoint}}    
+
         resources:
           cpu: 0.5
           memory: 1Gi

@@ -18,17 +18,16 @@ namespace ADP.Portal.Core.Ado.Services
             _graphClient = graphClient;
         }
 
-        public async void AddUser([FromBody] string userPrincipalName)
+        public async void AddOpenVPNUser([FromBody] string userPrincipalName)
         {
             string? objetcId = null;
             GraphServiceClient client = await _graphClient.GetServiceClient();
-            
 
             var result = await client
                     .Users[userPrincipalName]
                     .Request()
                     .Select("id")
-                    .GetAsync();
+                    .GetAsync();            
 
             if (result != null)
             {
@@ -41,7 +40,7 @@ namespace ADP.Portal.Core.Ado.Services
                 Id = objetcId
             };
 
-            await client.Groups[_graphClient.GetGroupObjectId()].Members.References
+            await client.Groups[_graphClient.GetGroupId()].Members.References
                 .Request()
                 .AddAsync(directoryObject);            
         }
