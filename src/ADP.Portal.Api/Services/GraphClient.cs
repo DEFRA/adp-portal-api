@@ -10,14 +10,7 @@ namespace ADP.Portal.Core.Ado.Services
     {
         private static GraphServiceClient? graphClient = null;
         private static IConfiguration? configuration = null;
-        private static string? clientId = null;
-        private static string? clientSecret = null;
-        private static string? tenantId = null;
-        private static string? aadInstance = null;
-        private static string? graphResource = null;
-        private static string? graphAPIEndpoint = null;
-        private static string? authority = null;
-        private readonly string? groupId = null;
+        public ADConfig? serviceConnectcion = null; 
 
         public GraphClient()
         {
@@ -27,25 +20,19 @@ namespace ADP.Portal.Core.Ado.Services
                                         .AddEnvironmentVariables()
                                         .Build();
 
-            var serviceConnectcion = new ADConfig();
-            configuration.Bind("OpenVPN", serviceConnectcion);
-            clientId = serviceConnectcion.ClientId;
-            clientSecret = serviceConnectcion.ClientSecret;
-            tenantId = serviceConnectcion.TenantId;
-            aadInstance = serviceConnectcion.Instance;
-            graphResource = serviceConnectcion.GraphResource;
-            graphAPIEndpoint = $"{serviceConnectcion.GraphResource}{serviceConnectcion.GraphResourceEndPoint}";
-            authority = $"{aadInstance}{tenantId}";
-            groupId = serviceConnectcion.GroupId;
+            serviceConnectcion = new ADConfig();
+            configuration.Bind("OpenVPN", serviceConnectcion);  
         }
 
         public async Task<GraphServiceClient> GetServiceClient()
         {
+            string authority = $"{serviceConnectcion.Instance}{serviceConnectcion.TenantId}";
+
             AuthenticationContext _authContext = new AuthenticationContext(authority);
-            ClientCredential _clientCred = new ClientCredential(clientId, clientSecret);
+            ClientCredential _clientCred = new ClientCredential(serviceConnectcion.ClientId, serviceConnectcion.ClientSecret);
 
             //Getting bearer token for Authentication
-            AuthenticationResult _authResult = await _authContext.AcquireTokenAsync(graphResource, _clientCred);
+            AuthenticationResult _authResult = await _authContext.AcquireTokenAsync(serviceConnectcion.GraphResource, _clientCred);
             var token = _authResult.AccessToken;
 
             //Getting Graphclient API Endpoints
@@ -55,13 +42,15 @@ namespace ADP.Portal.Core.Ado.Services
                 return Task.FromResult(0);
             });
 
+            string? graphAPIEndpoint = $"{serviceConnectcion.GraphResource}{serviceConnectcion.GraphResourceEndPoint}";
+
             // Initializing the GraphServiceClient with Authentication
             graphClient = new GraphServiceClient(graphAPIEndpoint, _authProvider);
             return graphClient;
         }
         public string? GetGroupId()
         {
-            return groupId;
+            return serviceConnectcion.GroupId;
         }
     }
 }
