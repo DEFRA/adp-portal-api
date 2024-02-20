@@ -1,20 +1,10 @@
-﻿using ADP.Portal.Api.Config;
-using ADP.Portal.Api.Controllers;
-using ADP.Portal.Api.Models;
+﻿using ADP.Portal.Api.Controllers;
 using ADP.Portal.Api.Services;
-using ADP.Portal.Core.Ado.Entities;
-using ADP.Portal.Core.Ado.Services;
-using AutoFixture;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.Core.WebApi;
 using NSubstitute;
 using NUnit.Framework;
 using System.Reflection;
-
-
 
 namespace ADP.Portal.Api.Tests.Controllers
 {
