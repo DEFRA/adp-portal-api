@@ -45,20 +45,35 @@ properties:
           - name: Ado__PatToken
             secretRef: ado-pat
 
+          # - name: OpenVPN__TenantId
+          #   value: {{tenantid}}            
+          # - name: OpenVPN__ClientId
+          #   value: {{clientid}}
+          # - name: OpenVPN__ClientSecret
+          #   secretRef: clientsecret
+          # - name: OpenVPN__GroupId
+          #   value: {{groupid}}
+          # - name: OpenVPN__Instance
+          #   value: {{instance}}    
+          # - name: OpenVPN__GraphResource
+          #   value: {{graphresource}}    
+          # - name: OpenVPN__GraphResourceEndPoint
+          #   value: {{graphendpoint}}  
+
           - name: OpenVPN__TenantId
-            value: {{tenantid}}            
+            value: "6f504113-6b64-43f2-ade9-242e05780007"            
           - name: OpenVPN__ClientId
-            value: {{clientid}}
+            value: "03ba3c8f-5086-45e0-870c-7fbd689c262e"
           - name: OpenVPN__ClientSecret
-            secretRef: clientsecret
+            value: "UE~8Q~OV5Hw-U_thwdNdswsOqEngVG7kZnoa9az0"
           - name: OpenVPN__GroupId
-            value: {{groupid}}
+            value: "004decd6-767b-417a-9223-a32dcbaa6b00"
           - name: OpenVPN__Instance
-            value: {{instance}}    
+            value: "https://login.microsoftonline.com/"    
           - name: OpenVPN__GraphResource
-            value: {{graphresource}}    
+            value: "https://graph.microsoft.com/"    
           - name: OpenVPN__GraphResourceEndPoint
-            value: {{graphendpoint}}    
+            value: "v1.0"
 
         resources:
           cpu: 0.5
