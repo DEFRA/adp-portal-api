@@ -17,9 +17,10 @@ namespace ADP.Portal.Api.Controllers
 
         // POST api/<UserController>
         [HttpPost()]
-        public void AddOpenVPNUser(string userPrincipalName)
+        public async Task<ActionResult> AddOpenVPNUser(string userPrincipalName)
         {
-            _UserService.AddOpenVPNUser(userPrincipalName);
+            await _UserService.AddOpenVPNUser(userPrincipalName);
+            return NoContent();
         }             
     }
 }

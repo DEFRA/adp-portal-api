@@ -18,14 +18,12 @@ namespace ADP.Portal.Core.Ado.Services
             _graphClient = graphClient;
         }
 
-        public async void AddOpenVPNUser([FromBody] string userPrincipalName)
+        public async Task AddOpenVPNUser([FromBody] string userPrincipalName)
         {
             string? objetcId = null;
             GraphServiceClient client = await _graphClient.GetServiceClient();
             try
             {
-
-
                 var result = await client
                         .Users[userPrincipalName]
                         .Request()
