@@ -10,7 +10,7 @@ namespace ADP.Portal.Api.Controllers
     public class OpenVpnUserController : ControllerBase
     {
         private readonly IUserService _UserService;
-        public OpenVpnUserController(IUserService userService, ILogger<OpenVpnUserController> logger)
+        public OpenVpnUserController(IUserService userService)
         {
             _UserService = userService;
         }        
