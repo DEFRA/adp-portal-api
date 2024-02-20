@@ -8,9 +8,9 @@ namespace ADP.Portal.Core.Ado.Services
 {
     internal class GraphClient : IGraphClient
     {
-        private static GraphServiceClient? graphClient = null;
-        private static IConfiguration? configuration = null;
-        private static ADConfig serviceConnectcion; 
+        private GraphServiceClient? graphClient = null;
+        private IConfiguration? configuration = null;
+        private ADConfig serviceConnectcion; 
 
         public GraphClient()
         {
