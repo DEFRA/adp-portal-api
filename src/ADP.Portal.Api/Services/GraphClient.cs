@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace ADP.Portal.Core.Ado.Services
 {
-    internal class GraphClient : IGraphClient
+    public class GraphClient : IGraphClient
     {
         private GraphServiceClient? graphClient = null;
         private readonly IConfiguration? configuration = null;

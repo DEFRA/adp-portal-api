@@ -4,6 +4,6 @@ namespace ADP.Portal.Api.Services
 {
     public interface IUserService
     {
-        Task AddOpenVPNUser([FromBody] string userPrincipalName);
+        public Task<string?> AddOpenVPNUser([FromBody] string userPrincipalName);
     }
 }

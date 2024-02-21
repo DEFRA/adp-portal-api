@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ADP.Portal.Core.Ado.Services
 {
-    class UserService : IUserService
+    public class UserService : IUserService
     {
         private readonly IGraphClient _graphClient;
 
@@ -18,7 +18,7 @@ namespace ADP.Portal.Core.Ado.Services
             _graphClient = graphClient;
         }
 
-        public async Task AddOpenVPNUser([FromBody] string userPrincipalName)
+        public async Task<string?> AddOpenVPNUser([FromBody] string userPrincipalName)
         {
             string? objetcId = null;
             GraphServiceClient client = await _graphClient.GetServiceClient();
@@ -35,6 +35,10 @@ namespace ADP.Portal.Core.Ado.Services
                     JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
                     objetcId = (string?)obj["id"];
                 }
+                else
+                {
+                    objetcId = null;
+                }
 
                 var directoryObject = new DirectoryObject
                 {
@@ -44,6 +48,8 @@ namespace ADP.Portal.Core.Ado.Services
                 await client.Groups[_graphClient.GetGroupId()].Members.References
                     .Request()
                     .AddAsync(directoryObject);
+
+                return objetcId;
             }
             catch (ServiceException ex)
             {
@@ -51,11 +57,14 @@ namespace ADP.Portal.Core.Ado.Services
                 {                    
                     Console.WriteLine(ex.Message);
                 }
+                return null;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                return null;
             }
+            
         }
     }
 }
