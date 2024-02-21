@@ -34,22 +34,22 @@ namespace ADP.Portal.Core.Ado.Services
                 {
                     JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
                     objetcId = (string?)obj["id"];
+
+                    var directoryObject = new DirectoryObject
+                    {
+                        Id = objetcId
+                    };
+
+                    await client.Groups[_graphClient.GetGroupId()].Members.References
+                        .Request()
+                        .AddAsync(directoryObject);
+
+                    return objetcId;
                 }
                 else
                 {
-                    objetcId = null;
+                    return null;
                 }
-
-                var directoryObject = new DirectoryObject
-                {
-                    Id = objetcId
-                };
-
-                await client.Groups[_graphClient.GetGroupId()].Members.References
-                    .Request()
-                    .AddAsync(directoryObject);
-
-                return objetcId;
             }
             catch (ServiceException ex)
             {

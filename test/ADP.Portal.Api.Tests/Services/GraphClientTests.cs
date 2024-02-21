@@ -11,13 +11,13 @@ namespace ADP.Portal.Api.Tests.Services
         public async Task GetServiceClient_ReturnNull_WhenDoesNotExist()
         {
             //Arrange
-           var client = new GraphClient();
+            GraphClient client = new GraphClient();
 
             // Act
             var result = await client.GetServiceClient();
 
             // Assert
-            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Null);
         }
         
         [Test]
