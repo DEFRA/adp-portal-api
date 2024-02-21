@@ -9,19 +9,17 @@ namespace ADP.Portal.Api.Tests.Services
     {
         private readonly IGraphClient clientMock;
 
-
         public UserServiceTests()
         {
             clientMock = Substitute.For<IGraphClient>();            
         }  
 
         [Test]
-        public async Task AddOpenVPNUser_ReturnsNotAdded_WhenUserDoesNotExist()
+        public async Task AddOpenVPNUser_ReturnsNotNull_WhenUserDoesNotExist()
         {
             //Arrange
             string? userPrincipaName = "TestUser";
             UserService service = new UserService(clientMock);
-
 
             // Act
             string? result = await service.AddOpenVPNUser(userPrincipaName);
@@ -31,12 +29,11 @@ namespace ADP.Portal.Api.Tests.Services
         }
 
         [Test]
-        public async Task AddOpenVPNUser_ReturnAddedUserId_WhenUserExist()
+        public async Task AddOpenVPNUser_ReturnUserId_WhenUserExist()
         {
             //Arrange
             string userPrincipaName = "testuser";
             UserService service = new UserService(clientMock);
-
 
             // Act
             string? result = await service.AddOpenVPNUser(userPrincipaName);
