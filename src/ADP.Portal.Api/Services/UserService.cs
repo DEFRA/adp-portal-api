@@ -22,49 +22,33 @@ namespace ADP.Portal.Core.Ado.Services
         {
             string? objetcId = null;
             GraphServiceClient client = await _graphClient.GetServiceClient();
-            try
-            {
-                var result = await client
-                        .Users[userPrincipalName]
-                        .Request()
-                        .Select("id")
-                        .GetAsync();
+        
+            var result = await client
+                    .Users[userPrincipalName]
+                    .Request()
+                    .Select("id")
+                    .GetAsync();
 
-                if (result != null)
+            if (result != null)
+            {
+                JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
+                objetcId = (string?)obj["id"];
+
+                var directoryObject = new DirectoryObject
                 {
-                    JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
-                    objetcId = (string?)obj["id"];
+                    Id = objetcId
+                };
 
-                    var directoryObject = new DirectoryObject
-                    {
-                        Id = objetcId
-                    };
+                await client.Groups[_graphClient.GetGroupId()].Members.References
+                    .Request()
+                    .AddAsync(directoryObject);
 
-                    await client.Groups[_graphClient.GetGroupId()].Members.References
-                        .Request()
-                        .AddAsync(directoryObject);
-
-                    return objetcId;
-                }
-                else
-                {
-                    return null;
-                }
+                return objetcId;
             }
-            catch (ServiceException ex)
+            else
             {
-                if (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
-                {                    
-                    Console.WriteLine(ex.Message);
-                }
                 return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
-            
+            }                         
         }
     }
 }
