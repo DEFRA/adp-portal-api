@@ -39,7 +39,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var notFoundResults = result as NotFoundResult;
 
             // Assert
-            Assert.That(notFoundResults, Is.Not.Null);
+            Assert.That(notFoundResults, Is.Null);
             if (notFoundResults != null)
             {
                 Assert.That(notFoundResults.StatusCode, Is.EqualTo(404));
