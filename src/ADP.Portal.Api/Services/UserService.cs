@@ -22,27 +22,36 @@ namespace ADP.Portal.Core.Ado.Services
         {
             string? objetcId = null;
             GraphServiceClient client = await _graphClient.GetServiceClient();
-      
-            var result = await client
-                    .Users[userPrincipalName]
-                    .Request()
-                    .Select("id")
-                    .GetAsync();
-
-             
-            JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
-            objetcId = (string?)obj["id"];                
-
-            var directoryObject = new DirectoryObject
+            try
             {
-                Id = objetcId
-            };
+                var result = await client
+                        .Users[userPrincipalName]
+                        .Request()
+                        .Select("id")
+                        .GetAsync();
 
-            await client.Groups[_graphClient.GetGroupId()].Members.References
-                .Request()
-                .AddAsync(directoryObject);                
+                if (result != null)
+                {
+                    JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
+                    objetcId = (string?)obj["id"];
 
-            return objetcId;            
+                    var directoryObject = new DirectoryObject
+                    {
+                        Id = objetcId
+                    };
+
+                    await client.Groups[_graphClient.GetGroupId()].Members.References
+                        .Request()
+                        .AddAsync(directoryObject);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                objetcId = null; 
+            }
+
+            return objetcId;
         }
     }
 }
