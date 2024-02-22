@@ -47,7 +47,7 @@ namespace ADP.Portal.Api
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
             builder.Services.Configure<AzureAdConfig>(builder.Configuration.GetSection("AzureAd"));
-            builder.Services.Configure<AADGroupConfig>(builder.Configuration.GetSection("AADGroupConfig"));
+            builder.Services.Configure<AADGroupConfig>(builder.Configuration.GetSection("AADGroups"));
             builder.Services.AddScoped<IAzureCredential>(provider =>
             {
                 return new DefaultAzureCredentialWrapper();

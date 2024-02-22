@@ -9,13 +9,15 @@ namespace ADP.Portal.Api.Controllers
     [ApiController]
     public class UserAADGroupController : ControllerBase
     {
+        private readonly ILogger<UserAADGroupController> logger;
         private readonly IUserGroupService userGroupService;
         public readonly IOptions<AADGroupConfig> aadGroupConfig;
 
-        public UserAADGroupController(IUserGroupService userGroupService, IOptions<AADGroupConfig> aadGroupConfig)
+        public UserAADGroupController(ILogger<UserAADGroupController> logger, IUserGroupService userGroupService, IOptions<AADGroupConfig> aadGroupConfig)
         {
             this.userGroupService = userGroupService;
             this.aadGroupConfig = aadGroupConfig;
+            this.logger = logger;
         }
 
         [HttpPost("openvpn/add/{userPrincipalName}")]
@@ -23,7 +25,12 @@ namespace ADP.Portal.Api.Controllers
         {
             var openVpnGroupId = aadGroupConfig.Value.OpenVPNGroupId;
 
-            await userGroupService.AddUserToGroupAsync(openVpnGroupId, userPrincipalName);
+            var result = await userGroupService.AddUserToGroupAsync(openVpnGroupId, userPrincipalName);
+            if(result != true)
+            {
+                logger.LogWarning("User {userPrincipalName} not found", userPrincipalName);
+                return NotFound();
+            }
             return NoContent();
         }
     }

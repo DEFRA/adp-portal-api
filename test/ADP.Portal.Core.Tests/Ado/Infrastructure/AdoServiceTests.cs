@@ -18,7 +18,7 @@ using NSubstitute.ExceptionExtensions;
 namespace ADP.Portal.Core.Tests.Ado.Infrastructure
 {
     [TestFixture]
-    public class AdoServiceTests
+    public class AzureAADGroupServiceTests
     {
         private readonly IVssConnection vssConnectionMock;
         private readonly ServiceEndpointHttpClient serviceEndpointClientMock;
@@ -32,7 +32,7 @@ namespace ADP.Portal.Core.Tests.Ado.Infrastructure
                 .Map(dest => dest.Variables, src => src.Variables.ToDictionary(v => v.Name, v => new DistributedTask.VariableValue(v.Value, v.IsSecret)));
         }
 
-        public AdoServiceTests()
+        public AzureAADGroupServiceTests()
         {
             vssConnectionMock = Substitute.For<IVssConnection>();
             serviceEndpointClientMock = Substitute.For<ServiceEndpointHttpClient>(new Uri("https://mock"), new VssCredentials());
