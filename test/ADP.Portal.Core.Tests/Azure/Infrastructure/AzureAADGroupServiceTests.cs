@@ -1,5 +1,6 @@
 ﻿using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
+using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
 using Mapster;
 using Microsoft.Extensions.Logging;
@@ -28,17 +29,14 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
         }
 
         [Test]
-        public void Constructor_WithValidParameters_SetsAdoService()
+        public void Constructor_WithValidParameters_SetsAzureAADGroupService()
         {
             // Arrange
-            var logger = Substitute.For<ILogger<AdoService>>();
+            var logger = Substitute.For<ILogger<AzureAADGroupService>>();
             string? userPrincipalName = "testuser";
 
             // Act
-           
-
-
-            //AddToAADGroupAsync(Guid groupId, userPrincipalName)
+            //var result = AddToAADGroupAsync(Guid groupId, userPrincipalName);
 
             // Assert
             //Assert.That(projectService, Is.Not.Null);

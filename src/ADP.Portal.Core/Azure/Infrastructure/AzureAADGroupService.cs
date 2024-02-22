@@ -10,10 +10,10 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 {
     public class AzureAADGroupService : IAzureAADGroupService
     {
-        private readonly ILogger<AdoProjectService> logger;
+        private readonly ILogger<AzureAADGroupService> logger;
         private readonly GraphServiceClient graphServiceClient;
 
-        public AzureAADGroupService(GraphServiceClient graphServiceClient, ILogger<AdoProjectService> logger)
+        public AzureAADGroupService(GraphServiceClient graphServiceClient, ILogger<AzureAADGroupService> logger)
         {
             this.graphServiceClient = graphServiceClient;
             this.logger = logger;
