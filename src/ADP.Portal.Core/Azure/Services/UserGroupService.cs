@@ -25,7 +25,7 @@ namespace ADP.Portal.Core.Azure.Services
             }
             catch (ProjectDoesNotExistWithNameException)
             {
-                logger.LogWarning("Project {userPrincipalName} does not exist", userPrincipalName);
+                logger.LogWarning("User {userPrincipalName} does not exist", userPrincipalName);
                 return false;
             }
 
