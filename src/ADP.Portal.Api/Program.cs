@@ -2,12 +2,16 @@
 using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Mapster;
 using ADP.Portal.Api.Providers;
-using ADP.Portal.Api.Services;
 using ADP.Portal.Api.Wrappers;
 using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
+using ADP.Portal.Core.Azure.Infrastructure;
+using ADP.Portal.Core.Azure.Services;
+using Azure.Identity;
 using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
+using Microsoft.Graph;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using System.Net.Http.Headers;
 
 namespace ADP.Portal.Api
 {
@@ -42,6 +46,8 @@ namespace ADP.Portal.Api
             builder.Services.AddProblemDetails();
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
+            builder.Services.Configure<AzureAdConfig>(builder.Configuration.GetSection("AzureAd"));
+            builder.Services.Configure<AADGroupConfig>(builder.Configuration.GetSection("AADGroupConfig"));
             builder.Services.AddScoped<IAzureCredential>(provider =>
             {
                 return new DefaultAzureCredentialWrapper();
@@ -50,20 +56,33 @@ namespace ADP.Portal.Api
             {
                 var azureCredentialsService = provider.GetRequiredService<IAzureCredential>();
                 var adoAzureAdConfig = provider.GetRequiredService<IOptions<AdoConfig>>().Value;
-                var vssConnectionProvider = new VssConnectionProvider(azureCredentialsService,adoAzureAdConfig);
+                var vssConnectionProvider = new VssConnectionProvider(azureCredentialsService, adoAzureAdConfig);
                 var connection = await vssConnectionProvider.GetConnectionAsync();
                 return connection;
             });
             builder.Services.AddScoped<IAdoProjectService, AdoProjectService>();
             builder.Services.AddScoped<IAdoService, AdoService>();
+            builder.Services.AddScoped<IUserGroupService, UserGroupService>();
+            builder.Services.AddScoped<IAzureAADGroupService, AzureAADGroupService>();
+            builder.Services.AddScoped(provider =>
+            {
+                var scopes = new[] { ".default" };
+
+                var azureAdConfig = provider.GetRequiredService<IOptions<AzureAdConfig>>().Value;
+                var clientSecretCredential = new ClientSecretCredential(azureAdConfig.TenantId, azureAdConfig.ClientId, azureAdConfig.ClientSecret);
+
+                var graphBaseUrl = "https://graph.microsoft.com/v1.0"; 
+
+                return new GraphServiceClient(clientSecretCredential, scopes, graphBaseUrl);
+
+            });
+
             builder.Services.EntitiesConfigure();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-   
-            builder.Services.AddTransient<IGraphClient, GraphClient>();
-            builder.Services.AddTransient<IUserService, UserService>();
+
 
         }
     }
