@@ -1,10 +1,7 @@
-﻿using ADP.Portal.Core.Ado.Infrastructure;
-using ADP.Portal.Core.Ado.Services;
-using ADP.Portal.Core.Azure.Infrastructure;
+﻿using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
 using Mapster;
 using Microsoft.Extensions.Logging;
-using Microsoft.Graph;
 using NSubstitute;
 using NUnit.Framework;
 using System.Reflection;

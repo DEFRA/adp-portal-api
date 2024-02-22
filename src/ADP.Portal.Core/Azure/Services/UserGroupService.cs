@@ -1,6 +1,3 @@
-
-using ADP.Portal.Core.Ado.Infrastructure;
-using ADP.Portal.Core.Ado.Services;
 using ADP.Portal.Core.Azure.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -9,10 +6,10 @@ namespace ADP.Portal.Core.Azure.Services
 {
     public class UserGroupService : IUserGroupService
     {
-        private readonly ILogger<AdoProjectService> logger;
+        private readonly ILogger<UserGroupService> logger;
         private readonly IAzureAADGroupService azureAADGroupService;
 
-        public UserGroupService(IAzureAADGroupService azureAADGroupService, ILogger<AdoProjectService> logger)
+        public UserGroupService(IAzureAADGroupService azureAADGroupService, ILogger<UserGroupService> logger)
         {
             this.azureAADGroupService = azureAADGroupService;
             this.logger = logger;

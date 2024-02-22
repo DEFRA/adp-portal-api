@@ -1,10 +1,8 @@
-﻿using ADP.Portal.Core.Ado.Services;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
 
 namespace ADP.Portal.Core.Azure.Infrastructure
 {

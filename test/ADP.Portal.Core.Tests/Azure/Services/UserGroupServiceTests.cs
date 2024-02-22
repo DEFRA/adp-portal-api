@@ -1,52 +1,62 @@
-﻿using ADP.Portal.Core.Ado.Entities;
-using ADP.Portal.Core.Ado.Infrastructure;
-using ADP.Portal.Core.Ado.Services;
+﻿using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
-using AutoFixture;
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.Core.WebApi;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using System.Collections.Generic;
 
 namespace ADP.Portal.Core.Tests.Ado.Services
 {
     [TestFixture]
     public class UserGroupServiceTests
     {
-        private readonly IUserGroupService serviceMock;
+        private readonly IAzureAADGroupService AzureAADGroupServicMock;
+        private readonly ILogger<UserGroupService> loggerMock;
+        private readonly UserGroupService userGroupService;
+
         public UserGroupServiceTests()
         {
-            serviceMock = Substitute.For<IUserGroupService>();
+            AzureAADGroupServicMock = Substitute.For<IAzureAADGroupService>();
+            loggerMock = Substitute.For<ILogger<UserGroupService>>();
+            userGroupService = new UserGroupService(AzureAADGroupServicMock, loggerMock);
         }
 
         [Test]
-        public async Task GetProjectAsync_ReturnsProject_WhenProjectExists()
+        public void Constructor_WithValidParameters_SetsAzureAADGroupService()
         {
-            // Arrange
-            var userPrincipalName = "TestProject";
-           
             // Act
-            
+            var userGroupService = new UserGroupService(AzureAADGroupServicMock, loggerMock);
 
             // Assert
-            //Assert.That(result, Is.EqualTo(project));
+            Assert.That(userGroupService, Is.Not.Null);
         }
 
         [Test]
-        public async Task GetProjectAsync_ReturnsNull_WhenProjectDoesNotExist()
+        public async Task AddUserToGroupAsync_ReturnsTrue_WhenUserAdded()
         {
             // Arrange
-            var projectName = "TestProject";
-            
-           
+            var userName = "testuser";
+            Guid groupId = Guid.NewGuid();
+
+
             // Act
-            
+            var result = await userGroupService.AddUserToGroupAsync(groupId, userName);
 
             // Assert
-            //Assert.That(result, Is.Null);
+            Assert.That(result, Is.EqualTo(true));
         }
-        
+
+        [Test]
+        public async Task AddUserToGroupAsync_ReturnsFalse_WhenUserNotAdded()
+        {
+            // Arrange
+            var userName = "testuser";
+            Guid groupId = Guid.NewGuid();
+
+            // Act
+            var result = await userGroupService.AddUserToGroupAsync(groupId, userName);
+
+            // Assert
+            Assert.That(result, Is.EqualTo(false));
+        }        
     }
 }
