@@ -45,20 +45,14 @@ properties:
           - name: Ado__PatToken
             secretRef: ado-pat
 
-          - name: OpenVPN__TenantId
+          - name: AzureAd__TenantId
             value: {{tenantid}}            
-          - name: OpenVPN__ClientId
+          - name: AzureAd__ClientId
             value: {{clientid}}
-          - name: OpenVPN__ClientSecret
+          - name: AzureAd__ClientSecret
             secretRef: clientsecret
-          - name: OpenVPN__GroupId
-            value: {{groupid}}
-          - name: OpenVPN__Instance
-            value: {{instance}}    
-          - name: OpenVPN__GraphResource
-            value: {{graphresource}}    
-          - name: OpenVPN__GraphResourceEndPoint
-            value: {{graphendpoint}}    
+          - name: AADGroups__GroupId
+            value: {{groupid}}              
 
         resources:
           cpu: 0.5
