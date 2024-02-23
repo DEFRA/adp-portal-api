@@ -31,7 +31,8 @@ resources:
       name: DEFRA/adp-pipeline-common
       endpoint: DEFRA
       type: github
-      ref: main      
+      #ref: main  
+      ref: refs/heads/sm/259861--AutomateAddUserToVpnGroup
 
 extends:
   template: /pipelines/common-aca-app-build.yaml@DEFRA-ADPPipelineCommon
@@ -54,4 +55,4 @@ extends:
         - adp-portal-api-ssv3
         - adp-portal-api-ssv5
       variables:   
-       - adp-portal-api-ClientSecret
+        - adp-portal-api-ClientSecret

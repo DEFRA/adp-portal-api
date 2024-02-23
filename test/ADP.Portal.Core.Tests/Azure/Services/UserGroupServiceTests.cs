@@ -24,10 +24,10 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         public void Constructor_WithValidParameters_SetsAzureAADGroupService()
         {
             // Act
-            var userGroupService = new UserGroupService(AzureAADGroupServicMock, loggerMock);
+            var usrGroupService = new UserGroupService(AzureAADGroupServicMock, loggerMock);
 
             // Assert
-            Assert.That(userGroupService, Is.Not.Null);
+            Assert.That(usrGroupService, Is.Not.Null);
         }
 
         [Test]
