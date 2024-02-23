@@ -29,7 +29,7 @@ namespace ADP.Portal.Api.Controllers
             if(result != true)
             {
                 logger.LogWarning("User {userPrincipalName} not found", userPrincipalName);
-                return NotFound();
+                return NotFound($"User not found");
             }
             return NoContent();
         }

@@ -1,6 +1,7 @@
 ﻿using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Controllers;
 using ADP.Portal.Core.Azure.Services;
+using AutoFixture;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
         }
 
-        public UserAADGroupControllerTests(IUserGroupService userGroupService, IOptions<AADGroupConfig> aadGroupConfig)
+        public UserAADGroupControllerTests()
         {
             loggerMock = Substitute.For<ILogger<UserAADGroupController>> ();
             configMock = Substitute.For<IOptions<AADGroupConfig>>();
@@ -34,38 +35,45 @@ namespace ADP.Portal.Api.Tests.Controllers
         } 
 
         [Test]
-        public async Task OnAddADUser_ReturnsNotAdded_WhenUserDoesNotExist()
+        public async Task AddUserToOpenVpnGroup_ReturnSuccess_When_AddUserToGroup_IsTrue()
         {
             // Arrange
             string userPrincipalName = "testUser";
+            var fixture = new Fixture();
+            configMock.Value.Returns(fixture.Create<AADGroupConfig>());
+            serviceMock.AddUserToGroupAsync(Arg.Any<Guid>(), Arg.Any<string>()).Returns(true);
 
             // Act
             var result = await controller.AddUserToOpenVpnGroup(userPrincipalName);
-            var notFoundResults = result as NotFoundResult;
+            var noContentResult = result as NoContentResult;
 
             // Assert
-            Assert.That(notFoundResults, Is.Null);
-            if (notFoundResults != null)
+            Assert.That(noContentResult, Is.Not.Null);
+            if (noContentResult != null)
             {
-                Assert.That(notFoundResults.StatusCode, Is.EqualTo(404));
+                Assert.That(noContentResult.StatusCode, Is.EqualTo(204));
             }
         }
         
         [Test]
-        public async Task OnAddADUser_Add_WhenUserExist()
+        public async Task AddUserToOpenVpnGroup_ReturnNotFound_When_AddUserToGroup_IsFalse()
         {
             // Arrange
             string userPrincipalName = "testUser";
+            var fixture = new Fixture();
+            configMock.Value.Returns(fixture.Create<AADGroupConfig>());
+            serviceMock.AddUserToGroupAsync(Arg.Any<Guid>(),Arg.Any<string>()).Returns(false);
 
             // Act
             var result = await controller.AddUserToOpenVpnGroup(userPrincipalName);
-            var notFoundResults = result as NotFoundResult;
+            var notFoundResults = result as NotFoundObjectResult;
 
             // Assert
             Assert.That(notFoundResults, Is.Not.Null);
             if (notFoundResults != null)
             {
                 Assert.That(notFoundResults.StatusCode, Is.EqualTo(404));
+                Assert.That(notFoundResults.Value, Is.EqualTo("User not found"));
             }
         }
     }

@@ -19,19 +19,17 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
         public async Task<bool> AddToAADGroupAsync(Guid groupId, string userPrincipalName)
         {
-            var result = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
+            var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Select = new string[] { "Id" };
             });
             
-            if (result != null)
+            if (user != null)
             {
-                JObject obj = JObject.Parse(JsonSerializer.Serialize(result));
-                string? objetcId = (string?)obj["Id"];
 
                 var requestBody = new ReferenceCreate
                 {
-                    OdataId = "https://graph.microsoft.com/beta/directoryObjects/" + "{" + objetcId + "}",
+                    OdataId = "https://graph.microsoft.com/beta/directoryObjects/" + "{" + user.Id + "}",
                 };
 
                 await graphServiceClient.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
