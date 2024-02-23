@@ -40,16 +40,6 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
         }
 
         [Test]
-        public void AddToAADGroupAsync_ReturnsNotAdded_WhenUserDoesNotExiste()
-        {
-            // Act
-            var azureAADGroupService = new AzureAADGroupService(graphServiceClientMock, loggerMock);
-
-            // Assert
-            Assert.That(azureAADGroupService, Is.Null);
-        }
-
-        [Test]
         public void AddToAADGroupAsync_ReturnsAdded_WhenUserExiste()
         {
             // Act

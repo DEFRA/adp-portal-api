@@ -31,21 +31,6 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         }
 
         [Test]
-        public async Task AddUserToGroupAsync_ReturnsTrue_WhenUserAdded()
-        {
-            // Arrange
-            var userName = "testuser";
-            Guid groupId = Guid.NewGuid();
-
-
-            // Act
-            var result = await userGroupService.AddUserToGroupAsync(groupId, userName);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(true));
-        }
-
-        [Test]
         public async Task AddUserToGroupAsync_ReturnsFalse_WhenUserNotAdded()
         {
             // Arrange

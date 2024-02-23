@@ -19,27 +19,41 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
         public async Task<bool> AddToAADGroupAsync(Guid groupId, string userPrincipalName)
         {
-            var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
+            var result = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((requestConfiguration) =>
             {
-                requestConfiguration.QueryParameters.Select = new string[] { "Id" };
+                requestConfiguration.QueryParameters.Count = true;
+                requestConfiguration.QueryParameters.Search = "\"userPrincipalName:" + userPrincipalName + "\"";
+                requestConfiguration.QueryParameters.Filter = "userPrincipalName eq " + "'" + userPrincipalName + "'";
+                requestConfiguration.Headers.Add("ConsistencyLevel", "eventual");
             });
-            
-            if (user != null)
+
+            if(result != null && 0 == result.OdataCount )
             {
-
-                var requestBody = new ReferenceCreate
+                var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
                 {
-                    OdataId = "https://graph.microsoft.com/beta/directoryObjects/" + "{" + user.Id + "}",
-                };
+                    requestConfiguration.QueryParameters.Select = new string[] { "Id" };
+                });
 
-                await graphServiceClient.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
+                if (user != null)
+                {
+                    var requestBody = new ReferenceCreate
+                    {
+                        OdataId = "https://graph.microsoft.com/beta/directoryObjects/" + "{" + user.Id + "}",
+                    };
+
+                    await graphServiceClient.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
+                }
+                else
+                {
+                    logger.LogWarning("User {userPrincipalName} does not exist", userPrincipalName);
+                    return false;
+                }
             }
             else
             {
-                logger.LogWarning("User {userPrincipalName} does not exist", userPrincipalName);
+                logger.LogWarning("User {userPrincipalName} already exist", userPrincipalName);
                 return false;
-            }
-
+            } 
             return true;
         }
     }
