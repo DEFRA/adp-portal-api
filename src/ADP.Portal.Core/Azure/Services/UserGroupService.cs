@@ -15,25 +15,25 @@ namespace ADP.Portal.Core.Azure.Services
             this.azureAADGroupService = azureAADGroupService;
             this.logger = logger;
         }
-        public async Task<bool> AddUserToGroupAsync(Guid groupId, string userPrincipalName)
-        {
-            try
-            {
-                return await azureAADGroupService.AddToAADGroupAsync(groupId, userPrincipalName);
-            }
-            catch (ODataError odataException)
-            {
-                if (odataException.ResponseStatusCode == 404)
-                {
-                    logger.LogWarning("User {userPrincipalName} does not exist", userPrincipalName);
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
 
+        public async Task<string?> GetUserIdAsync(string userPrincipalName)
+        {
+            return await azureAADGroupService.GetUserIdAsync(userPrincipalName);
+        }
+
+        public async Task<bool> AddUserToGroupAsync(Guid groupId, string userPrincipalName, string userId)
+        {
+            var isExistingMember = await azureAADGroupService.ExsistingMemberAsync(groupId, userPrincipalName);
+            if (isExistingMember)
+            {
+                logger.LogInformation("User:'{userPrincipalName}' already a member of the group:'{groupId}'", userPrincipalName, groupId);
+            }
+            else
+            {
+                await azureAADGroupService.AddToAADGroupAsync(groupId, userId);
+                logger.LogInformation("User:'{userPrincipalName}' added to the group:{groupId}", userPrincipalName, groupId);
+            }
+            return true;
         }
     }
 }

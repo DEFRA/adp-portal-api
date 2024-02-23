@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
+using Microsoft.Graph.Models.ODataErrors;
+using Microsoft.VisualStudio.Services.Users;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
 
@@ -8,52 +10,65 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 {
     public class AzureAADGroupService : IAzureAADGroupService
     {
-        private readonly ILogger<AzureAADGroupService> logger;
         private readonly GraphServiceClient graphServiceClient;
 
-        public AzureAADGroupService(GraphServiceClient graphServiceClient, ILogger<AzureAADGroupService> logger)
+        public AzureAADGroupService(GraphServiceClient graphServiceClient)
         {
             this.graphServiceClient = graphServiceClient;
-            this.logger = logger;
         }
 
-        public async Task<bool> AddToAADGroupAsync(Guid groupId, string userPrincipalName)
-        {
-            var result = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((requestConfiguration) =>
-            {
-                requestConfiguration.QueryParameters.Count = true;
-                requestConfiguration.QueryParameters.Search = "\"userPrincipalName:" + userPrincipalName + "\"";
-                requestConfiguration.QueryParameters.Filter = "userPrincipalName eq " + "'" + userPrincipalName + "'";
-                requestConfiguration.Headers.Add("ConsistencyLevel", "eventual");
-            });
 
-            if(result != null && 0 == result.OdataCount )
+        public async Task<string?> GetUserIdAsync(string userPrincipalName)
+        {
+            try
             {
                 var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
                 {
-                    requestConfiguration.QueryParameters.Select = new string[] { "Id" };
+                    requestConfiguration.QueryParameters.Select = ["Id"];
                 });
 
-                if (user != null)
+                return user?.Id;
+            }
+            catch (ODataError odataException)
+            {
+                if (odataException.ResponseStatusCode == 404)
                 {
-                    var requestBody = new ReferenceCreate
-                    {
-                        OdataId = "https://graph.microsoft.com/beta/directoryObjects/" + "{" + user.Id + "}",
-                    };
-
-                    await graphServiceClient.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
+                    return null;
                 }
                 else
                 {
-                    logger.LogWarning("User {userPrincipalName} does not exist", userPrincipalName);
-                    return false;
+                    throw;
                 }
             }
-            else
+        }
+
+        public async Task<bool> ExsistingMemberAsync(Guid groupId, string userPrincipalName)
+        {
+            var exsistingMember = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((requestConfiguration) =>
+                   {
+                       requestConfiguration.QueryParameters.Count = true;
+                       requestConfiguration.QueryParameters.Filter = $"userPrincipalName eq '{userPrincipalName}'";
+                       requestConfiguration.Headers.Add("ConsistencyLevel", "eventual");
+                   });
+
+            if (exsistingMember?.Value != null && exsistingMember.Value.Count == 0)
             {
-                logger.LogWarning("User {userPrincipalName} already exist", userPrincipalName);
                 return false;
-            } 
+            }
+
+            return true;
+        }
+
+
+        public async Task<bool> AddToAADGroupAsync(Guid groupId, string userId)
+        {
+            var requestBody = new ReferenceCreate
+            {
+                OdataId = $"https://graph.microsoft.com/beta/directoryObjects/{userId}",
+            };
+
+            await graphServiceClient.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
+
             return true;
         }
     }

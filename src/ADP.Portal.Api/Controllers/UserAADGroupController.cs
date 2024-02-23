@@ -25,13 +25,21 @@ namespace ADP.Portal.Api.Controllers
         {
             var openVpnGroupId = aadGroupConfig.Value.OpenVPNGroupId;
 
-            var result = await userGroupService.AddUserToGroupAsync(openVpnGroupId, userPrincipalName);
-            if(result != true)
+            var userId = await userGroupService.GetUserIdAsync(userPrincipalName);
+
+            if (string.IsNullOrEmpty(userId))
             {
-                logger.LogWarning("User {userPrincipalName} not found", userPrincipalName);
+                logger.LogWarning("User:'{userPrincipalName}' not found", userPrincipalName);
                 return NotFound($"User not found");
             }
-            return NoContent();
+
+            var result = await userGroupService.AddUserToGroupAsync(openVpnGroupId, userPrincipalName, userId);
+            if(result == true)
+            {
+                return NoContent();
+            }
+
+            return BadRequest();
         }
     }
 }

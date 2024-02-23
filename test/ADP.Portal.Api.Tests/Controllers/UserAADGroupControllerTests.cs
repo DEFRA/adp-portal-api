@@ -41,7 +41,10 @@ namespace ADP.Portal.Api.Tests.Controllers
             string userPrincipalName = "testUser";
             var fixture = new Fixture();
             configMock.Value.Returns(fixture.Create<AADGroupConfig>());
-            serviceMock.AddUserToGroupAsync(Arg.Any<Guid>(), Arg.Any<string>()).Returns(true);
+
+            var expectedUserId = Guid.NewGuid().ToString();
+            serviceMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
+            serviceMock.AddUserToGroupAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
 
             // Act
             var result = await controller.AddUserToOpenVpnGroup(userPrincipalName);
@@ -56,13 +59,14 @@ namespace ADP.Portal.Api.Tests.Controllers
         }
         
         [Test]
-        public async Task AddUserToOpenVpnGroup_ReturnNotFound_When_AddUserToGroup_IsFalse()
+        public async Task AddUserToOpenVpnGroup_ReturnNotFound_When_UserId_Null()
         {
             // Arrange
             string userPrincipalName = "testUser";
             var fixture = new Fixture();
             configMock.Value.Returns(fixture.Create<AADGroupConfig>());
-            serviceMock.AddUserToGroupAsync(Arg.Any<Guid>(),Arg.Any<string>()).Returns(false);
+            string? expectedUserId = null;
+            serviceMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
 
             // Act
             var result = await controller.AddUserToOpenVpnGroup(userPrincipalName);
@@ -74,6 +78,30 @@ namespace ADP.Portal.Api.Tests.Controllers
             {
                 Assert.That(notFoundResults.StatusCode, Is.EqualTo(404));
                 Assert.That(notFoundResults.Value, Is.EqualTo("User not found"));
+            }
+        }
+
+        [Test]
+        public async Task AddUserToOpenVpnGroup_ReturnBadRequest_When_AddUserToGroup_Is_False()
+        {
+            // Arrange
+            string userPrincipalName = "testUser";
+            var fixture = new Fixture();
+            configMock.Value.Returns(fixture.Create<AADGroupConfig>());
+
+            var expectedUserId = Guid.NewGuid().ToString();
+            serviceMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
+            serviceMock.AddUserToGroupAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>()).Returns(false);
+
+            // Act
+            var result = await controller.AddUserToOpenVpnGroup(userPrincipalName);
+            var badRequestResult = result as BadRequestResult;
+
+            // Assert
+            Assert.That(badRequestResult, Is.Not.Null);
+            if (badRequestResult != null)
+            {
+                Assert.That(badRequestResult.StatusCode, Is.EqualTo(400));
             }
         }
     }

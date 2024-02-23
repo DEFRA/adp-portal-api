@@ -1,4 +1,5 @@
-﻿using ADP.Portal.Core.Azure.Infrastructure;
+﻿using ADP.Portal.Core.Ado.Services;
+using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -9,39 +10,77 @@ namespace ADP.Portal.Core.Tests.Ado.Services
     [TestFixture]
     public class UserGroupServiceTests
     {
-        private readonly IAzureAADGroupService AzureAADGroupServicMock;
+        private readonly IAzureAADGroupService azureAADGroupServicMock;
         private readonly ILogger<UserGroupService> loggerMock;
         private readonly UserGroupService userGroupService;
 
         public UserGroupServiceTests()
         {
-            AzureAADGroupServicMock = Substitute.For<IAzureAADGroupService>();
+            azureAADGroupServicMock = Substitute.For<IAzureAADGroupService>();
             loggerMock = Substitute.For<ILogger<UserGroupService>>();
-            userGroupService = new UserGroupService(AzureAADGroupServicMock, loggerMock);
+            userGroupService = new UserGroupService(azureAADGroupServicMock, loggerMock);
         }
 
         [Test]
-        public void Constructor_WithValidParameters_SetsAzureAADGroupService()
+        public void Constructor_WithValidParameters_SetsUserGroupService()
         {
             // Act
-            var usrGroupService = new UserGroupService(AzureAADGroupServicMock, loggerMock);
+            var userGroupService2 = new UserGroupService(azureAADGroupServicMock, loggerMock);
 
             // Assert
-            Assert.That(usrGroupService, Is.Not.Null);
+            Assert.That(userGroupService2, Is.Not.Null);
         }
 
         [Test]
-        public async Task AddUserToGroupAsync_ReturnsFalse_WhenUserNotAdded()
+        public async Task GetUserIdAsync_ReturnsExpectedUserId()
         {
             // Arrange
-            var userName = "testuser";
-            Guid groupId = Guid.NewGuid();
+            var userPrincipalName = "test@domain.com";
+            var expectedUserId = "12345";
+            azureAADGroupServicMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
 
             // Act
-            var result = await userGroupService.AddUserToGroupAsync(groupId, userName);
+            var actualUserId = await userGroupService.GetUserIdAsync(userPrincipalName);
 
             // Assert
-            Assert.That(result, Is.EqualTo(false));
-        }        
+            Assert.That(actualUserId, Is.Not.Null);
+        }
+
+
+
+        [Test]
+        public async Task AddUserToGroupAsync_UserNotExistingMember_AddsUserToGroup()
+        {
+            // Arrange
+            var groupId = Guid.NewGuid();
+            var userPrincipalName = "test@domain.com";
+            var userId = "12345";
+            azureAADGroupServicMock.ExsistingMemberAsync(groupId, userPrincipalName).Returns(false);
+
+            // Act
+            var result = await userGroupService.AddUserToGroupAsync(groupId, userPrincipalName, userId);
+
+            // Assert
+            await azureAADGroupServicMock.Received().AddToAADGroupAsync(groupId, userId);
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public async Task AddUserToGroupAsync_UserExistingMember_DoesNotAddUserToGroup()
+        {
+            // Arrange
+            var groupId = Guid.NewGuid();
+            var userPrincipalName = "test@domain.com";
+            var userId = "12345";
+            azureAADGroupServicMock.ExsistingMemberAsync(groupId, userPrincipalName).Returns(true);
+
+            // Act
+            var result = await userGroupService.AddUserToGroupAsync(groupId, userPrincipalName, userId);
+
+            // Assert
+            await azureAADGroupServicMock.DidNotReceive().AddToAADGroupAsync(groupId, userId);
+            Assert.That(result, Is.True);
+        }
+
     }
 }
