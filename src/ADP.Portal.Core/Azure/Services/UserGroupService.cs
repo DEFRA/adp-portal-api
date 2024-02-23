@@ -8,9 +8,9 @@ namespace ADP.Portal.Core.Azure.Services
     public class UserGroupService : IUserGroupService
     {
         private readonly ILogger<UserGroupService> logger;
-        private readonly IAzureAADGroupService azureAADGroupService;
+        private readonly IAzureAadGroupService azureAADGroupService;
 
-        public UserGroupService(IAzureAADGroupService azureAADGroupService, ILogger<UserGroupService> logger)
+        public UserGroupService(IAzureAadGroupService azureAADGroupService, ILogger<UserGroupService> logger)
         {
             this.azureAADGroupService = azureAADGroupService;
             this.logger = logger;

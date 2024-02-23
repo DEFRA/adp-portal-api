@@ -11,9 +11,9 @@ namespace ADP.Portal.Api.Controllers
     {
         private readonly ILogger<UserAADGroupController> logger;
         private readonly IUserGroupService userGroupService;
-        public readonly IOptions<AADGroupConfig> aadGroupConfig;
+        public readonly IOptions<AadGroupConfig> aadGroupConfig;
 
-        public UserAADGroupController(ILogger<UserAADGroupController> logger, IUserGroupService userGroupService, IOptions<AADGroupConfig> aadGroupConfig)
+        public UserAADGroupController(ILogger<UserAADGroupController> logger, IUserGroupService userGroupService, IOptions<AadGroupConfig> aadGroupConfig)
         {
             this.userGroupService = userGroupService;
             this.aadGroupConfig = aadGroupConfig;

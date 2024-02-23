@@ -1,7 +1,7 @@
 ﻿
 namespace ADP.Portal.Core.Azure.Infrastructure
 {
-    public interface IAzureAADGroupService
+    public interface IAzureAadGroupService
     {
         Task<string?> GetUserIdAsync(string userPrincipalName);
 

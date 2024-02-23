@@ -10,13 +10,13 @@ namespace ADP.Portal.Core.Tests.Ado.Services
     [TestFixture]
     public class UserGroupServiceTests
     {
-        private readonly IAzureAADGroupService azureAADGroupServicMock;
+        private readonly IAzureAadGroupService azureAADGroupServicMock;
         private readonly ILogger<UserGroupService> loggerMock;
         private readonly UserGroupService userGroupService;
 
         public UserGroupServiceTests()
         {
-            azureAADGroupServicMock = Substitute.For<IAzureAADGroupService>();
+            azureAADGroupServicMock = Substitute.For<IAzureAadGroupService>();
             loggerMock = Substitute.For<ILogger<UserGroupService>>();
             userGroupService = new UserGroupService(azureAADGroupServicMock, loggerMock);
         }

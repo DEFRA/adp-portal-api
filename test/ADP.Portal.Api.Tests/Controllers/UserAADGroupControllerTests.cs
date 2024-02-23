@@ -17,7 +17,7 @@ namespace ADP.Portal.Api.Tests.Controllers
     {
         private readonly UserAADGroupController controller;
         private readonly ILogger<UserAADGroupController> loggerMock;
-        private readonly IOptions<AADGroupConfig> configMock;
+        private readonly IOptions<AadGroupConfig> configMock;
         private readonly IUserGroupService serviceMock;
 
         [SetUp]
@@ -29,7 +29,7 @@ namespace ADP.Portal.Api.Tests.Controllers
         public UserAADGroupControllerTests()
         {
             loggerMock = Substitute.For<ILogger<UserAADGroupController>> ();
-            configMock = Substitute.For<IOptions<AADGroupConfig>>();
+            configMock = Substitute.For<IOptions<AadGroupConfig>>();
             serviceMock = Substitute.For<IUserGroupService>();
             controller = new UserAADGroupController(loggerMock, serviceMock, configMock);
         } 
@@ -40,7 +40,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             string userPrincipalName = "testUser";
             var fixture = new Fixture();
-            configMock.Value.Returns(fixture.Create<AADGroupConfig>());
+            configMock.Value.Returns(fixture.Create<AadGroupConfig>());
 
             var expectedUserId = Guid.NewGuid().ToString();
             serviceMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
@@ -64,7 +64,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             string userPrincipalName = "testUser";
             var fixture = new Fixture();
-            configMock.Value.Returns(fixture.Create<AADGroupConfig>());
+            configMock.Value.Returns(fixture.Create<AadGroupConfig>());
             string? expectedUserId = null;
             serviceMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
 
@@ -87,7 +87,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             string userPrincipalName = "testUser";
             var fixture = new Fixture();
-            configMock.Value.Returns(fixture.Create<AADGroupConfig>());
+            configMock.Value.Returns(fixture.Create<AadGroupConfig>());
 
             var expectedUserId = Guid.NewGuid().ToString();
             serviceMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);

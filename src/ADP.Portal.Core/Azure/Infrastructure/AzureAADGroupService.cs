@@ -8,11 +8,11 @@ using System.Text.Json;
 
 namespace ADP.Portal.Core.Azure.Infrastructure
 {
-    public class AzureAADGroupService : IAzureAADGroupService
+    public class AzureAadGroupService : IAzureAadGroupService
     {
         private readonly GraphServiceClient graphServiceClient;
 
-        public AzureAADGroupService(GraphServiceClient graphServiceClient)
+        public AzureAadGroupService(GraphServiceClient graphServiceClient)
         {
             this.graphServiceClient = graphServiceClient;
         }

@@ -47,7 +47,7 @@ namespace ADP.Portal.Api
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
             builder.Services.Configure<AzureAdConfig>(builder.Configuration.GetSection("AzureAd"));
-            builder.Services.Configure<AADGroupConfig>(builder.Configuration.GetSection("AADGroups"));
+            builder.Services.Configure<AadGroupConfig>(builder.Configuration.GetSection("AADGroups"));
             builder.Services.AddScoped<IAzureCredential>(provider =>
             {
                 return new DefaultAzureCredentialWrapper();
@@ -63,7 +63,7 @@ namespace ADP.Portal.Api
             builder.Services.AddScoped<IAdoProjectService, AdoProjectService>();
             builder.Services.AddScoped<IAdoService, AdoService>();
             builder.Services.AddScoped<IUserGroupService, UserGroupService>();
-            builder.Services.AddScoped<IAzureAADGroupService, AzureAADGroupService>();
+            builder.Services.AddScoped<IAzureAadGroupService, AzureAadGroupService>();
             builder.Services.AddScoped(provider =>
             {
                 var scopes = new[] { ".default" };
