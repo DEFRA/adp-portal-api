@@ -11,7 +11,7 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
     [TestFixture]
     public class AzureAadGroupServiceTests
     {
-        private readonly IAzureAadGroupService azureAadGroupService;
+        private readonly AzureAadGroupService azureAadGroupService;
 
         private readonly GraphServiceClient graphServiceClientMock;
 
