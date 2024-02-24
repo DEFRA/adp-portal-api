@@ -39,6 +39,8 @@ namespace ADP.Portal.Api
             app.Run();
         }
 
+        private static readonly string[] graphApiDefaultScope = [".default"];
+
         public static void ConfigureApp(WebApplicationBuilder builder)
         {
             builder.Services.AddLogging();
@@ -66,14 +68,12 @@ namespace ADP.Portal.Api
             builder.Services.AddScoped<IAzureAadGroupService, AzureAadGroupService>();
             builder.Services.AddScoped(provider =>
             {
-                var scopes = new[] { ".default" };
-
                 var azureAdConfig = provider.GetRequiredService<IOptions<AzureAdConfig>>().Value;
                 var clientSecretCredential = new ClientSecretCredential(azureAdConfig.TenantId, azureAdConfig.ClientId, azureAdConfig.ClientSecret);
 
                 var graphBaseUrl = "https://graph.microsoft.com/v1.0"; 
 
-                return new GraphServiceClient(clientSecretCredential, scopes, graphBaseUrl);
+                return new GraphServiceClient(clientSecretCredential, graphApiDefaultScope, graphBaseUrl);
 
             });
 

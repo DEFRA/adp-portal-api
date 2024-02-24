@@ -7,13 +7,13 @@ namespace ADP.Portal.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserAADGroupController : ControllerBase
+    public class UserAadGroupController : ControllerBase
     {
-        private readonly ILogger<UserAADGroupController> logger;
+        private readonly ILogger<UserAadGroupController> logger;
         private readonly IUserGroupService userGroupService;
         public readonly IOptions<AadGroupConfig> aadGroupConfig;
 
-        public UserAADGroupController(ILogger<UserAADGroupController> logger, IUserGroupService userGroupService, IOptions<AadGroupConfig> aadGroupConfig)
+        public UserAadGroupController(ILogger<UserAadGroupController> logger, IUserGroupService userGroupService, IOptions<AadGroupConfig> aadGroupConfig)
         {
             this.userGroupService = userGroupService;
             this.aadGroupConfig = aadGroupConfig;
@@ -34,7 +34,7 @@ namespace ADP.Portal.Api.Controllers
             }
 
             var result = await userGroupService.AddUserToGroupAsync(openVpnGroupId, userPrincipalName, userId);
-            if(result == true)
+            if(result)
             {
                 return NoContent();
             }

@@ -2,7 +2,9 @@
 using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph.Models.ODataErrors;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace ADP.Portal.Core.Tests.Ado.Services
@@ -36,17 +38,42 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         {
             // Arrange
             var userPrincipalName = "test@domain.com";
-            var expectedUserId = "12345";
-            azureAADGroupServicMock.GetUserIdAsync(userPrincipalName).Returns(expectedUserId);
+            var userId = "12345";
+            azureAADGroupServicMock.GetUserIdAsync(userPrincipalName).Returns(userId);
 
             // Act
-            var actualUserId = await userGroupService.GetUserIdAsync(userPrincipalName);
+            var result = await userGroupService.GetUserIdAsync(userPrincipalName);
 
             // Assert
-            Assert.That(actualUserId, Is.Not.Null);
+            Assert.That(result, Is.Not.Null);
         }
 
 
+        [Test]
+        public async Task GetUserIdAsync_Returns_Null_UserId_When_NotExists()
+        {
+            // Arrange
+            var userPrincipalName = "test@domain.com";
+            azureAADGroupServicMock.GetUserIdAsync(userPrincipalName).ThrowsAsync(new ODataError() { ResponseStatusCode = 404 });
+
+            // Act
+            var result = await userGroupService.GetUserIdAsync(userPrincipalName);
+
+            // Assert
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public  void GetUserIdAsync_Throw_Unhandled_Exception()
+        {
+            // Arrange
+            var userPrincipalName = "test@domain.com";
+            azureAADGroupServicMock.GetUserIdAsync(userPrincipalName).ThrowsAsync<ODataError>();
+
+
+            // Assert
+            Assert.ThrowsAsync<ODataError>(async () => await userGroupService.GetUserIdAsync(userPrincipalName));
+        }
 
         [Test]
         public async Task AddUserToGroupAsync_UserNotExistingMember_AddsUserToGroup()
@@ -55,7 +82,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             var groupId = Guid.NewGuid();
             var userPrincipalName = "test@domain.com";
             var userId = "12345";
-            azureAADGroupServicMock.ExsistingMemberAsync(groupId, userPrincipalName).Returns(false);
+            azureAADGroupServicMock.ExistingMemberAsync(groupId, userPrincipalName).Returns(false);
 
             // Act
             var result = await userGroupService.AddUserToGroupAsync(groupId, userPrincipalName, userId);
@@ -72,7 +99,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             var groupId = Guid.NewGuid();
             var userPrincipalName = "test@domain.com";
             var userId = "12345";
-            azureAADGroupServicMock.ExsistingMemberAsync(groupId, userPrincipalName).Returns(true);
+            azureAADGroupServicMock.ExistingMemberAsync(groupId, userPrincipalName).Returns(true);
 
             // Act
             var result = await userGroupService.AddUserToGroupAsync(groupId, userPrincipalName, userId);

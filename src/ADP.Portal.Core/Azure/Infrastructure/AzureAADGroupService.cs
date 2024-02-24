@@ -1,10 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Graph;
+﻿using Microsoft.Graph;
 using Microsoft.Graph.Models;
-using Microsoft.Graph.Models.ODataErrors;
-using Microsoft.VisualStudio.Services.Users;
-using Newtonsoft.Json.Linq;
-using System.Text.Json;
 
 namespace ADP.Portal.Core.Azure.Infrastructure
 {
@@ -20,38 +15,25 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
         public async Task<string?> GetUserIdAsync(string userPrincipalName)
         {
-            try
-            {
-                var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
-                {
-                    requestConfiguration.QueryParameters.Select = ["Id"];
-                });
 
-                return user?.Id;
-            }
-            catch (ODataError odataException)
+            var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
             {
-                if (odataException.ResponseStatusCode == 404)
-                {
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
-            }
+                requestConfiguration.QueryParameters.Select = ["Id"];
+            });
+
+            return user?.Id;
         }
 
-        public async Task<bool> ExsistingMemberAsync(Guid groupId, string userPrincipalName)
+        public async Task<bool> ExistingMemberAsync(Guid groupId, string userPrincipalName)
         {
-            var exsistingMember = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((requestConfiguration) =>
+            var existingMember = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((requestConfiguration) =>
                    {
                        requestConfiguration.QueryParameters.Count = true;
                        requestConfiguration.QueryParameters.Filter = $"userPrincipalName eq '{userPrincipalName}'";
                        requestConfiguration.Headers.Add("ConsistencyLevel", "eventual");
                    });
 
-            if (exsistingMember?.Value != null && exsistingMember.Value.Count == 0)
+            if (existingMember?.Value != null && existingMember.Value.Count == 0)
             {
                 return false;
             }

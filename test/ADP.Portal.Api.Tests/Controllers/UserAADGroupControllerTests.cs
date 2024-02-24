@@ -15,8 +15,8 @@ namespace ADP.Portal.Api.Tests.Controllers
     [TestFixture]
     public class UserAADGroupControllerTests
     {
-        private readonly UserAADGroupController controller;
-        private readonly ILogger<UserAADGroupController> loggerMock;
+        private readonly UserAadGroupController controller;
+        private readonly ILogger<UserAadGroupController> loggerMock;
         private readonly IOptions<AadGroupConfig> configMock;
         private readonly IUserGroupService serviceMock;
 
@@ -28,10 +28,10 @@ namespace ADP.Portal.Api.Tests.Controllers
 
         public UserAADGroupControllerTests()
         {
-            loggerMock = Substitute.For<ILogger<UserAADGroupController>> ();
+            loggerMock = Substitute.For<ILogger<UserAadGroupController>> ();
             configMock = Substitute.For<IOptions<AadGroupConfig>>();
             serviceMock = Substitute.For<IUserGroupService>();
-            controller = new UserAADGroupController(loggerMock, serviceMock, configMock);
+            controller = new UserAadGroupController(loggerMock, serviceMock, configMock);
         } 
 
         [Test]

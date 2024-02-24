@@ -18,12 +18,26 @@ namespace ADP.Portal.Core.Azure.Services
 
         public async Task<string?> GetUserIdAsync(string userPrincipalName)
         {
-            return await azureAADGroupService.GetUserIdAsync(userPrincipalName);
+            try
+            {
+                return await azureAADGroupService.GetUserIdAsync(userPrincipalName);
+            }
+            catch (ODataError odataException)
+            {
+                if (odataException.ResponseStatusCode == 404)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         public async Task<bool> AddUserToGroupAsync(Guid groupId, string userPrincipalName, string userId)
         {
-            var isExistingMember = await azureAADGroupService.ExsistingMemberAsync(groupId, userPrincipalName);
+            var isExistingMember = await azureAADGroupService.ExistingMemberAsync(groupId, userPrincipalName);
             if (isExistingMember)
             {
                 logger.LogInformation("User:'{userPrincipalName}' already a member of the group:'{groupId}'", userPrincipalName, groupId);
