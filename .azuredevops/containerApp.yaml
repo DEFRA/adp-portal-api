@@ -50,9 +50,7 @@ properties:
           - name: AzureAd__ClientId
             value: {{clientid}}
           - name: AzureAd__ClientSecret
-            secretRef: clientsecret
-          - name: AADGroups__GroupId
-            value: {{groupid}}              
+            secretRef: clientsecret             
 
         resources:
           cpu: 0.5

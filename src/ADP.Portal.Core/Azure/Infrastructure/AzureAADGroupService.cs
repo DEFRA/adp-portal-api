@@ -15,22 +15,21 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
         public async Task<string?> GetUserIdAsync(string userPrincipalName)
         {
-
-            var user = await graphServiceClient.Users[userPrincipalName].GetAsync((requestConfiguration) =>
+            var user = await graphServiceClient.Users[userPrincipalName].GetAsync((request) =>
             {
-                requestConfiguration.QueryParameters.Select = ["Id"];
+                request.QueryParameters.Select = ["Id"];
             });
 
             return user?.Id;
         }
 
-        public async Task<bool> ExistingMemberAsync(Guid groupId, string userPrincipalName)
+        public async Task<bool> ExistingMemberAsync(string groupId, string userPrincipalName)
         {
-            var existingMember = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((requestConfiguration) =>
+            var existingMember = await graphServiceClient.Groups[groupId.ToString()].Members.GraphUser.GetAsync((request) =>
                    {
-                       requestConfiguration.QueryParameters.Count = true;
-                       requestConfiguration.QueryParameters.Filter = $"userPrincipalName eq '{userPrincipalName}'";
-                       requestConfiguration.Headers.Add("ConsistencyLevel", "eventual");
+                       request.QueryParameters.Count = true;
+                       request.QueryParameters.Filter = $"userPrincipalName eq '{userPrincipalName}'";
+                       request.Headers.Add("ConsistencyLevel", "eventual");
                    });
 
             if (existingMember?.Value != null && existingMember.Value.Count == 0)
@@ -42,16 +41,76 @@ namespace ADP.Portal.Core.Azure.Infrastructure
         }
 
 
-        public async Task<bool> AddToAADGroupAsync(Guid groupId, string userId)
+        public async Task<bool> AddGroupMemberAsync(string groupId, string directoryObjectId)
         {
             var requestBody = new ReferenceCreate
             {
-                OdataId = $"https://graph.microsoft.com/beta/directoryObjects/{userId}",
+                OdataId = $"https://graph.microsoft.com/beta/directoryObjects/{directoryObjectId}",
             };
 
             await graphServiceClient.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
 
             return true;
         }
+
+        public async Task<bool> RemoveGroupMemberAsync(string groupId, string directoryObjectId)
+        {
+            await graphServiceClient.Groups[groupId.ToString()].Members[directoryObjectId].Ref.DeleteAsync();
+            return true;
+        }
+
+        public async Task<string?> GetGroupIdAsync(string groupName)
+        {
+
+            var existingGroup = await graphServiceClient.Groups.GetAsync((request) =>
+             {
+                 request.QueryParameters.Select = ["Id"];
+                 request.QueryParameters.Filter = $"displayName eq '{groupName}'";
+             });
+
+            if (existingGroup?.Value != null && existingGroup.Value.Count > 0)
+            {
+                return existingGroup.Value.First().Id;
+            }
+
+            return default;
+        }
+
+        public async Task<List<User>?> GetGroupMembersAsync(string groupId)
+        {
+            var result = await graphServiceClient.Groups[groupId].Members.GetAsync((request) =>
+            {
+                request.QueryParameters.Select = ["id", "userPrincipalName"];
+            });
+
+            if (result != null)
+            {
+                return result?.Value?.Select(item => (User)item).ToList();
+            }
+            return default;
+        }
+
+        public async Task<List<Group>?> GetGroupMemberShipsAsync(string groupId)
+        {
+            var result = await graphServiceClient.Groups[groupId].MemberOf.GetAsync((request) =>
+            {
+                request.QueryParameters.Select = ["id", "displayName"];
+            });
+
+
+            if (result != null)
+            {
+                return result?.Value?.Select(item => (Group)item).ToList();
+            }
+            return default;
+        }
+
+        public async Task<Group?> AddGroupAsync(Group group)
+        {
+            var result = await graphServiceClient.Groups.PostAsync(group);
+
+            return result;
+        }
+
     }
 }

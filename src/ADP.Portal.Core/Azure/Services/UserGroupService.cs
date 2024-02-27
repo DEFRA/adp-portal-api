@@ -1,7 +1,9 @@
+using ADP.Portal.Core.Azure.Entities;
 using ADP.Portal.Core.Azure.Infrastructure;
+using Mapster;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph.Models;
 using Microsoft.Graph.Models.ODataErrors;
-using Microsoft.TeamFoundation.Core.WebApi;
 
 namespace ADP.Portal.Core.Azure.Services
 {
@@ -20,12 +22,20 @@ namespace ADP.Portal.Core.Azure.Services
         {
             try
             {
-                return await azureAADGroupService.GetUserIdAsync(userPrincipalName);
+                var result = await azureAADGroupService.GetUserIdAsync(userPrincipalName);
+
+                if (!string.IsNullOrEmpty(result))
+                {
+                    logger.LogInformation("User '{userPrincipalName}' found.", userPrincipalName);
+                }
+               
+                return result;
             }
             catch (ODataError odataException)
             {
                 if (odataException.ResponseStatusCode == 404)
                 {
+                    logger.LogWarning("User '{userPrincipalName}' does not exist.", userPrincipalName);
                     return null;
                 }
                 else
@@ -35,19 +45,70 @@ namespace ADP.Portal.Core.Azure.Services
             }
         }
 
-        public async Task<bool> AddUserToGroupAsync(Guid groupId, string userPrincipalName, string userId)
+        public async Task<bool> AddGroupMemberAsync(string groupId, string userId)
         {
-            var isExistingMember = await azureAADGroupService.ExistingMemberAsync(groupId, userPrincipalName);
-            if (isExistingMember)
+            var result = await azureAADGroupService.AddGroupMemberAsync(groupId, userId);
+            if (result)
             {
-                logger.LogInformation("User:'{userPrincipalName}' already a member of the group:'{groupId}'", userPrincipalName, groupId);
+                logger.LogInformation("Added user({userId}) to group({groupId})", userId, groupId);
             }
-            else
+            return result;
+        }
+
+        public async Task<bool> RemoveGroupMemberAsync(string groupId, string userId)
+        {
+            var result = await azureAADGroupService.RemoveGroupMemberAsync(groupId, userId);
+
+            if (result)
             {
-                await azureAADGroupService.AddToAADGroupAsync(groupId, userId);
-                logger.LogInformation("User:'{userPrincipalName}' added to the group:{groupId}", userPrincipalName, groupId);
+                logger.LogInformation("Removed user({userId} from the group({groupId}))", userId, groupId);
             }
-            return true;
+
+            return result;
+        }
+
+        public async Task<string?> GetGroupIdAsync(string displayName)
+        {
+            var result = await azureAADGroupService.GetGroupIdAsync(displayName);
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                logger.LogInformation("Group '{displayName}' found.", displayName);
+            }
+
+            return result;
+
+        }
+        public async Task<List<AadGroupMember>?> GetGroupMembersAsync(string groupId)
+        {
+            var result = await azureAADGroupService.GetGroupMembersAsync(groupId);
+            if (result != null)
+            {
+                logger.LogInformation("Retrived group members({Count}) from group({groupId}))", result.Count, groupId);
+            }
+            return result.Adapt<List<AadGroupMember>>();
+        }
+
+        public async Task<List<AadGroup>?> GetGroupMemberShipsAsync(string groupId)
+        {
+            var result = await azureAADGroupService.GetGroupMemberShipsAsync(groupId);
+
+            if(result != null)
+            {
+                logger.LogInformation("Retrived group memberships({Count}) from group({groupId}))", result.Count, groupId);
+            }
+
+            return result.Adapt<List<AadGroup>>();
+        }
+
+        public async Task<string?> AddGroupAsync(AadGroup aadGroup)
+        {
+            var result = await azureAADGroupService.AddGroupAsync(aadGroup.Adapt<Group>());
+            if (result != null)
+            {
+                logger.LogInformation("Group '{DisplayName}' created", aadGroup.DisplayName);
+            }
+            return result?.Id;
         }
     }
 }

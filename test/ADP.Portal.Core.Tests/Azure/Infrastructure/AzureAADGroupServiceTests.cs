@@ -42,7 +42,7 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
         public async Task ExistingMemberAsync_UserExists_ReturnsTrue()
         {
             // Arrange
-            var groupId = Guid.NewGuid();
+            var groupId = Guid.NewGuid().ToString();
             var userPrincipalName = "test@domain.com";
             var user = new User { UserPrincipalName = userPrincipalName };
             graphServiceClientMock.Groups[groupId.ToString()].Members.GraphUser.GetAsync()
@@ -59,7 +59,7 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
         public async Task ExistingMemberAsync_UserDoesNotExist_ReturnsFalse()
         {
             // Arrange
-            var groupId = Guid.NewGuid();
+            var groupId = Guid.NewGuid().ToString();
             var userPrincipalName = "test@domain.com";
             graphServiceClientMock.Groups[groupId.ToString()].Members.GraphUser.GetAsync()
                .ReturnsForAnyArgs(new UserCollectionResponse() { Value = [] });
@@ -72,10 +72,10 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
         }
 
         [Test]
-        public async Task AddToAADGroupAsync_AddsUserToGroup()
+        public async Task AddGroupMemberAsync_AddsUserToGroup()
         {
             // Arrange
-            var groupId = Guid.NewGuid();
+            var groupId = Guid.NewGuid().ToString();
             var userId = "12345";
             var requestBody = new ReferenceCreate
             {
@@ -85,7 +85,7 @@ namespace ADP.Portal.Core.Tests.Azure.Infrastructure
             await graphServiceClientMock.Groups[groupId.ToString()].Members.Ref.PostAsync(requestBody);
 
             // Act
-            var result = await azureAadGroupService.AddToAADGroupAsync(groupId, userId);
+            var result = await azureAadGroupService.AddGroupMemberAsync(groupId, userId);
 
             // Assert
             

@@ -7,11 +7,13 @@ using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
 using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
+using ADP.Portal.Core.Git.Infrastructure;
+using ADP.Portal.Core.Git.Services;
 using Azure.Identity;
+using LibGit2Sharp;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System.Net.Http.Headers;
 
 namespace ADP.Portal.Api
 {
@@ -49,7 +51,7 @@ namespace ADP.Portal.Api
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
             builder.Services.Configure<AzureAdConfig>(builder.Configuration.GetSection("AzureAd"));
-            builder.Services.Configure<AadGroupConfig>(builder.Configuration.GetSection("AADGroups"));
+            builder.Services.Configure<AdpTeamConfigRepoConfig>(builder.Configuration.GetSection("AdpTeamConfigRepo"));
             builder.Services.AddScoped<IAzureCredential>(provider =>
             {
                 return new DefaultAzureCredentialWrapper();
@@ -69,21 +71,39 @@ namespace ADP.Portal.Api
             builder.Services.AddScoped(provider =>
             {
                 var azureAdConfig = provider.GetRequiredService<IOptions<AzureAdConfig>>().Value;
-                var clientSecretCredential = new ClientSecretCredential(azureAdConfig.TenantId, azureAdConfig.ClientId, azureAdConfig.ClientSecret);
+                var clientSecretCredential = new ClientSecretCredential(azureAdConfig.TenantId, azureAdConfig.SpClientId, azureAdConfig.SpClientSecret);
 
-                var graphBaseUrl = "https://graph.microsoft.com/v1.0"; 
+                var graphBaseUrl = "https://graph.microsoft.com/v1.0";
 
                 return new GraphServiceClient(clientSecretCredential, graphApiDefaultScope, graphBaseUrl);
 
             });
+
+            builder.Services.AddScoped<IRepository>(provider =>
+            {
+                var repoConfig = provider.GetRequiredService<IOptions<AdpTeamConfigRepoConfig>>().Value;
+                if (!Directory.Exists(Path.Combine(repoConfig.LocalPath, ".git")))
+                {
+                    Repository.Clone(repoConfig.RepoUrl, repoConfig.LocalPath, new CloneOptions() { BranchName = repoConfig.BranchName });
+                }
+                else
+                {
+                    using var repo = new Repository(repoConfig.LocalPath);
+                    var committer = new Signature(repoConfig.UserName, repoConfig.UserEmail, DateTimeOffset.Now);
+                    var result = Commands.Pull(repo, committer, new PullOptions());
+                }
+                return new Repository(repoConfig.LocalPath);
+            });
+
+            builder.Services.AddScoped<IGitOpsConfigRepository, GitOpsConfigRepository>();
+            builder.Services.AddScoped<IGitOpsConfigService, GitOpsConfigService>();
 
             builder.Services.EntitiesConfigure();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
-
         }
+
     }
 }
