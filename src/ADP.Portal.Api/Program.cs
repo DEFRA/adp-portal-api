@@ -84,7 +84,13 @@ namespace ADP.Portal.Api
                 var repoConfig = provider.GetRequiredService<IOptions<AdpTeamConfigRepoConfig>>().Value;
                 if (!Directory.Exists(Path.Combine(repoConfig.LocalPath, ".git")))
                 {
-                    Repository.Clone(repoConfig.RepoUrl, repoConfig.LocalPath, new CloneOptions() { BranchName = repoConfig.BranchName });
+                    var cloneOptions = new CloneOptions()
+                    {
+                        BranchName = repoConfig.BranchName
+
+                    };
+
+                    Repository.Clone(repoConfig.RepoUrl, repoConfig.LocalPath, cloneOptions);
                 }
                 else
                 {
