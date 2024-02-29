@@ -70,7 +70,7 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
             if (existingGroup?.Value != null && existingGroup.Value.Count > 0)
             {
-                return existingGroup.Value.First().Id;
+                return existingGroup.Value[0].Id;
             }
 
             return default;
@@ -85,7 +85,7 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
             if (result != null)
             {
-                return result?.Value?.Select(item => (User)item).ToList();
+                return result.Value?.Select(item => (User)item).ToList();
             }
             return default;
         }
@@ -100,7 +100,7 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
             if (result != null)
             {
-                return result?.Value?.Select(item => (Group)item).ToList();
+                return result.Value?.Select(item => (Group)item).ToList();
             }
             return default;
         }

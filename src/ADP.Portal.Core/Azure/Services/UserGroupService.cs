@@ -45,35 +45,35 @@ namespace ADP.Portal.Core.Azure.Services
             }
         }
 
-        public async Task<bool> AddGroupMemberAsync(string groupId, string userId)
+        public async Task<bool> AddGroupMemberAsync(string groupId, string memberId)
         {
-            var result = await azureAADGroupService.AddGroupMemberAsync(groupId, userId);
+            var result = await azureAADGroupService.AddGroupMemberAsync(groupId, memberId);
             if (result)
             {
-                logger.LogInformation("Added user({userId}) to group({groupId})", userId, groupId);
+                logger.LogInformation("Added user({memberId}) to group({groupId})", memberId, groupId);
             }
             return result;
         }
 
-        public async Task<bool> RemoveGroupMemberAsync(string groupId, string userId)
+        public async Task<bool> RemoveGroupMemberAsync(string groupId, string memberId)
         {
-            var result = await azureAADGroupService.RemoveGroupMemberAsync(groupId, userId);
+            var result = await azureAADGroupService.RemoveGroupMemberAsync(groupId, memberId);
 
             if (result)
             {
-                logger.LogInformation("Removed user({userId} from the group({groupId}))", userId, groupId);
+                logger.LogInformation("Removed user({memberId} from the group({groupId}))", memberId, groupId);
             }
 
             return result;
         }
 
-        public async Task<string?> GetGroupIdAsync(string displayName)
+        public async Task<string?> GetGroupIdAsync(string groupName)
         {
-            var result = await azureAADGroupService.GetGroupIdAsync(displayName);
+            var result = await azureAADGroupService.GetGroupIdAsync(groupName);
 
             if (!string.IsNullOrEmpty(result))
             {
-                logger.LogInformation("Group '{displayName}' found.", displayName);
+                logger.LogInformation("Group '{groupName}' found.", groupName);
             }
 
             return result;

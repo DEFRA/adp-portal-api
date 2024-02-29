@@ -11,9 +11,9 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
         Task<bool> ExistingMemberAsync(string groupId, string userPrincipalName);
 
-        Task<bool> AddGroupMemberAsync(string groupId, string userId);
+        Task<bool> AddGroupMemberAsync(string groupId, string directoryObjectId);
 
-        Task<bool> RemoveGroupMemberAsync(string groupId, string userId);
+        Task<bool> RemoveGroupMemberAsync(string groupId, string directoryObjectId);
 
         Task<string?> GetGroupIdAsync(string groupName);
 

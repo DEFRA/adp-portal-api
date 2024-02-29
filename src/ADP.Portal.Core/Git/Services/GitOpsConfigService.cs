@@ -54,7 +54,7 @@ namespace ADP.Portal.Core.Git.Services
                     var groupId = await userGroupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
-                    if (group.ManageMembersOnly == false && string.IsNullOrEmpty(groupId))
+                    if (!group.ManageMembersOnly && string.IsNullOrEmpty(groupId))
                     {
                         logger.LogInformation("Creating a new Group({})", group.DisplayName);
                         var aadGroup = group.Adapt<AadGroup>();
@@ -86,39 +86,42 @@ namespace ADP.Portal.Core.Git.Services
 
         private async Task SyncMembersAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
         {
-            if (groupId != null)
+            if (groupId == null)
             {
-                var existingMembers = new List<AadGroupMember>();
-                if (!isNewGroup)
-                {
-                    existingMembers = await userGroupService.GetGroupMembersAsync(groupId);
-                }
+                return;
+            }
 
-                if (existingMembers != null && existingMembers.Count > 0)
+            var existingMembers = new List<AadGroupMember>();
+            if (!isNewGroup)
+            {
+                existingMembers = await userGroupService.GetGroupMembersAsync(groupId);
+            }
+
+            if (existingMembers?.Count > 0)
+            {
+                foreach (var member in existingMembers)
                 {
-                    foreach (var member in existingMembers)
+                    if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase))
                     {
-                        if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase))
-                        {
-                            await userGroupService.RemoveGroupMemberAsync(groupId, member.Id);
-                        }
+                        await userGroupService.RemoveGroupMemberAsync(groupId, member.Id);
                     }
                 }
+            }
 
-                foreach (var member in group.Members)
+            foreach (var member in group.Members)
+            {
+                if (existingMembers == null || (existingMembers.Select(i => i.UserPrincipalName).Contains(member, StringComparer.OrdinalIgnoreCase) == false))
                 {
-                    if (existingMembers == null || (existingMembers.Select(i => i.UserPrincipalName).Contains(member, StringComparer.OrdinalIgnoreCase) == false))
-                    {
-                        var userid = await userGroupService.GetUserIdAsync(member);
+                    var userid = await userGroupService.GetUserIdAsync(member);
 
-                        if (userid == null)
-                        {
-                            result.Error.Add($"User '{member}' not found.");
-                        }
-                        else
-                        {
-                            await userGroupService.AddGroupMemberAsync(groupId, userid);
-                        }
+                    if (userid == null)
+                    {
+                        result.Error.Add($"User '{member}' not found.");
+                        continue;
+                    }
+                    else
+                    {
+                        await userGroupService.AddGroupMemberAsync(groupId, userid);
                     }
                 }
             }
@@ -126,38 +129,41 @@ namespace ADP.Portal.Core.Git.Services
 
         private async Task SyncMembershipsAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool IsNewGroup)
         {
-            if (groupId != null)
+            if (groupId == null)
             {
-                var existingMemberShips = new List<AadGroup>();
-                if (!IsNewGroup)
-                {
-                    existingMemberShips = await userGroupService.GetGroupMemberShipsAsync(groupId);
-                }
+                return;
+            }
 
-                if (existingMemberShips != null && existingMemberShips.Count > 0)
+            var existingMemberShips = new List<AadGroup>();
+            if (!IsNewGroup)
+            {
+                existingMemberShips = await userGroupService.GetGroupMemberShipsAsync(groupId);
+            }
+
+            if (existingMemberShips?.Count > 0)
+            {
+                foreach (var memberShip in existingMemberShips)
                 {
-                    foreach (var memberShip in existingMemberShips)
+                    if (memberShip.Id != null && !group.GroupMemberships.Contains(memberShip.DisplayName, StringComparer.OrdinalIgnoreCase))
                     {
-                        if (memberShip.Id != null && !group.GroupMemberships.Contains(memberShip.DisplayName, StringComparer.OrdinalIgnoreCase))
-                        {
-                            await userGroupService.RemoveGroupMemberAsync(memberShip.Id, groupId);
-                        }
+                        await userGroupService.RemoveGroupMemberAsync(memberShip.Id, groupId);
                     }
                 }
+            }
 
-                foreach (var groupMembership in group.GroupMemberships)
+            foreach (var groupMembership in group.GroupMemberships)
+            {
+                if (existingMemberShips == null || (existingMemberShips.Select(item => item.DisplayName).Contains(groupMembership, StringComparer.OrdinalIgnoreCase) == false))
                 {
-                    if (existingMemberShips == null || (existingMemberShips.Select(item => item.DisplayName).Contains(groupMembership, StringComparer.OrdinalIgnoreCase) == false))
+                    var groupMembershipId = await userGroupService.GetGroupIdAsync(groupMembership);
+                    if (groupMembershipId == null)
                     {
-                        var groupMembershipId = await userGroupService.GetGroupIdAsync(groupMembership);
-                        if (groupMembershipId == null)
-                        {
-                            result.Error.Add($"Membership Group '{groupMembership}' not found.");
-                        }
-                        else
-                        {
-                            await userGroupService.AddGroupMemberAsync(groupMembershipId, groupId);
-                        }
+                        result.Error.Add($"Membership Group '{groupMembership}' not found.");
+                        continue;
+                    }
+                    else
+                    {
+                        await userGroupService.AddGroupMemberAsync(groupMembershipId, groupId);
                     }
                 }
             }

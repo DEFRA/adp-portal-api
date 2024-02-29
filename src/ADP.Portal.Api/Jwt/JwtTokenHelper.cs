@@ -8,7 +8,7 @@ namespace ADP.Portal.Api.Jwt
 {
     public static class JwtTokenHelper
     {
-        private static readonly long TicksSince197011 = new DateTime(1970, 1, 1).Ticks;
+        private static readonly long TicksSince197011 = DateTime.UnixEpoch.Ticks;
         public static string CreateEncodedJwtToken(string privateKeyBae64, int githubAppId, int expirationSeconds = 600, TimeSpan? iatOffset = null)
         {
             var utcNow = DateTime.UtcNow.Add(iatOffset ?? TimeSpan.Zero);

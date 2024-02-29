@@ -95,7 +95,7 @@ namespace ADP.Portal.Api
             builder.Services.AddSwaggerGen();
         }
 
-        private static IGitHubClient GetGitHubClient(AdpTeamGitRepoConfig repoConfig)
+        private static GitHubClient GetGitHubClient(AdpTeamGitRepoConfig repoConfig)
         {
             var gitHubAppName = repoConfig.Auth.AppName.Replace(" ", "");
 
