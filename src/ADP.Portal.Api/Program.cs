@@ -10,8 +10,6 @@ using ADP.Portal.Core.Azure.Services;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Git.Services;
 using Azure.Identity;
-using GitHubJwt;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
 using Octokit;
@@ -116,7 +114,7 @@ namespace ADP.Portal.Api
 
         private static string GenerateJwtToken(string privateKeyBae64, int appId, int expirationSeconds = 600)
         {
-            var options = new GitHubJwtFactoryOptions
+            var options = new GitHubJwt.GitHubJwtFactoryOptions
             {
                 AppIntegrationId = appId,
                 ExpirationSeconds = expirationSeconds
@@ -125,8 +123,8 @@ namespace ADP.Portal.Api
             byte[] data = Convert.FromBase64String(privateKeyBae64);
             string decodedString = Encoding.UTF8.GetString(data);
 
-            var generator = new GitHubJwtFactory(
-            new StringPrivateKeySource(decodedString), options);
+            var generator = new GitHubJwt.GitHubJwtFactory(
+            new GitHubJwt.StringPrivateKeySource(decodedString), options);
 
             return generator.CreateEncodedJwtToken();
         }
