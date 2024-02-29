@@ -1,6 +1,8 @@
 ﻿using ADP.Portal.Api.Config;
 using ADP.Portal.Api.Models;
+using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Services;
+using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -12,12 +14,14 @@ namespace ADP.Portal.Api.Controllers
     {
         private readonly IGitOpsConfigService gitOpsConfigService;
         public readonly IOptions<AzureAdConfig> azureAdConfig;
+        private readonly IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfig;
 
         public AadGroupController(IGitOpsConfigService gitOpsConfigService,
-            IOptions<AzureAdConfig> azureAdConfig)
+            IOptions<AzureAdConfig> azureAdConfig , IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfig)
         {
             this.gitOpsConfigService = gitOpsConfigService;
             this.azureAdConfig = azureAdConfig;
+            this.adpTeamGitRepoConfig = adpTeamGitRepoConfig;
         }
 
         [HttpPut("sync/{teamName}/{syncConfigtype}")]
@@ -28,10 +32,10 @@ namespace ADP.Portal.Api.Controllers
                 return BadRequest("Invalid sync config type.");
             }
 
-            var tenant = azureAdConfig.Value.DirectoryName;
             var configType = (ConfigType)syncConfigtypeEnum;
+            var teamRepo = adpTeamGitRepoConfig.Value.Adapt<GitRepo>();
 
-            var isConfigExists = gitOpsConfigService.IsConfigExists(teamName, configType, tenant);
+            var isConfigExists = await gitOpsConfigService.IsConfigExistsAsync(teamName, configType, teamRepo);
             if (!isConfigExists)
             {
                 return BadRequest($"Team '{teamName}' config not found."); 
@@ -39,7 +43,7 @@ namespace ADP.Portal.Api.Controllers
 
             var ownerId = azureAdConfig.Value.SpObjectId;
 
-            var result = await gitOpsConfigService.SyncGroupsAsync(teamName, ownerId, configType, tenant);
+            var result = await gitOpsConfigService.SyncGroupsAsync(teamName, ownerId, configType, teamRepo);
 
             if(result.Error.Count> 0)
             {

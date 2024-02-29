@@ -10,10 +10,12 @@ using ADP.Portal.Core.Azure.Services;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Git.Services;
 using Azure.Identity;
-using LibGit2Sharp;
+using GitHubJwt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
+using Octokit;
+using System.Text;
 
 namespace ADP.Portal.Api
 {
@@ -51,7 +53,7 @@ namespace ADP.Portal.Api
             builder.Services.Configure<AdoConfig>(builder.Configuration.GetSection("Ado"));
             builder.Services.Configure<AdpAdoProjectConfig>(builder.Configuration.GetSection("AdpAdoProject"));
             builder.Services.Configure<AzureAdConfig>(builder.Configuration.GetSection("AzureAd"));
-            builder.Services.Configure<AdpTeamConfigRepoConfig>(builder.Configuration.GetSection("AdpTeamConfigRepo"));
+            builder.Services.Configure<AdpTeamGitRepoConfig>(builder.Configuration.GetSection("AdpTeamGitRepo"));
             builder.Services.AddScoped<IAzureCredential>(provider =>
             {
                 return new DefaultAzureCredentialWrapper();
@@ -79,26 +81,27 @@ namespace ADP.Portal.Api
 
             });
 
-            builder.Services.AddScoped<IRepository>(provider =>
+            builder.Services.AddScoped<IGitHubClient>(provider =>
             {
-                var repoConfig = provider.GetRequiredService<IOptions<AdpTeamConfigRepoConfig>>().Value;
-                if (!Directory.Exists(Path.Combine(repoConfig.LocalPath, ".git")))
-                {
-                    var cloneOptions = new CloneOptions()
-                    {
-                        BranchName = repoConfig.BranchName
+                var repoConfig = provider.GetRequiredService<IOptions<AdpTeamGitRepoConfig>>().Value;
 
-                    };
+                var gitHubAppName = repoConfig.Auth.AppName.Replace(" ", "");
 
-                    Repository.Clone(repoConfig.RepoUrl, repoConfig.LocalPath, cloneOptions);
-                }
-                else
+                var appClient = new GitHubClient(new ProductHeaderValue(gitHubAppName))
                 {
-                    using var repo = new Repository(repoConfig.LocalPath);
-                    var committer = new Signature(repoConfig.UserName, repoConfig.UserEmail, DateTimeOffset.Now);
-                    var result = Commands.Pull(repo, committer, new PullOptions());
-                }
-                return new Repository(repoConfig.LocalPath);
+                    Credentials = new Credentials(GenerateJwtToken(repoConfig.Auth.PrivateKeyBase64, repoConfig.Auth.AppId), AuthenticationType.Bearer)
+                };
+
+                var installations = appClient.GitHubApps.GetAllInstallationsForCurrent().Result;
+
+                var instationId = installations.First(i => i.Account.Login.Equals(repoConfig.Organisation, StringComparison.CurrentCultureIgnoreCase)).Id;
+
+                var response = appClient.GitHubApps.CreateInstallationToken(instationId).Result;
+
+                return new GitHubClient(new ProductHeaderValue($"{gitHubAppName}-{instationId}"))
+                {
+                    Credentials = new Credentials(response.Token)
+                };
             });
 
             builder.Services.AddScoped<IGitOpsConfigRepository, GitOpsConfigRepository>();
@@ -109,6 +112,23 @@ namespace ADP.Portal.Api
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+        }
+
+        private static string GenerateJwtToken(string privateKeyBae64, int appId, int expirationSeconds = 600)
+        {
+            var options = new GitHubJwtFactoryOptions
+            {
+                AppIntegrationId = appId,
+                ExpirationSeconds = expirationSeconds
+            };
+
+            byte[] data = Convert.FromBase64String(privateKeyBae64);
+            string decodedString = Encoding.UTF8.GetString(data);
+
+            var generator = new GitHubJwtFactory(
+            new StringPrivateKeySource(decodedString), options);
+
+            return generator.CreateEncodedJwtToken();
         }
 
     }

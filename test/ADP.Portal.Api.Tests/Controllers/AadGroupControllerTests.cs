@@ -14,7 +14,8 @@ namespace ADP.Portal.Api.Tests.Controllers
     public class AadGroupControllerTests
     {
         private readonly AadGroupController controller;
-        private readonly IOptions<AzureAdConfig> configMock;
+        private readonly IOptions<AzureAdConfig> azureAdConfigMock;
+        private readonly IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfigMock;
         private readonly IGitOpsConfigService gitOpsConfigServiceMock;
 
         [SetUp]
@@ -25,9 +26,10 @@ namespace ADP.Portal.Api.Tests.Controllers
 
         public AadGroupControllerTests()
         {
-            configMock = Substitute.For<IOptions<AzureAdConfig>>();
+            azureAdConfigMock = Substitute.For<IOptions<AzureAdConfig>>();
+            adpTeamGitRepoConfigMock = Substitute.For<IOptions<AdpTeamGitRepoConfig>>();
             gitOpsConfigServiceMock = Substitute.For<IGitOpsConfigService>();
-            controller = new AadGroupController(gitOpsConfigServiceMock, configMock);
+            controller = new AadGroupController(gitOpsConfigServiceMock, azureAdConfigMock, adpTeamGitRepoConfigMock);
         }
     }
 }

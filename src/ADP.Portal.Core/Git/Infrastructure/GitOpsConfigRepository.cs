@@ -1,47 +1,24 @@
-﻿using LibGit2Sharp;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+﻿using ADP.Portal.Core.Git.Entities;
+using Octokit;
 
 
 namespace ADP.Portal.Core.Git.Infrastructure
 {
     public class GitOpsConfigRepository : IGitOpsConfigRepository
     {
-        private readonly IRepository repository;
+        private readonly IGitHubClient gitHubClient;
 
-        public GitOpsConfigRepository(IRepository repository)
+        public GitOpsConfigRepository(IGitHubClient gitHubClient)
         {
-            this.repository = repository;
+            this.gitHubClient = gitHubClient;
         }
 
-        public bool IsConfigExists(string fileName)
+        public async Task<T?> GetConfigAsync<T>(string fileName, GitRepo gitRepo)
         {
-            var latestCommit = repository.Head.Tip;
-            var file = latestCommit[fileName];
-
-            return file != null;
-        }
-
-        public T? ReadYamlFromRepo<T>(string fileName)
-        {
-            var latestCommit = repository.Head.Tip;
-
-            var file = latestCommit[fileName];
-
-            if (file != null)
+            var file = await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.RepoName, fileName, gitRepo.BranchName);
+            if (typeof(T) == typeof(string))
             {
-                var blob = (Blob)repository.Lookup(file.Target.Id);
-                if (blob != null)
-                {
-                    var yamlContent = blob.GetContentText();
-
-                    var deserializer = new DeserializerBuilder()
-                            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                            .Build();
-
-                    var result = deserializer.Deserialize<T>(yamlContent);
-                    return result;
-                }
+                return (T)Convert.ChangeType(file[0].Content, typeof(T));
             }
 
             return default;

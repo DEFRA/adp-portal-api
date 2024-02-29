@@ -1,8 +1,9 @@
-﻿namespace ADP.Portal.Core.Git.Infrastructure
+﻿using ADP.Portal.Core.Git.Entities;
+
+namespace ADP.Portal.Core.Git.Infrastructure
 {
     public interface IGitOpsConfigRepository
     {
-        bool IsConfigExists(string fileName);
-        T? ReadYamlFromRepo<T>(string fileName);
+        Task<T?> GetConfigAsync<T>(string fileName, GitRepo gitRepo);
     }
 }

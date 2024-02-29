@@ -4,7 +4,7 @@ namespace ADP.Portal.Core.Git.Services
 {
     public interface IGitOpsConfigService
     {
-        bool IsConfigExists(string teamName, ConfigType configTypes, string tenant);
-        Task<GroupSyncResult> SyncGroupsAsync(string teamName, string ownerId, ConfigType configType, string tenant);
+        Task<bool> IsConfigExistsAsync(string teamName, ConfigType configTypes, GitRepo gitRepo);
+        Task<GroupSyncResult> SyncGroupsAsync(string teamName, string ownerId, ConfigType configType, GitRepo gitRepo);
     }
 }

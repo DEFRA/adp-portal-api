@@ -54,4 +54,6 @@ extends:
         - adp-portal-api-ssv3
         - adp-portal-api-ssv5
       variables:   
-        - adp-portal-api-ClientSecret
+        - ADP-PORTAL-API-CLIENT-SECRET
+        - ADP-PORTAL-API-GITHUB-APP-ID
+        - ADP-PORTAL-API-PRIVATE-KEY-BASE64

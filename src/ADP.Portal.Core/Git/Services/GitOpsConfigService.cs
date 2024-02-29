@@ -4,6 +4,7 @@ using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using Mapster;
 using Microsoft.Extensions.Logging;
+using Octokit;
 using System.Text.RegularExpressions;
 
 namespace ADP.Portal.Core.Git.Services
@@ -21,28 +22,35 @@ namespace ADP.Portal.Core.Git.Services
             this.userGroupService = userGroupService;
         }
 
-        public bool IsConfigExists(string teamName, ConfigType configType, string tenant)
+        public async Task<bool> IsConfigExistsAsync(string teamName, ConfigType configType, GitRepo gitRepo)
         {
-            var filenName = $"{tenant}/{teamName}/{ToKebabCase(configType.ToString())}.yaml";
-
-            return gitOpsConfigRepository.IsConfigExists(filenName); 
+            var fileName = GetFileName(teamName, configType);
+            try
+            {
+                var result = await gitOpsConfigRepository.GetConfigAsync<string>(fileName, gitRepo);
+                return !string.IsNullOrEmpty(result);
+            }
+            catch (NotFoundException)
+            {
+                return false;
+            }
         }
 
-        public async Task<GroupSyncResult> SyncGroupsAsync(string teamName, string ownerId, ConfigType configType, string tenant)
+        public async Task<GroupSyncResult> SyncGroupsAsync(string teamName, string ownerId, ConfigType configType, GitRepo gitRepo)
         {
             var result = new GroupSyncResult();
 
-            var filenName = $"{tenant}/{teamName}/{ToKebabCase(configType.ToString())}.yaml";
+            var filenName = GetFileName(teamName, configType);
 
-            logger.LogInformation("Getting config({configType}) for the Team({teamName})'", configType.ToString(), teamName); 
+            logger.LogInformation("Getting config({configType}) for the Team({teamName})'", configType.ToString(), teamName);
 
-            var groupsConfig = gitOpsConfigRepository.ReadYamlFromRepo<GroupsRoot>(filenName);
+            var groupsConfig = await gitOpsConfigRepository.GetConfigAsync<GroupsRoot>(filenName, gitRepo);
 
             if (groupsConfig != null)
             {
                 foreach (var group in groupsConfig.Groups)
                 {
-                    logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName); 
+                    logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName);
                     var groupId = await userGroupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
@@ -153,6 +161,12 @@ namespace ADP.Portal.Core.Git.Services
                     }
                 }
             }
+        }
+
+
+        private static string GetFileName(string teamName, ConfigType configType)
+        {
+            return $"{teamName}/{ToKebabCase(configType.ToString())}.yaml";
         }
         private static string ToKebabCase(string name)
         {
