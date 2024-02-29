@@ -1,5 +1,7 @@
 ﻿using ADP.Portal.Core.Git.Entities;
 using Octokit;
+using YamlDotNet.Serialization.NamingConventions;
+using YamlDotNet.Serialization;
 
 
 namespace ADP.Portal.Core.Git.Infrastructure
@@ -21,7 +23,12 @@ namespace ADP.Portal.Core.Git.Infrastructure
                 return (T)Convert.ChangeType(file[0].Content, typeof(T));
             }
 
-            return default;
+            var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+
+            var result = deserializer.Deserialize<T>(file[0].Content);
+            return result;
         }
     }
 }

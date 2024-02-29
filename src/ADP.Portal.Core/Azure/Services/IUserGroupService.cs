@@ -16,9 +16,9 @@ namespace ADP.Portal.Core.Azure.Services
 
         Task<string?> GetGroupIdAsync(string groupName);
 
-        Task<List<AadGroupMember>?> GetGroupMembersAsync(string groupId);
+        Task<List<AadGroupMember>> GetGroupMembersAsync(string groupId);
 
-        Task<List<AadGroup>?> GetGroupMemberShipsAsync(string groupId);
+        Task<List<AadGroup>> GetGroupMemberShipsAsync(string groupId);
 
         Task<string?> AddGroupAsync(AadGroup aadGroup);
     }

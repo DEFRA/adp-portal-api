@@ -79,7 +79,7 @@ namespace ADP.Portal.Api
 
             });
 
-            builder.Services.AddScoped(provider =>
+            builder.Services.AddScoped<IGitHubClient>(provider =>
             {
                 var repoConfig = provider.GetRequiredService<IOptions<AdpTeamGitRepoConfig>>().Value;
                 return GetGitHubClient(repoConfig);

@@ -4,6 +4,7 @@ using Mapster;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph.Models;
 using Microsoft.Graph.Models.ODataErrors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ADP.Portal.Core.Azure.Services
 {
@@ -79,26 +80,29 @@ namespace ADP.Portal.Core.Azure.Services
             return result;
 
         }
-        public async Task<List<AadGroupMember>?> GetGroupMembersAsync(string groupId)
+        public async Task<List<AadGroupMember>> GetGroupMembersAsync(string groupId)
         {
             var result = await azureAADGroupService.GetGroupMembersAsync(groupId);
             if (result != null)
             {
                 logger.LogInformation("Retrived group members({Count}) from group({groupId}))", result.Count, groupId);
+                return result.Adapt<List<AadGroupMember>>();
             }
-            return result.Adapt<List<AadGroupMember>>();
+
+            return [];
         }
 
-        public async Task<List<AadGroup>?> GetGroupMemberShipsAsync(string groupId)
+        public async Task<List<AadGroup>> GetGroupMemberShipsAsync(string groupId)
         {
             var result = await azureAADGroupService.GetGroupMemberShipsAsync(groupId);
 
             if(result != null)
             {
                 logger.LogInformation("Retrived group memberships({Count}) from group({groupId}))", result.Count, groupId);
+                return result.Adapt<List<AadGroup>>();
             }
 
-            return result.Adapt<List<AadGroup>>();
+            return [];
         }
 
         public async Task<string?> AddGroupAsync(AadGroup aadGroup)

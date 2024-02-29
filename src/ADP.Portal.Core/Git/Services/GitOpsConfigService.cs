@@ -4,17 +4,20 @@ using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using Mapster;
 using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.Work.WebApi;
 using Octokit;
 using System.Text.RegularExpressions;
 
 namespace ADP.Portal.Core.Git.Services
 {
-    public class GitOpsConfigService : IGitOpsConfigService
+    public partial class GitOpsConfigService : IGitOpsConfigService
     {
         private readonly IGitOpsConfigRepository gitOpsConfigRepository;
         private readonly ILogger<GitOpsConfigService> logger;
         private readonly IUserGroupService userGroupService;
 
+        [GeneratedRegex("(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])")]
+        private static partial Regex KebadCaseRegex();
         public GitOpsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsConfigService> logger, IUserGroupService userGroupService)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
@@ -54,7 +57,7 @@ namespace ADP.Portal.Core.Git.Services
                     var groupId = await userGroupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
-                    if (!group.ManageMembersOnly && string.IsNullOrEmpty(groupId))
+                    if (group.ManageMembersOnly == false && string.IsNullOrEmpty(groupId))
                     {
                         logger.LogInformation("Creating a new Group({})", group.DisplayName);
                         var aadGroup = group.Adapt<AadGroup>();
@@ -91,37 +94,31 @@ namespace ADP.Portal.Core.Git.Services
                 return;
             }
 
-            var existingMembers = new List<AadGroupMember>();
-            if (!isNewGroup)
-            {
-                existingMembers = await userGroupService.GetGroupMembersAsync(groupId);
-            }
+            var existingMembers = isNewGroup ? [] : await userGroupService.GetGroupMembersAsync(groupId);
 
-            if (existingMembers?.Count > 0)
+            foreach (var member in existingMembers)
             {
-                foreach (var member in existingMembers)
+                if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase))
                 {
-                    if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase))
-                    {
-                        await userGroupService.RemoveGroupMemberAsync(groupId, member.Id);
-                    }
+                    await userGroupService.RemoveGroupMemberAsync(groupId, member.Id);
                 }
             }
 
+            var existingMemberNames = existingMembers.Select(i => i.UserPrincipalName).ToList();
+
             foreach (var member in group.Members)
             {
-                if (existingMembers == null || (existingMembers.Select(i => i.UserPrincipalName).Contains(member, StringComparer.OrdinalIgnoreCase) == false))
+                if (!existingMemberNames.Contains(member, StringComparer.OrdinalIgnoreCase))
                 {
-                    var userid = await userGroupService.GetUserIdAsync(member);
+                    var userId = await userGroupService.GetUserIdAsync(member);
 
-                    if (userid == null)
+                    if (userId == null)
                     {
                         result.Error.Add($"User '{member}' not found.");
-                        continue;
                     }
                     else
                     {
-                        await userGroupService.AddGroupMemberAsync(groupId, userid);
+                        await userGroupService.AddGroupMemberAsync(groupId, userId);
                     }
                 }
             }
@@ -134,32 +131,27 @@ namespace ADP.Portal.Core.Git.Services
                 return;
             }
 
-            var existingMemberShips = new List<AadGroup>();
-            if (!IsNewGroup)
-            {
-                existingMemberShips = await userGroupService.GetGroupMemberShipsAsync(groupId);
-            }
+            var existingMemberShips = IsNewGroup ? [] : await userGroupService.GetGroupMemberShipsAsync(groupId);
 
-            if (existingMemberShips?.Count > 0)
+
+            foreach (var memberShip in existingMemberShips)
             {
-                foreach (var memberShip in existingMemberShips)
+                if (memberShip.Id != null && !group.GroupMemberships.Contains(memberShip.DisplayName, StringComparer.OrdinalIgnoreCase))
                 {
-                    if (memberShip.Id != null && !group.GroupMemberships.Contains(memberShip.DisplayName, StringComparer.OrdinalIgnoreCase))
-                    {
-                        await userGroupService.RemoveGroupMemberAsync(memberShip.Id, groupId);
-                    }
+                    await userGroupService.RemoveGroupMemberAsync(memberShip.Id, groupId);
                 }
             }
 
+            var existingMembershipNames = existingMemberShips.Select(i => i.DisplayName).ToList();
+
             foreach (var groupMembership in group.GroupMemberships)
             {
-                if (existingMemberShips == null || (existingMemberShips.Select(item => item.DisplayName).Contains(groupMembership, StringComparer.OrdinalIgnoreCase) == false))
+                if (!existingMembershipNames.Contains(groupMembership, StringComparer.OrdinalIgnoreCase))
                 {
                     var groupMembershipId = await userGroupService.GetGroupIdAsync(groupMembership);
                     if (groupMembershipId == null)
                     {
                         result.Error.Add($"Membership Group '{groupMembership}' not found.");
-                        continue;
                     }
                     else
                     {
@@ -169,14 +161,13 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-
         private static string GetFileName(string teamName, ConfigType configType)
         {
             return $"{teamName}/{ToKebabCase(configType.ToString())}.yaml";
         }
         private static string ToKebabCase(string name)
         {
-            return Regex.Replace(name, "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])", "-$1").ToLower();
+            return KebadCaseRegex().Replace(name, "-$1").ToLower();
         }
     }
 }
