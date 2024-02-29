@@ -1,4 +1,4 @@
-﻿namespace ADP.Portal.Core.Git.Services
+﻿namespace ADP.Portal.Core.Git.Entities
 {
     public enum ConfigType
     {

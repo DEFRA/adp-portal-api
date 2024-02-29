@@ -1,5 +1,6 @@
 
 using ADP.Portal.Api.Config;
+using ADP.Portal.Api.Jwt;
 using ADP.Portal.Api.Mapster;
 using ADP.Portal.Api.Providers;
 using ADP.Portal.Api.Wrappers;
@@ -13,7 +14,6 @@ using Azure.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
 using Octokit;
-using System.Text;
 
 namespace ADP.Portal.Api
 {
@@ -79,27 +79,10 @@ namespace ADP.Portal.Api
 
             });
 
-            builder.Services.AddScoped<IGitHubClient>(provider =>
+            builder.Services.AddScoped(provider =>
             {
                 var repoConfig = provider.GetRequiredService<IOptions<AdpTeamGitRepoConfig>>().Value;
-
-                var gitHubAppName = repoConfig.Auth.AppName.Replace(" ", "");
-
-                var appClient = new GitHubClient(new ProductHeaderValue(gitHubAppName))
-                {
-                    Credentials = new Credentials(GenerateJwtToken(repoConfig.Auth.PrivateKeyBase64, repoConfig.Auth.AppId), AuthenticationType.Bearer)
-                };
-
-                var installations = appClient.GitHubApps.GetAllInstallationsForCurrent().Result;
-
-                var instationId = installations.First(i => i.Account.Login.Equals(repoConfig.Organisation, StringComparison.CurrentCultureIgnoreCase)).Id;
-
-                var response = appClient.GitHubApps.CreateInstallationToken(instationId).Result;
-
-                return new GitHubClient(new ProductHeaderValue($"{gitHubAppName}-{instationId}"))
-                {
-                    Credentials = new Credentials(response.Token)
-                };
+                return GetGitHubClient(repoConfig);
             });
 
             builder.Services.AddScoped<IGitOpsConfigRepository, GitOpsConfigRepository>();
@@ -112,21 +95,25 @@ namespace ADP.Portal.Api
             builder.Services.AddSwaggerGen();
         }
 
-        private static string GenerateJwtToken(string privateKeyBae64, int appId, int expirationSeconds = 600)
+        private static IGitHubClient GetGitHubClient(AdpTeamGitRepoConfig repoConfig)
         {
-            var options = new GitHubJwt.GitHubJwtFactoryOptions
+            var gitHubAppName = repoConfig.Auth.AppName.Replace(" ", "");
+
+            var appClient = new GitHubClient(new ProductHeaderValue(gitHubAppName))
             {
-                AppIntegrationId = appId,
-                ExpirationSeconds = expirationSeconds
+                Credentials = new Credentials(JwtTokenHelper.CreateEncodedJwtToken(repoConfig.Auth.PrivateKeyBase64, repoConfig.Auth.AppId), AuthenticationType.Bearer)
             };
 
-            byte[] data = Convert.FromBase64String(privateKeyBae64);
-            string decodedString = Encoding.UTF8.GetString(data);
+            var installations = appClient.GitHubApps.GetAllInstallationsForCurrent().Result;
 
-            var generator = new GitHubJwt.GitHubJwtFactory(
-            new GitHubJwt.StringPrivateKeySource(decodedString), options);
+            var instationId = installations.First(i => i.Account.Login.Equals(repoConfig.Organisation, StringComparison.CurrentCultureIgnoreCase)).Id;
 
-            return generator.CreateEncodedJwtToken();
+            var response = appClient.GitHubApps.CreateInstallationToken(instationId).Result;
+
+            return new GitHubClient(new ProductHeaderValue($"{gitHubAppName}-{instationId}"))
+            {
+                Credentials = new Credentials(response.Token)
+            };
         }
 
     }
