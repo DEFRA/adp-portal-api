@@ -225,11 +225,59 @@ namespace ADP.Portal.Core.Tests.Git.Services
             userGroupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns("existingGroupId");
             userGroupServiceMock.GetGroupMembersAsync(Arg.Any<string>()).Returns(exstingGroupMembers);
             userGroupServiceMock.GetGroupMemberShipsAsync(Arg.Any<string>()).Returns(groupMemberships);
+
             // Act
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
 
             // Assert
             Assert.That(result.Error, Is.Empty);
+        }
+
+        [Test]
+        public async Task SyncGroupsAsync_ErrorOccursWhileCreatingGroup_ReturnsErrorResult()
+        {
+            // Arrange
+            var groupsRoot = new GroupsRoot
+            {
+                Groups = [
+                   new() { DisplayName = "group1", ManageMembersOnly = false }
+               ]
+            };
+
+            gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
+
+            var fixture = new Fixture();
+            var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
+
+            // Act
+            var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
+
+            // Assert
+            Assert.That(result.Error, Is.Not.Empty);
+        }
+
+        [Test]
+        public async Task SyncGroupsAsync_ErrorOccursWhileAddingMembers_ReturnsErrorResult()
+        {
+            // Arrange
+            var groupsRoot = new GroupsRoot
+            {
+                Groups = [
+                   new Group() { DisplayName = "group1", ManageMembersOnly = false, Members = ["test@test"]  }
+               ]
+            };
+
+            gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
+
+            var fixture = new Fixture();
+            var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
+            userGroupServiceMock.GetUserIdAsync(groupsRoot.Groups[0].Members[0]).Returns("");
+
+            // Act
+            var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
+
+            // Assert
+            Assert.That(result.Error, Is.Not.Empty);
         }
     }
 }
