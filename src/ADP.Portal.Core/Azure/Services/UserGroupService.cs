@@ -62,7 +62,7 @@ namespace ADP.Portal.Core.Azure.Services
 
             if (result)
             {
-                logger.LogInformation("Removed user({memberId} from the group({groupId}))", memberId, groupId);
+                logger.LogInformation("Removed user({memberId}) from the group({groupId})", memberId, groupId);
             }
 
             return result;
@@ -85,7 +85,7 @@ namespace ADP.Portal.Core.Azure.Services
             var result = await azureAADGroupService.GetGroupMembersAsync(groupId);
             if (result != null)
             {
-                logger.LogInformation("Retrived group members({Count}) from group({groupId}))", result.Count, groupId);
+                logger.LogInformation("Retrieved group members({Count}) from group({groupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroupMember>>();
             }
 
@@ -98,7 +98,7 @@ namespace ADP.Portal.Core.Azure.Services
 
             if(result != null)
             {
-                logger.LogInformation("Retrived group memberships({Count}) from group({groupId}))", result.Count, groupId);
+                logger.LogInformation("Retrieved group memberships({Count}) from group({groupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroup>>();
             }
 
