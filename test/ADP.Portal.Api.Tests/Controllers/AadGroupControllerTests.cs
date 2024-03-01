@@ -50,13 +50,24 @@ namespace ADP.Portal.Api.Tests.Controllers
         }
 
         [Test]
+        public async Task SyncGroupsAsync_InvalidConfigType_ReturnsBadRequest()
+        {
+
+            // Act
+            var result = await controller.SyncGroupsAsync("teamName", "ValidSyncConfigType");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+        }
+
+        [Test]
         public async Task SyncGroupsAsync_ConfigDoesNotExist_ReturnsBadRequest()
         {
             // Arrange
             gitOpsConfigServiceMock.IsConfigExistsAsync(Arg.Any<string>(), Arg.Any<ConfigType>(), Arg.Any<GitRepo>()).Returns(false);
 
             // Act
-            var result = await controller.SyncGroupsAsync("teamName", "ValidSyncConfigType");
+            var result = await controller.SyncGroupsAsync("teamName", "UserGroupsMembers");
 
             // Assert
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
