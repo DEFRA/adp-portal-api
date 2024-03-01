@@ -64,6 +64,12 @@ properties:
             secretRef: sp-client-secret             
           - name: AzureAd__SpObjectId
             secretRef: sp-object-id 
+          - name: AdpTeamGitRepo__RepoName
+            value: "adp-team-onboard"
+          - name: AdpTeamGitRepo__BranchName
+            value: "main"
+          - name: AdpTeamGitRepo__Organisation
+            value: "defra-adp-sandpit"
           - name: AdpTeamGitRepo__Auth__AppName
             value: "ADP Portal API"
           - name: AdpTeamGitRepo__Auth__AppId
