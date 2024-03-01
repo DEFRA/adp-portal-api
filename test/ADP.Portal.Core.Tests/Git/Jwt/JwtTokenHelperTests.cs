@@ -1,4 +1,5 @@
 ﻿using ADP.Portal.Core.Git.Jwt;
+using Microsoft.Graph.Models.Security;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -13,14 +14,15 @@ namespace ADP.Portal.Core.Tests.Git.Jwt
     [TestFixture]
     public class JwtTokenHelperTests
     {
-        [Test]
-        public void CreateEncodedJwtToken_GivenValidInputs_ShouldReturnValidJwtToken()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CreateEncodedJwtToken_GivenValidInputs_ShouldReturnValidJwtToken(bool timeSpan)
         {
             // Arrange
             var privateKeyBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(GenerateTestPrivateKey()));
             var githubAppId = 123;
             var expirationSeconds = 600;
-            var iatOffset = TimeSpan.Zero;
+            TimeSpan? iatOffset = timeSpan? TimeSpan.Zero: null;
 
             // Act
             var token = JwtTokenHelper.CreateEncodedJwtToken(privateKeyBase64, githubAppId, expirationSeconds, iatOffset);
