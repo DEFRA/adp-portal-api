@@ -13,13 +13,12 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
     {
         private readonly IGitHubClient gitHubClientMock;
         private readonly GitOpsConfigRepository repository;
-        private readonly Fixture fixture;
+
 
         public GitOpsConfigRepositoryTests()
         {
             gitHubClientMock = Substitute.For<IGitHubClient>();
             repository = new GitOpsConfigRepository(gitHubClientMock);
-            fixture = new Fixture();
         }
 
         [Test]

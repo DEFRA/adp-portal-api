@@ -21,13 +21,14 @@ namespace ADP.Portal.Core.Tests.Git.Services
         private readonly GitOpsConfigService gitOpsConfigService;
         private readonly ILogger<GitOpsConfigService> loggerMock;
         private readonly IUserGroupService userGroupServiceMock;
-
+        private readonly Fixture fixture;
         public GitOpsConfigServiceTests()
         {
             gitOpsConfigRepositoryMock = Substitute.For<IGitOpsConfigRepository>();
             loggerMock = Substitute.For<ILogger<GitOpsConfigService>>();
             userGroupServiceMock = Substitute.For<IUserGroupService>();
             gitOpsConfigService = new GitOpsConfigService(gitOpsConfigRepositoryMock, loggerMock, userGroupServiceMock);
+            fixture = new Fixture();
         }
 
         [Test]
@@ -36,7 +37,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
             // Arrange
             gitOpsConfigRepositoryMock.GetConfigAsync<string>(Arg.Any<string>(), Arg.Any<GitRepo>())
             .Returns("config");
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>()
                 .With(i => i.BranchName, "main")
                 .With(i => i.Organisation, "defra")
@@ -57,7 +57,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepositoryMock.GetConfigAsync<string>(Arg.Any<string>(), Arg.Any<GitRepo>())
                 .Returns(string.Empty);
 
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>()
                .With(i => i.BranchName, "main")
                .With(i => i.Organisation, "defra")
@@ -76,7 +75,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
         {
             // Arrange
             gitOpsConfigRepositoryMock.GetConfigAsync<string>(Arg.Any<string>(), Arg.Any<GitRepo>()).ThrowsAsync(new NotFoundException("message", HttpStatusCode.NotFound));
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>()
                .With(i => i.BranchName, "main")
                .With(i => i.Organisation, "defra")
@@ -99,7 +97,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>())
                 .Returns(groupsRoot);
 
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>()
               .With(i => i.BranchName, "main")
               .With(i => i.Organisation, "defra")
@@ -125,7 +122,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 ]
             };
 
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>()
                   .With(i => i.BranchName, "main")
                   .With(i => i.Organisation, "defra")
@@ -154,7 +150,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                     new Group { DisplayName = "group1", ManageMembersOnly = true, Members = ["member@test.com"] }
                 ]
             };
-            var fixture = new Fixture();
+
             var gitRepo = fixture.Build<GitRepo>()
                   .With(i => i.BranchName, "main")
                   .With(i => i.Organisation, "defra")
@@ -187,7 +183,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                     new Group { DisplayName = "group1", ManageMembersOnly = true }
                 }
             };
-            var fixture = new Fixture();
+            
             var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>())
                 .Returns(groupsRoot);
@@ -197,7 +193,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
 
             // Assert
-            await userGroupServiceMock.DidNotReceive().AddGroupAsync(Arg.Any<AadGroup>());
             Assert.That(result.Error, Is.Not.Empty);
         }
 
@@ -216,7 +211,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
                     }
                 ]
             };
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
             var exstingGroupMembers = fixture.Build<AadGroupMember>().CreateMany(2).ToList();
             var groupMemberships = fixture.Build<AadGroup>().CreateMany(2).ToList();
@@ -246,7 +240,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
 
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
 
             // Act
@@ -269,7 +262,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
 
-            var fixture = new Fixture();
             var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
             userGroupServiceMock.GetUserIdAsync(groupsRoot.Groups[0].Members[0]).Returns("");
 

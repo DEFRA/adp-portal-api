@@ -19,11 +19,13 @@ namespace ADP.Portal.Api.Tests.Controllers
         private readonly IOptions<AzureAdConfig> azureAdConfigMock;
         private readonly IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfigMock;
         private readonly IGitOpsConfigService gitOpsConfigServiceMock;
+        private readonly Fixture fixture;
 
         [SetUp]
         public void SetUp()
         {
             TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
+            
         }
 
         public AadGroupControllerTests()
@@ -32,6 +34,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             adpTeamGitRepoConfigMock = Substitute.For<IOptions<AdpTeamGitRepoConfig>>();
             gitOpsConfigServiceMock = Substitute.For<IGitOpsConfigService>();
             controller = new AadGroupController(gitOpsConfigServiceMock, azureAdConfigMock, adpTeamGitRepoConfigMock);
+            fixture = new Fixture();
         }
 
         [Test]
@@ -67,7 +70,6 @@ namespace ADP.Portal.Api.Tests.Controllers
             gitOpsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<ConfigType>(), Arg.Any<GitRepo>())
                 .Returns(new GroupSyncResult { Error = new List<string> { "Error" } });
 
-            var fixture = new Fixture();
             adpTeamGitRepoConfigMock.Value.Returns(fixture.Create<AdpTeamGitRepoConfig>());
             azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
@@ -86,7 +88,6 @@ namespace ADP.Portal.Api.Tests.Controllers
             gitOpsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<ConfigType>(), Arg.Any<GitRepo>())
                 .Returns(new GroupSyncResult { Error = new List<string>() });
 
-            var fixture = new Fixture();
             adpTeamGitRepoConfigMock.Value.Returns(fixture.Create<AdpTeamGitRepoConfig>());
             azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
