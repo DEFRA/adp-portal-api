@@ -33,7 +33,7 @@ namespace ADP.Portal.Core.Tests.Git.Jwt
 
         }
 
-        public string GenerateTestPrivateKey()
+        public static string GenerateTestPrivateKey()
         {
             using var rsa = RSA.Create(2048);
             var privateKeyBytes = rsa.ExportRSAPrivateKey();

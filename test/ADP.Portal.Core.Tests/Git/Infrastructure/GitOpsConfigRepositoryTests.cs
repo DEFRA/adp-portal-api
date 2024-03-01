@@ -58,7 +58,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             }
         }
 
-        private RepositoryContent CreateRepositoryContent(string content)
+        private static RepositoryContent CreateRepositoryContent(string content)
         {
             var contentBytes = Encoding.UTF8.GetBytes(content);
             var encodedContent = Convert.ToBase64String(contentBytes);
