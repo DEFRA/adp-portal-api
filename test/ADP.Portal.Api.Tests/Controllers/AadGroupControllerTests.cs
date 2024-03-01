@@ -5,6 +5,7 @@ using ADP.Portal.Core.Git.Services;
 using AutoFixture;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
@@ -17,6 +18,7 @@ namespace ADP.Portal.Api.Tests.Controllers
     {
         private readonly AadGroupController controller;
         private readonly IOptions<AzureAdConfig> azureAdConfigMock;
+        private readonly ILogger<AadGroupController> loggerMock;
         private readonly IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfigMock;
         private readonly IGitOpsConfigService gitOpsConfigServiceMock;
         private readonly Fixture fixture;
@@ -32,8 +34,9 @@ namespace ADP.Portal.Api.Tests.Controllers
         {
             azureAdConfigMock = Substitute.For<IOptions<AzureAdConfig>>();
             adpTeamGitRepoConfigMock = Substitute.For<IOptions<AdpTeamGitRepoConfig>>();
+            loggerMock = Substitute.For<ILogger<AadGroupController>>();
             gitOpsConfigServiceMock = Substitute.For<IGitOpsConfigService>();
-            controller = new AadGroupController(gitOpsConfigServiceMock, azureAdConfigMock, adpTeamGitRepoConfigMock);
+            controller = new AadGroupController(gitOpsConfigServiceMock, loggerMock, azureAdConfigMock, adpTeamGitRepoConfigMock);
             fixture = new Fixture();
         }
 
