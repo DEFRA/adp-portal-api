@@ -1,6 +1,5 @@
 
 using ADP.Portal.Api.Config;
-using ADP.Portal.Api.Jwt;
 using ADP.Portal.Api.Mapster;
 using ADP.Portal.Api.Providers;
 using ADP.Portal.Api.Wrappers;
@@ -9,6 +8,7 @@ using ADP.Portal.Core.Ado.Services;
 using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
 using ADP.Portal.Core.Git.Infrastructure;
+using ADP.Portal.Core.Git.Jwt;
 using ADP.Portal.Core.Git.Services;
 using Azure.Identity;
 using Microsoft.Extensions.Options;

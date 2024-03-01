@@ -17,7 +17,8 @@ namespace ADP.Portal.Core.Git.Services
         private readonly IUserGroupService userGroupService;
 
         [GeneratedRegex("(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])")]
-        private static partial Regex KebadCaseRegex();
+        private static partial Regex KebabCaseRegex();
+        
         public GitOpsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsConfigService> logger, IUserGroupService userGroupService)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
@@ -43,11 +44,11 @@ namespace ADP.Portal.Core.Git.Services
         {
             var result = new GroupSyncResult();
 
-            var filenName = GetFileName(teamName, configType);
+            var fileName = GetFileName(teamName, configType);
 
             logger.LogInformation("Getting config({configType}) for the Team({teamName})'", configType.ToString(), teamName);
 
-            var groupsConfig = await gitOpsConfigRepository.GetConfigAsync<GroupsRoot>(filenName, gitRepo);
+            var groupsConfig = await gitOpsConfigRepository.GetConfigAsync<GroupsRoot>(fileName, gitRepo);
 
             if (groupsConfig != null)
             {
@@ -57,7 +58,7 @@ namespace ADP.Portal.Core.Git.Services
                     var groupId = await userGroupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
-                    if (group.ManageMembersOnly == false && string.IsNullOrEmpty(groupId))
+                    if (!group.ManageMembersOnly && string.IsNullOrEmpty(groupId))
                     {
                         logger.LogInformation("Creating a new Group({})", group.DisplayName);
                         var aadGroup = group.Adapt<AadGroup>();
@@ -167,7 +168,7 @@ namespace ADP.Portal.Core.Git.Services
         }
         private static string ToKebabCase(string name)
         {
-            return KebadCaseRegex().Replace(name, "-$1").ToLower();
+            return KebabCaseRegex().Replace(name, "-$1").ToLower();
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ADP.Portal.Api.Jwt
+namespace ADP.Portal.Core.Git.Jwt
 {
     public static class JwtTokenHelper
     {
