@@ -31,7 +31,7 @@ resources:
       name: DEFRA/adp-pipeline-common
       endpoint: DEFRA
       type: github
-      ref: main  
+      ref: pp/platformKeyVault  
 
 extends:
   template: /pipelines/common-aca-app-build.yaml@DEFRA-ADPPipelineCommon
@@ -53,7 +53,6 @@ extends:
       variableGroups: 
         - adp-portal-api-ssv3
         - adp-portal-api-ssv5
-      variables:   
-        - ADP-PORTAL-API-CLIENT-SECRET
+      variables:
         - ADP-PORTAL-API-GITHUB-APP-ID
         - ADP-PORTAL-API-GITHUB-PRIVATE-KEY-BASE64

@@ -19,12 +19,24 @@ properties:
       - server: {{acrName}}.azurecr.io
         identity: {{userAssignedIdentity}}
     secrets:
-      - name: ado-pat
-        keyVaultUrl: https://{{keyvaultName}}.vault.azure.net/secrets/ADO-PAT
+      - name: adoPat
+        keyVaultUrl: https://{{appKeyVaultName}}.vault.azure.net/secrets/ADO-PAT
         identity: {{userAssignedIdentity}}
-      - name: clientsecret
-        keyVaultUrl: https://{{keyvaultName}}.vault.azure.net/secrets/adp-portal-api-ClientSecret
+      - name: spClientId
+        keyVaultUrl: https://{{platformKeyVaultName}}.vault.azure.net/secrets/ADO-DefraGovUK-AAD-ADP-SSV3-ClientId
         identity: {{userAssignedIdentity}}
+      - name: spClientSecret
+        keyVaultUrl: https://{{platformKeyVaultName}}.vault.azure.net/secrets/ADO-DefraGovUK-AAD-ADP-SSV3
+        identity: {{userAssignedIdentity}}
+      - name: spObjectId
+        keyVaultUrl: https://{{platformKeyVaultName}}.vault.azure.net/secrets/ADO-DefraGovUK-AAD-ADP-SSV3-ObjectId
+        identity: {{userAssignedIdentity}}       
+      - name: gitHubAppId
+        keyVaultUrl: https://{{appKeyVaultName}}.vault.azure.net/secrets/ADP-PORTAL-API-GITHUB-APP-ID
+        identity: {{userAssignedIdentity}}        
+      - name: gitHubPrivateKeyBase64
+        keyVaultUrl: https://{{appKeyVaultName}}.vault.azure.net/secrets/ADP-PORTAL-API-GITHUB-PRIVATE-KEY-BASE64
+        identity: {{userAssignedIdentity}} 
   template:
     containers:
       - image: {{acrName}}.azurecr.io/image/{{imageRepoName}}:{{appVersion}}
@@ -43,15 +55,21 @@ properties:
           - name: Ado__UsePatToken
             value: true
           - name: Ado__PatToken
-            secretRef: ado-pat
-
+            secretRef: adoPat
           - name: AzureAd__TenantId
             value: {{tenantid}}            
-          - name: AzureAd__ClientId
-            value: {{clientid}}
-          - name: AzureAd__ClientSecret
-            secretRef: clientsecret             
-
+          - name: AzureAd__SpClientId
+            secretRef: spClientId 
+          - name: AzureAd__SpClientSecret
+            secretRef: spClientSecret             
+          - name: AzureAd__SpObjectId
+            secretRef: spObjectId 
+          - name: AdpTeamGitRepo__Auth__AppName
+            value: "ADP Portal API"
+          - name: AdpTeamGitRepo__Auth__AppId
+            secretRef: gitHubAppId
+          - name: AdpTeamGitRepo__Auth__PrivateKeyBase64
+            secretRef: gitHubPrivateKeyBase64
         resources:
           cpu: 0.5
           memory: 1Gi
