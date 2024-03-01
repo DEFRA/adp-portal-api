@@ -39,6 +39,7 @@ extends:
     deployFromFeature: ${{ parameters.deployFromFeature }}
     privateAgentName: ''
     containerAppName: 'ssvadpinfca3402-portal-api'
+    appNamePostfix: 'adp-portal-api'
     appBuildConfig:
       appFrameworkType: "dotnet"
       frameworkVersion: "8.x"   
