@@ -229,9 +229,9 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         {
             // Arrange
             var aadGroup = fixture.Build<AadGroup>().With(i => i.DisplayName, "group").Create();
-            Group? group = aadGroup.Adapt<Group>();
             
-            azureAADGroupServicMock.AddGroupAsync(group).Returns((Group?)null);
+            
+            azureAADGroupServicMock.AddGroupAsync(Arg.Any<Group>()).Returns((Group?)null);
 
             // Act
             var result = await userGroupService.AddGroupAsync(aadGroup);
