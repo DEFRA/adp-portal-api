@@ -4,7 +4,6 @@ using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using Mapster;
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.Work.WebApi;
 using Octokit;
 using System.Text.RegularExpressions;
 
@@ -18,7 +17,7 @@ namespace ADP.Portal.Core.Git.Services
 
         [GeneratedRegex("(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])")]
         private static partial Regex KebabCaseRegex();
-        
+
         public GitOpsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsConfigService> logger, IUserGroupService userGroupService)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;

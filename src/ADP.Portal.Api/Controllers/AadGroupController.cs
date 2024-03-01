@@ -13,13 +13,15 @@ namespace ADP.Portal.Api.Controllers
     public class AadGroupController : ControllerBase
     {
         private readonly IGitOpsConfigService gitOpsConfigService;
+        private readonly ILogger<AadGroupController> logger;
         public readonly IOptions<AzureAdConfig> azureAdConfig;
         private readonly IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfig;
 
-        public AadGroupController(IGitOpsConfigService gitOpsConfigService,
-            IOptions<AzureAdConfig> azureAdConfig , IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfig)
+        public AadGroupController(IGitOpsConfigService gitOpsConfigService, ILogger<AadGroupController> logger,
+            IOptions<AzureAdConfig> azureAdConfig, IOptions<AdpTeamGitRepoConfig> adpTeamGitRepoConfig)
         {
             this.gitOpsConfigService = gitOpsConfigService;
+            this.logger = logger;
             this.azureAdConfig = azureAdConfig;
             this.adpTeamGitRepoConfig = adpTeamGitRepoConfig;
         }
@@ -29,23 +31,26 @@ namespace ADP.Portal.Api.Controllers
         {
             if (!Enum.TryParse<SyncConfigType>(syncConfigType, true, out var syncConfigtypeEnum))
             {
-                return BadRequest("Invalid sync config type.");
+                logger.LogWarning("Invalid syncConfigType:{syncConfigType}", syncConfigType);
+                return BadRequest("Invalid syncConfigType.");
             }
 
             var configType = (ConfigType)syncConfigtypeEnum;
             var teamRepo = adpTeamGitRepoConfig.Value.Adapt<GitRepo>();
 
+            logger.LogInformation("Check if config exists for team:{teamName} and configType:{configType}", teamName, configType);
             var isConfigExists = await gitOpsConfigService.IsConfigExistsAsync(teamName, configType, teamRepo);
             if (!isConfigExists)
             {
-                return BadRequest($"Team '{teamName}' config not found."); 
+                logger.LogWarning("Config not found for the Team:{teamName} and configType:{configType}", teamName, configType);
+                return BadRequest($"Team '{teamName}' config not found.");
             }
 
             var ownerId = azureAdConfig.Value.SpObjectId;
-
+            logger.LogInformation("Sync Groups for the Team:{teamName} and configType:{configType}", teamName, configType);
             var result = await gitOpsConfigService.SyncGroupsAsync(teamName, ownerId, configType, teamRepo);
 
-            if(result.Error.Count> 0)
+            if (result.Error.Count > 0)
             {
                 return Ok(result.Error);
             }
