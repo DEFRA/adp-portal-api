@@ -145,6 +145,35 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         }
 
         [Test]
+        public async Task GetGroupIdAsync_GroupExists_ReturnsGroupId()
+        {
+            // Arrange
+            var groupName = "testGroup";
+            var groupId = "testId";
+            azureAADGroupServicMock.GetGroupIdAsync(groupName).Returns(groupId);
+
+            // Act
+            var result = await userGroupService.GetGroupIdAsync(groupName);
+
+            // Assert
+            Assert.That(result, Is.EqualTo(groupId));
+        }
+
+        [Test]
+        public async Task GetGroupIdAsync_GroupDoesNotExist_ReturnsNull()
+        {
+            // Arrange
+            var groupName = "testGroup";
+            azureAADGroupServicMock.GetGroupIdAsync(groupName).Returns((string?)null);
+
+            // Act
+            var result = await userGroupService.GetGroupIdAsync(groupName);
+
+            // Assert
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
         public async Task GetGroupMembersAsync_GivenGroupId_ReturnsGroupMembersAndLogsInformation()
         {
             // Arrange
