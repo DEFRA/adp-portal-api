@@ -12,7 +12,6 @@ namespace ADP.Portal.Core.Azure.Infrastructure
             this.graphServiceClient = graphServiceClient;
         }
 
-
         public async Task<string?> GetUserIdAsync(string userPrincipalName)
         {
             var user = await graphServiceClient.Users[userPrincipalName].GetAsync((request) =>
@@ -39,7 +38,6 @@ namespace ADP.Portal.Core.Azure.Infrastructure
 
             return true;
         }
-
 
         public async Task<bool> AddGroupMemberAsync(string groupId, string directoryObjectId)
         {
