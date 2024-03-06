@@ -210,6 +210,35 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
+        public async Task SyncGroupsAsync_Returns_Success_WhenAccessGroup_GroupMembers_Synced()
+        {
+            // Arrange
+            var groupsRoot = new GroupsRoot
+            {
+                Groups = [ new() {
+                    DisplayName = "access-group-memberships" , Type = GroupType.AccessGroup,
+                    Members = ["group-member"]  }
+                ]
+            };
+
+            var groupId = "accessGroupMemberId";
+            var exstingMembersToberemoved = fixture.Build<AadGroupMember>().CreateMany(1).ToList();
+
+            gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
+            groupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns(groupId);
+            groupServiceMock.GetGroupTypeGroupMembersAsync(Arg.Any<string>()).Returns(exstingMembersToberemoved);
+           
+
+            // Act
+            var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.GroupsMembers, gitRepo);
+
+            // Assert
+            Assert.That(result.Error, Is.Empty);
+            await groupServiceMock.Received().RemoveGroupMemberAsync(Arg.Is(groupId), Arg.Any<string>());
+            await groupServiceMock.Received().AddGroupMemberAsync(Arg.Is(groupId), Arg.Any<string>());
+        }
+
+        [Test]
         public async Task SyncGroupsAsync_ErrorOccursWhileCreating_UserGroup_ReturnsErrorResult()
         {
             // Arrange
