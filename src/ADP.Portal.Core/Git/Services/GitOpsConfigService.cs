@@ -42,7 +42,6 @@ namespace ADP.Portal.Core.Git.Services
         public async Task<GroupSyncResult> SyncGroupsAsync(string teamName, string ownerId, ConfigType configType, GitRepo gitRepo)
         {
             var result = new GroupSyncResult();
-
             var fileName = GetFileName(teamName, configType);
 
             logger.LogInformation("Getting config({configType}) for the Team({teamName})'", configType.ToString(), teamName);
@@ -53,47 +52,60 @@ namespace ADP.Portal.Core.Git.Services
             {
                 foreach (var group in groupsConfig.Groups)
                 {
-                    logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName);
-                    var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
-                    var isNewGroup = false;
-
-                    if (string.IsNullOrEmpty(groupId) && (configType == ConfigType.UserGroupsMembers || configType == ConfigType.AccessGroupsMembers))
-                    {
-                        logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
-                        var aadGroup = group.Adapt<AadGroup>();
-                        aadGroup.OwnerId = ownerId;
-
-                        groupId = await groupService.AddGroupAsync(aadGroup);
-                        isNewGroup = true;
-                    }
-
-                    if (string.IsNullOrEmpty(groupId))
-                    {
-                        result.Error.Add($"Group '{group.DisplayName}' does not exists.");
-                        continue;
-                    }
-
-                    logger.LogInformation("Syncing group members for the group({DisplayName})", group.DisplayName);
-                    if (configType == ConfigType.OpenVpnMembers || configType == ConfigType.UserGroupsMembers)
-                    {
-                        await SyncUserTypeMembersAsync(result, group, groupId, isNewGroup);
-                    }
-
-                    if (configType == ConfigType.UserGroupsMembers)
-                    {
-                        logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
-                        await SyncMembershipsAsync(result, group, groupId, isNewGroup);
-                    }
-
-                    if (configType == ConfigType.AccessGroupsMembers)
-                    {
-                        await SyncGroupTypeMembersAsync(result, group, groupId, isNewGroup);
-                    }
-
+                    await ProcessGroupAsync(group, ownerId, configType, result);
                 }
             }
 
             return result;
+        }
+
+        private async Task ProcessGroupAsync(Entities.Group group, string ownerId, ConfigType configType, GroupSyncResult result)
+        {
+            logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName);
+            var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
+
+            if (string.IsNullOrEmpty(groupId) && (configType == ConfigType.UserGroupsMembers || configType == ConfigType.AccessGroupsMembers))
+            {
+                groupId = await CreateNewGroupAsync(group, ownerId);
+            }
+
+            if (string.IsNullOrEmpty(groupId))
+            {
+                result.Error.Add($"Group '{group.DisplayName}' does not exists.");
+                return;
+            }
+
+            await SyncGroupMembersAsync(group, groupId, configType, result);
+        }
+
+        private async Task<string?> CreateNewGroupAsync(Entities.Group group, string ownerId)
+        {
+            logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
+            var aadGroup = group.Adapt<AadGroup>();
+            aadGroup.OwnerId = ownerId;
+
+            return await groupService.AddGroupAsync(aadGroup);
+        }
+
+        private async Task SyncGroupMembersAsync(Entities.Group group, string groupId, ConfigType configType, GroupSyncResult result)
+        {
+            logger.LogInformation("Syncing group members for the group({DisplayName})", group.DisplayName);
+
+            if (configType == ConfigType.OpenVpnMembers || configType == ConfigType.UserGroupsMembers)
+            {
+                await SyncUserTypeMembersAsync(result, group, groupId, false);
+            }
+
+            if (configType == ConfigType.UserGroupsMembers)
+            {
+                logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
+                await SyncMembershipsAsync(result, group, groupId, false);
+            }
+
+            if (configType == ConfigType.AccessGroupsMembers)
+            {
+                await SyncGroupTypeMembersAsync(result, group, groupId, false);
+            }
         }
 
         private async Task SyncUserTypeMembersAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
