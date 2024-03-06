@@ -57,20 +57,14 @@ namespace ADP.Portal.Core.Git.Services
                     var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
-                    switch (configType)
+                    if (string.IsNullOrEmpty(groupId) && (configType == ConfigType.UserGroupsMembers || configType == ConfigType.AccessGroupsMembers))
                     {
-                        case ConfigType.UserGroupsMembers:
-                        case ConfigType.AccessGroupsMembers:
-                            if (string.IsNullOrEmpty(groupId))
-                            {
-                                logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
-                                var aadGroup = group.Adapt<AadGroup>();
-                                aadGroup.OwnerId = ownerId;
+                        logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
+                        var aadGroup = group.Adapt<AadGroup>();
+                        aadGroup.OwnerId = ownerId;
 
-                                groupId = await groupService.AddGroupAsync(aadGroup);
-                                isNewGroup = true;
-                            }
-                            break;
+                        groupId = await groupService.AddGroupAsync(aadGroup);
+                        isNewGroup = true;
                     }
 
                     if (string.IsNullOrEmpty(groupId))
@@ -79,23 +73,21 @@ namespace ADP.Portal.Core.Git.Services
                         continue;
                     }
 
-                    switch (configType)
+                    logger.LogInformation("Syncing group members for the group({DisplayName})", group.DisplayName);
+                    if (configType == ConfigType.OpenVpnMembers || configType == ConfigType.UserGroupsMembers)
                     {
-                        case ConfigType.OpenVpnMembers:
-                            logger.LogInformation("Syncing group members(user type) for the group({DisplayName})", group.DisplayName);
-                            await SyncUserTypeMembersAsync(result, group, groupId, isNewGroup);
-                            break;
-                        case ConfigType.UserGroupsMembers:
-                            logger.LogInformation("Syncing group members(user type)  for the group({DisplayName})", group.DisplayName);
-                            await SyncUserTypeMembersAsync(result, group, groupId, isNewGroup);
+                        await SyncUserTypeMembersAsync(result, group, groupId, isNewGroup);
+                    }
 
-                            logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
-                            await SyncMembershipsAsync(result, group, groupId, isNewGroup);
-                            break;
-                        case ConfigType.AccessGroupsMembers:
-                            logger.LogInformation("Syncing group members(group type) for the group({DisplayName})", group.DisplayName);
-                            await SyncMembersGroupTypeAsync(result, group, groupId, isNewGroup);
-                            break;
+                    if (configType == ConfigType.UserGroupsMembers)
+                    {
+                        logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
+                        await SyncMembershipsAsync(result, group, groupId, isNewGroup);
+                    }
+
+                    if (configType == ConfigType.AccessGroupsMembers)
+                    {
+                        await SyncGroupTypeMembersAsync(result, group, groupId, isNewGroup);
                     }
 
                 }
@@ -141,7 +133,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task SyncMembersGroupTypeAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
+        private async Task SyncGroupTypeMembersAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
         {
             if (groupId == null)
             {
