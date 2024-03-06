@@ -64,7 +64,7 @@ namespace ADP.Portal.Core.Git.Services
             logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName);
             var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
 
-            if (string.IsNullOrEmpty(groupId) && (configType == ConfigType.UserGroupsMembers || configType == ConfigType.AccessGroupsMembers))
+            if (string.IsNullOrEmpty(groupId) && (configType == ConfigType.GroupsMembers))
             {
                 groupId = await CreateNewGroupAsync(group, ownerId);
             }
@@ -92,18 +92,18 @@ namespace ADP.Portal.Core.Git.Services
         {
             logger.LogInformation("Syncing group members for the group({DisplayName})", group.DisplayName);
 
-            if (configType == ConfigType.OpenVpnMembers || configType == ConfigType.UserGroupsMembers)
+            if (configType == ConfigType.OpenVpnMembers || group.Type == GroupType.UserGroup)
             {
                 await SyncUserTypeMembersAsync(result, group, groupId, false);
             }
 
-            if (configType == ConfigType.UserGroupsMembers)
+            if (group.Type == GroupType.UserGroup)
             {
                 logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
                 await SyncMembershipsAsync(result, group, groupId, false);
             }
 
-            if (configType == ConfigType.AccessGroupsMembers)
+            if (group.Type == GroupType.AccessGroup)
             {
                 await SyncGroupTypeMembersAsync(result, group, groupId, false);
             }
