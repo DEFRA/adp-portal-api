@@ -59,7 +59,7 @@ namespace ADP.Portal.Core.Git.Services
 
                     if (!group.ManageMembersOnly && string.IsNullOrEmpty(groupId))
                     {
-                        logger.LogInformation("Creating a new Group({})", group.DisplayName);
+                        logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
                         var aadGroup = group.Adapt<AadGroup>();
                         aadGroup.OwnerId = ownerId;
 

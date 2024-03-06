@@ -29,13 +29,13 @@ namespace ADP.Portal.Api.Controllers
         [HttpPut("sync/{teamName}/{syncConfigType}")]
         public async Task<ActionResult> SyncGroupsAsync(string teamName, string syncConfigType)
         {
-            if (!Enum.TryParse<SyncConfigType>(syncConfigType, true, out var syncConfigtypeEnum))
+            if (!Enum.TryParse<SyncConfigType>(syncConfigType, true, out var syncConfigTypeEnum))
             {
                 logger.LogWarning("Invalid syncConfigType:{syncConfigType}", syncConfigType);
                 return BadRequest("Invalid syncConfigType.");
             }
 
-            var configType = (ConfigType)syncConfigtypeEnum;
+            var configType = (ConfigType)syncConfigTypeEnum;
             var teamRepo = adpTeamGitRepoConfig.Value.Adapt<GitRepo>();
 
             logger.LogInformation("Check if config exists for team:{teamName} and configType:{configType}", teamName, configType);

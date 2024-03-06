@@ -41,6 +41,7 @@ namespace ADP.Portal.Core.Azure.Services
                 }
                 else
                 {
+                    logger.LogError(odataException, "Error occurred while getting user '{userPrincipalName}'", userPrincipalName);
                     throw;
                 }
             }
