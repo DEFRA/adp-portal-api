@@ -20,14 +20,14 @@ namespace ADP.Portal.Core.Tests.Git.Services
         private readonly IGitOpsConfigRepository gitOpsConfigRepositoryMock;
         private readonly GitOpsConfigService gitOpsConfigService;
         private readonly ILogger<GitOpsConfigService> loggerMock;
-        private readonly IUserGroupService userGroupServiceMock;
+        private readonly IGroupService groupServiceMock;
         private readonly Fixture fixture;
         public GitOpsConfigServiceTests()
         {
             gitOpsConfigRepositoryMock = Substitute.For<IGitOpsConfigRepository>();
             loggerMock = Substitute.For<ILogger<GitOpsConfigService>>();
-            userGroupServiceMock = Substitute.For<IUserGroupService>();
-            gitOpsConfigService = new GitOpsConfigService(gitOpsConfigRepositoryMock, loggerMock, userGroupServiceMock);
+            groupServiceMock = Substitute.For<IGroupService>();
+            gitOpsConfigService = new GitOpsConfigService(gitOpsConfigRepositoryMock, loggerMock, groupServiceMock);
             fixture = new Fixture();
         }
 
@@ -129,14 +129,14 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Create();
 
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
-            userGroupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns(string.Empty);
-            userGroupServiceMock.AddGroupAsync(Arg.Any<AadGroup>()).Returns("newGroupId");
+            groupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns(string.Empty);
+            groupServiceMock.AddGroupAsync(Arg.Any<AadGroup>()).Returns("newGroupId");
 
             // Act
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
 
             // Assert
-            await userGroupServiceMock.Received().AddGroupAsync(Arg.Any<AadGroup>());
+            await groupServiceMock.Received().AddGroupAsync(Arg.Any<AadGroup>());
             Assert.That(result.Error, Is.Empty);
         }
 
@@ -161,8 +161,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>())
                 .Returns(groupsRoot);
-            userGroupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns("existingGroupId");
-            userGroupServiceMock.GetGroupMembersAsync(Arg.Any<string>()).Returns(exstingGroupMembers);
+            groupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns("existingGroupId");
+            groupServiceMock.GetGroupMembersAsync(Arg.Any<string>()).Returns(exstingGroupMembers);
 
             // Act
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.OpenVpnMembers, gitRepo);
@@ -187,7 +187,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>())
                 .Returns(groupsRoot);
-            userGroupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns(string.Empty);
+            groupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns(string.Empty);
 
             // Act
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
@@ -216,9 +216,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var groupMemberships = fixture.Build<AadGroup>().CreateMany(2).ToList();
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>())
                 .Returns(groupsRoot);
-            userGroupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns("existingGroupId");
-            userGroupServiceMock.GetGroupMembersAsync(Arg.Any<string>()).Returns(exstingGroupMembers);
-            userGroupServiceMock.GetGroupMemberShipsAsync(Arg.Any<string>()).Returns(groupMemberships);
+            groupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns("existingGroupId");
+            groupServiceMock.GetGroupMembersAsync(Arg.Any<string>()).Returns(exstingGroupMembers);
+            groupServiceMock.GetGroupMemberShipsAsync(Arg.Any<string>()).Returns(groupMemberships);
 
             // Act
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);
@@ -263,7 +263,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepositoryMock.GetConfigAsync<GroupsRoot>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groupsRoot);
 
             var gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.RepoName, "test").Create();
-            userGroupServiceMock.GetUserIdAsync(groupsRoot.Groups[0].Members[0]).Returns("");
+            groupServiceMock.GetUserIdAsync(groupsRoot.Groups[0].Members[0]).Returns("");
 
             // Act
             var result = await gitOpsConfigService.SyncGroupsAsync("teamName", "ownerId", ConfigType.UserGroupsMembers, gitRepo);

@@ -6,11 +6,11 @@ using Microsoft.Graph.Models;
 
 namespace ADP.Portal.Core.Azure.Services
 {
-    public interface IUserGroupService
+    public interface IGroupService
     {
         Task<string?> GetUserIdAsync(string userPrincipalName);
 
-        public Task<bool> AddGroupMemberAsync(string groupId, string memberId);
+        Task<bool> AddGroupMemberAsync(string groupId, string memberId);
 
         Task<bool> RemoveGroupMemberAsync(string groupId, string memberId);
 

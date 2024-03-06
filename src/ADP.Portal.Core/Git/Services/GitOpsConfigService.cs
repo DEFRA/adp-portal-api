@@ -13,16 +13,16 @@ namespace ADP.Portal.Core.Git.Services
     {
         private readonly IGitOpsConfigRepository gitOpsConfigRepository;
         private readonly ILogger<GitOpsConfigService> logger;
-        private readonly IUserGroupService userGroupService;
+        private readonly IGroupService groupService;
 
         [GeneratedRegex("(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])")]
         private static partial Regex KebabCaseRegex();
 
-        public GitOpsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsConfigService> logger, IUserGroupService userGroupService)
+        public GitOpsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsConfigService> logger, IGroupService groupService)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
             this.logger = logger;
-            this.userGroupService = userGroupService;
+            this.groupService = groupService;
         }
 
         public async Task<bool> IsConfigExistsAsync(string teamName, ConfigType configType, GitRepo gitRepo)
@@ -54,7 +54,7 @@ namespace ADP.Portal.Core.Git.Services
                 foreach (var group in groupsConfig.Groups)
                 {
                     logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName);
-                    var groupId = await userGroupService.GetGroupIdAsync(group.DisplayName);
+                    var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
                     if (!group.ManageMembersOnly && string.IsNullOrEmpty(groupId))
@@ -63,7 +63,7 @@ namespace ADP.Portal.Core.Git.Services
                         var aadGroup = group.Adapt<AadGroup>();
                         aadGroup.OwnerId = ownerId;
 
-                        groupId = await userGroupService.AddGroupAsync(aadGroup);
+                        groupId = await groupService.AddGroupAsync(aadGroup);
                         isNewGroup = true;
                     }
 
@@ -94,13 +94,13 @@ namespace ADP.Portal.Core.Git.Services
                 return;
             }
 
-            var existingMembers = isNewGroup ? [] : await userGroupService.GetGroupMembersAsync(groupId);
+            var existingMembers = isNewGroup ? [] : await groupService.GetGroupMembersAsync(groupId);
 
             foreach (var member in existingMembers)
             {
                 if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase))
                 {
-                    await userGroupService.RemoveGroupMemberAsync(groupId, member.Id);
+                    await groupService.RemoveGroupMemberAsync(groupId, member.Id);
                 }
             }
 
@@ -110,7 +110,7 @@ namespace ADP.Portal.Core.Git.Services
             {
                 if (!existingMemberNames.Contains(member, StringComparer.OrdinalIgnoreCase))
                 {
-                    var userId = await userGroupService.GetUserIdAsync(member);
+                    var userId = await groupService.GetUserIdAsync(member);
 
                     if (userId == null)
                     {
@@ -118,7 +118,7 @@ namespace ADP.Portal.Core.Git.Services
                     }
                     else
                     {
-                        await userGroupService.AddGroupMemberAsync(groupId, userId);
+                        await groupService.AddGroupMemberAsync(groupId, userId);
                     }
                 }
             }
@@ -131,14 +131,14 @@ namespace ADP.Portal.Core.Git.Services
                 return;
             }
 
-            var existingMemberShips = IsNewGroup ? [] : await userGroupService.GetGroupMemberShipsAsync(groupId);
+            var existingMemberShips = IsNewGroup ? [] : await groupService.GetGroupMemberShipsAsync(groupId);
 
 
             foreach (var memberShip in existingMemberShips)
             {
                 if (memberShip.Id != null && !group.GroupMemberships.Contains(memberShip.DisplayName, StringComparer.OrdinalIgnoreCase))
                 {
-                    await userGroupService.RemoveGroupMemberAsync(memberShip.Id, groupId);
+                    await groupService.RemoveGroupMemberAsync(memberShip.Id, groupId);
                 }
             }
 
@@ -148,14 +148,14 @@ namespace ADP.Portal.Core.Git.Services
             {
                 if (!existingMembershipNames.Contains(groupMembership, StringComparer.OrdinalIgnoreCase))
                 {
-                    var groupMembershipId = await userGroupService.GetGroupIdAsync(groupMembership);
+                    var groupMembershipId = await groupService.GetGroupIdAsync(groupMembership);
                     if (groupMembershipId == null)
                     {
                         result.Error.Add($"Membership Group '{groupMembership}' not found.");
                     }
                     else
                     {
-                        await userGroupService.AddGroupMemberAsync(groupMembershipId, groupId);
+                        await groupService.AddGroupMemberAsync(groupMembershipId, groupId);
                     }
                 }
             }

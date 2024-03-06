@@ -8,12 +8,12 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ADP.Portal.Core.Azure.Services
 {
-    public class UserGroupService : IUserGroupService
+    public class GroupService : IGroupService
     {
-        private readonly ILogger<UserGroupService> logger;
+        private readonly ILogger<GroupService> logger;
         private readonly IAzureAadGroupService azureAADGroupService;
 
-        public UserGroupService(IAzureAadGroupService azureAADGroupService, ILogger<UserGroupService> logger)
+        public GroupService(IAzureAadGroupService azureAADGroupService, ILogger<GroupService> logger)
         {
             this.azureAADGroupService = azureAADGroupService;
             this.logger = logger;
@@ -29,7 +29,7 @@ namespace ADP.Portal.Core.Azure.Services
                 {
                     logger.LogInformation("User '{userPrincipalName}' found.", userPrincipalName);
                 }
-               
+
                 return result;
             }
             catch (ODataError odataException)
@@ -96,7 +96,7 @@ namespace ADP.Portal.Core.Azure.Services
         {
             var result = await azureAADGroupService.GetGroupMemberShipsAsync(groupId);
 
-            if(result != null)
+            if (result != null)
             {
                 logger.LogInformation("Retrieved group memberships({Count}) from group({groupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroup>>();
