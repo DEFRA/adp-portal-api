@@ -25,7 +25,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             azureAADGroupServiceMock = Substitute.For<IAzureAadGroupService>();
             loggerMock = Substitute.For<ILogger<GroupService>>();
             groupService = new GroupService(azureAADGroupServiceMock, loggerMock);
-            fixture= new Fixture();
+            fixture = new Fixture();
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             var result = await groupService.RemoveGroupMemberAsync(groupId, memberId);
 
             // Assert
-            Assert.That(result,Is.True);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -186,7 +186,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             var result = await groupService.GetUserTypeGroupMembersAsync(groupId);
 
             // Assert
-            
+
             Assert.That(groupMembers.Count, Is.EqualTo(result.Count));
         }
 
@@ -202,7 +202,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             var result = await groupService.GetUserTypeGroupMembersAsync(groupId);
 
             // Assert
-            Assert.That(result,Is.Empty);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]
@@ -243,7 +243,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
             // Arrange
             var groupId = "groupId";
             var groupMemberships = new List<Group> { new Group { Id = "groupId2", DisplayName = "group2" } };
-            
+
             azureAADGroupServiceMock.GetGroupMemberShipsAsync(groupId).Returns(groupMemberships);
 
             // Act
@@ -271,7 +271,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         public async Task AddGroupAsync_GivenAadGroup_ReturnsGroupIdAndLogsInformation()
         {
             // Arrange
-            var aadGroup = fixture.Build<AadGroup>().With(i=>i.DisplayName, "group").Create();
+            var aadGroup = fixture.Build<AadGroup>().With(i => i.DisplayName, "group").Create();
             var group = aadGroup.Adapt<Group>();
             group.Id = "groupId";
 
@@ -282,7 +282,7 @@ namespace ADP.Portal.Core.Tests.Ado.Services
 
             // Assert
             Assert.That(result, Is.EqualTo(group.Id));
-            
+
         }
 
         [Test]
@@ -290,8 +290,8 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         {
             // Arrange
             var aadGroup = fixture.Build<AadGroup>().With(i => i.DisplayName, "group").Create();
-            
-            
+
+
             azureAADGroupServiceMock.AddGroupAsync(Arg.Any<Group>()).Returns((Group?)null);
 
             // Act
