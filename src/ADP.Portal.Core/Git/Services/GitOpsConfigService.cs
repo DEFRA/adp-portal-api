@@ -72,10 +72,11 @@ namespace ADP.Portal.Core.Git.Services
             if (string.IsNullOrEmpty(groupId))
             {
                 result.Error.Add($"Group '{group.DisplayName}' does not exists.");
-                return;
             }
-
-            await SyncGroupMembersAsync(group, groupId, configType, result);
+            else
+            {
+                await SyncGroupMembersAsync(group, groupId, configType, result);
+            }
         }
 
         private async Task<string?> CreateNewGroupAsync(Entities.Group group, string ownerId)
