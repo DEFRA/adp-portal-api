@@ -1,8 +1,4 @@
-﻿
-
-
-using ADP.Portal.Core.Azure.Entities;
-using Microsoft.Graph.Models;
+﻿using ADP.Portal.Core.Azure.Entities;
 
 namespace ADP.Portal.Core.Azure.Services
 {
@@ -16,7 +12,9 @@ namespace ADP.Portal.Core.Azure.Services
 
         Task<string?> GetGroupIdAsync(string groupName);
 
-        Task<List<AadGroupMember>> GetGroupMembersAsync(string groupId);
+        Task<List<AadGroupMember>> GetUserTypeGroupMembersAsync(string groupId);
+
+        Task<List<AadGroupMember>> GetGroupTypeGroupMembersAsync(string groupId);
 
         Task<List<AadGroup>> GetGroupMemberShipsAsync(string groupId);
 

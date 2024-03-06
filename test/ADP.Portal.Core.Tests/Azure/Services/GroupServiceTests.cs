@@ -174,16 +174,16 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         }
 
         [Test]
-        public async Task GetGroupMembersAsync_GivenGroupId_ReturnsGroupMembersAndLogsInformation()
+        public async Task GetGroupMembersAsync_GivenGroupId_Returns_UserTypeGroupMembersAndLogsInformation()
         {
             // Arrange
             var groupId = "groupId";
             var groupMembers = new List<User> { new User { Id = "memberId", UserPrincipalName = "user@domain.com" } };
 
-            azureAADGroupServiceMock.GetGroupMembersAsync(groupId).Returns(groupMembers);
+            azureAADGroupServiceMock.GetGroupMembersAsync<User>(groupId).Returns(groupMembers);
 
             // Act
-            var result = await groupService.GetGroupMembersAsync(groupId);
+            var result = await groupService.GetUserTypeGroupMembersAsync(groupId);
 
             // Assert
             
@@ -191,18 +191,50 @@ namespace ADP.Portal.Core.Tests.Ado.Services
         }
 
         [Test]
-        public async Task GetGroupMembersAsync_GivenGroupIdButNoMembers_ReturnsEmptyListAndDoesNotLogInformation()
+        public async Task GetGroupMembersAsync_GivenGroupIdButNo_UserTypeMembers_ReturnsEmpty_ListAndDoesNotLogInformation()
         {
             // Arrange
             var groupId = "groupId";
             List<User>? listUsers = null;
-            azureAADGroupServiceMock.GetGroupMembersAsync(groupId).Returns(listUsers);
+            azureAADGroupServiceMock.GetGroupMembersAsync<User>(groupId).Returns(listUsers);
 
             // Act
-            var result = await groupService.GetGroupMembersAsync(groupId);
+            var result = await groupService.GetUserTypeGroupMembersAsync(groupId);
 
             // Assert
             Assert.That(result,Is.Empty);
+        }
+
+        [Test]
+        public async Task GetGroupMembersAsync_GivenGroupId_Returns_GroupType_GroupMembersAndLogsInformation()
+        {
+            // Arrange
+            var groupId = "groupId";
+            var groupMembers = new List<Group> { new Group { Id = "memberId", DisplayName = "Test group" } };
+
+            azureAADGroupServiceMock.GetGroupMembersAsync<Group>(groupId).Returns(groupMembers);
+
+            // Act
+            var result = await groupService.GetGroupTypeGroupMembersAsync(groupId);
+
+            // Assert
+
+            Assert.That(groupMembers.Count, Is.EqualTo(result.Count));
+        }
+
+        [Test]
+        public async Task GetGroupMembersAsync_GivenGroupIdButNoMembers_ReturnsEmpty_GroupType_ListAndDoesNotLogInformation()
+        {
+            // Arrange
+            var groupId = "groupId";
+            List<Group>? listUsers = null;
+            azureAADGroupServiceMock.GetGroupMembersAsync<Group>(groupId).Returns(listUsers);
+
+            // Act
+            var result = await groupService.GetUserTypeGroupMembersAsync(groupId);
+
+            // Assert
+            Assert.That(result, Is.Empty);
         }
 
         [Test]

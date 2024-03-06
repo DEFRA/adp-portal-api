@@ -81,12 +81,24 @@ namespace ADP.Portal.Core.Azure.Services
             return result;
 
         }
-        public async Task<List<AadGroupMember>> GetGroupMembersAsync(string groupId)
+        public async Task<List<AadGroupMember>> GetUserTypeGroupMembersAsync(string groupId)
         {
-            var result = await azureAADGroupService.GetGroupMembersAsync(groupId);
+            var result =   await azureAADGroupService.GetGroupMembersAsync<User>(groupId);
             if (result != null)
             {
-                logger.LogInformation("Retrieved group members({Count}) from group({groupId}))", result.Count, groupId);
+                logger.LogInformation("Retrieved user type group members({Count}) from group({groupId}))", result.Count, groupId);
+                return result.Adapt<List<AadGroupMember>>();
+            }
+
+            return [];
+        }
+
+        public async Task<List<AadGroupMember>> GetGroupTypeGroupMembersAsync(string groupId)
+        {
+            var result = await azureAADGroupService.GetGroupMembersAsync<Group>(groupId);
+            if (result != null)
+            {
+                logger.LogInformation("Retrieved group type group members({Count}) from group({groupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroupMember>>();
             }
 

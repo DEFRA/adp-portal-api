@@ -57,14 +57,20 @@ namespace ADP.Portal.Core.Git.Services
                     var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
                     var isNewGroup = false;
 
-                    if (!group.ManageMembersOnly && string.IsNullOrEmpty(groupId))
+                    switch (configType)
                     {
-                        logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
-                        var aadGroup = group.Adapt<AadGroup>();
-                        aadGroup.OwnerId = ownerId;
+                        case ConfigType.UserGroupsMembers:
+                        case ConfigType.AccessGroupsMembers:
+                            if (string.IsNullOrEmpty(groupId))
+                            {
+                                logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
+                                var aadGroup = group.Adapt<AadGroup>();
+                                aadGroup.OwnerId = ownerId;
 
-                        groupId = await groupService.AddGroupAsync(aadGroup);
-                        isNewGroup = true;
+                                groupId = await groupService.AddGroupAsync(aadGroup);
+                                isNewGroup = true;
+                            }
+                            break;
                     }
 
                     if (string.IsNullOrEmpty(groupId))
@@ -73,28 +79,39 @@ namespace ADP.Portal.Core.Git.Services
                         continue;
                     }
 
-                    logger.LogInformation("Syncing group members for the group({DisplayName})", group.DisplayName);
-                    await SyncMembersAsync(result, group, groupId, isNewGroup);
-
-                    if (!group.ManageMembersOnly)
+                    switch (configType)
                     {
-                        logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
-                        await SyncMembershipsAsync(result, group, groupId, isNewGroup);
+                        case ConfigType.OpenVpnMembers:
+                            logger.LogInformation("Syncing group members(user type) for the group({DisplayName})", group.DisplayName);
+                            await SyncUserTypeMembersAsync(result, group, groupId, isNewGroup);
+                            break;
+                        case ConfigType.UserGroupsMembers:
+                            logger.LogInformation("Syncing group members(user type)  for the group({DisplayName})", group.DisplayName);
+                            await SyncUserTypeMembersAsync(result, group, groupId, isNewGroup);
+
+                            logger.LogInformation("Syncing group memberships for the group({DisplayName})", group.DisplayName);
+                            await SyncMembershipsAsync(result, group, groupId, isNewGroup);
+                            break;
+                        case ConfigType.AccessGroupsMembers:
+                            logger.LogInformation("Syncing group members(group type) for the group({DisplayName})", group.DisplayName);
+                            await SyncMembersGroupTypeAsync(result, group, groupId, isNewGroup);
+                            break;
                     }
+
                 }
             }
 
             return result;
         }
 
-        private async Task SyncMembersAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
+        private async Task SyncUserTypeMembersAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
         {
             if (groupId == null)
             {
                 return;
             }
 
-            var existingMembers = isNewGroup ? [] : await groupService.GetGroupMembersAsync(groupId);
+            var existingMembers = isNewGroup ? [] : await groupService.GetUserTypeGroupMembersAsync(groupId);
 
             foreach (var member in existingMembers)
             {
@@ -110,15 +127,52 @@ namespace ADP.Portal.Core.Git.Services
             {
                 if (!existingMemberNames.Contains(member, StringComparer.OrdinalIgnoreCase))
                 {
-                    var userId = await groupService.GetUserIdAsync(member);
+                    var memberId = await groupService.GetUserIdAsync(member);
 
-                    if (userId == null)
+                    if (memberId == null)
                     {
                         result.Error.Add($"User '{member}' not found.");
                     }
                     else
                     {
-                        await groupService.AddGroupMemberAsync(groupId, userId);
+                        await groupService.AddGroupMemberAsync(groupId, memberId);
+                    }
+                }
+            }
+        }
+
+        private async Task SyncMembersGroupTypeAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
+        {
+            if (groupId == null)
+            {
+                return;
+            }
+
+            var existingMembers = isNewGroup ? [] : await groupService.GetGroupTypeGroupMembersAsync(groupId);
+
+            foreach (var member in existingMembers)
+            {
+                if (!group.Members.Contains(member.DisplayName, StringComparer.OrdinalIgnoreCase))
+                {
+                    await groupService.RemoveGroupMemberAsync(groupId, member.Id);
+                }
+            }
+
+            var existingMemberNames = existingMembers.Select(i => i.DisplayName).ToList();
+
+            foreach (var member in group.Members)
+            {
+                if (!existingMemberNames.Contains(member, StringComparer.OrdinalIgnoreCase))
+                {
+                    var memberId = await groupService.GetGroupIdAsync(member);
+
+                    if (memberId == null)
+                    {
+                        result.Error.Add($"Group '{member}' not found.");
+                    }
+                    else
+                    {
+                        await groupService.AddGroupMemberAsync(groupId, memberId);
                     }
                 }
             }
