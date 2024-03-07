@@ -53,7 +53,7 @@ extends:
     appDeployConfig:
       filepath: ".azuredevops/containerApp.yaml"  
       variableGroups: 
-        - adp-portal-api-ssv3
+        - adp-portal-2-api-ssv3
         - adp-portal-api-ssv5
       variables:
         - ADP-PORTAL-API-GITHUB-APP-ID
