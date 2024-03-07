@@ -44,7 +44,7 @@ namespace ADP.Portal.Core.Git.Services
             var result = new GroupSyncResult();
             var fileName = GetFileName(teamName, configType);
 
-            logger.LogInformation("Getting config({configType}) for the Team({teamName})'", configType.ToString(), teamName);
+            logger.LogInformation("Getting config({ConfigType}) for the Team({TeamName})'", configType.ToString(), teamName);
 
             var groupsConfig = await gitOpsConfigRepository.GetConfigAsync<GroupsRoot>(fileName, gitRepo);
 

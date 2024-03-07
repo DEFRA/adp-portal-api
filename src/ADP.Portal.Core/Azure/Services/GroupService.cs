@@ -27,7 +27,7 @@ namespace ADP.Portal.Core.Azure.Services
 
                 if (!string.IsNullOrEmpty(result))
                 {
-                    logger.LogInformation("User '{userPrincipalName}' found.", userPrincipalName);
+                    logger.LogInformation("User '{UserPrincipalName}' found.", userPrincipalName);
                 }
 
                 return result;
@@ -36,12 +36,12 @@ namespace ADP.Portal.Core.Azure.Services
             {
                 if (odataException.ResponseStatusCode == 404)
                 {
-                    logger.LogWarning("User '{userPrincipalName}' does not exist.", userPrincipalName);
+                    logger.LogWarning("User '{UserPrincipalName}' does not exist.", userPrincipalName);
                     return null;
                 }
                 else
                 {
-                    logger.LogError(odataException, "Error occurred while getting user '{userPrincipalName}'", userPrincipalName);
+                    logger.LogError(odataException, "Error occurred while getting user '{UserPrincipalName}'", userPrincipalName);
                     throw;
                 }
             }
@@ -52,7 +52,7 @@ namespace ADP.Portal.Core.Azure.Services
             var result = await azureAADGroupService.AddGroupMemberAsync(groupId, memberId);
             if (result)
             {
-                logger.LogInformation("Added user({memberId}) to group({groupId})", memberId, groupId);
+                logger.LogInformation("Added user({MemberId}) to group({GroupId})", memberId, groupId);
             }
             return result;
         }
@@ -63,7 +63,7 @@ namespace ADP.Portal.Core.Azure.Services
 
             if (result)
             {
-                logger.LogInformation("Removed user({memberId}) from the group({groupId})", memberId, groupId);
+                logger.LogInformation("Removed user({MemberId}) from the group({GroupId})", memberId, groupId);
             }
 
             return result;
@@ -75,7 +75,7 @@ namespace ADP.Portal.Core.Azure.Services
 
             if (!string.IsNullOrEmpty(result))
             {
-                logger.LogInformation("Group '{groupName}' found.", groupName);
+                logger.LogInformation("Group '{GroupName}' found.", groupName);
             }
 
             return result;
@@ -86,7 +86,7 @@ namespace ADP.Portal.Core.Azure.Services
             var result =   await azureAADGroupService.GetGroupMembersAsync<User>(groupId);
             if (result != null)
             {
-                logger.LogInformation("Retrieved user type group members({Count}) from group({groupId}))", result.Count, groupId);
+                logger.LogInformation("Retrieved user type group members({Count}) from group({GroupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroupMember>>();
             }
 
@@ -98,7 +98,7 @@ namespace ADP.Portal.Core.Azure.Services
             var result = await azureAADGroupService.GetGroupMembersAsync<Group>(groupId);
             if (result != null)
             {
-                logger.LogInformation("Retrieved group type group members({Count}) from group({groupId}))", result.Count, groupId);
+                logger.LogInformation("Retrieved group type group members({Count}) from group({GroupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroupMember>>();
             }
 
@@ -111,7 +111,7 @@ namespace ADP.Portal.Core.Azure.Services
 
             if (result != null)
             {
-                logger.LogInformation("Retrieved group memberships({Count}) from group({groupId}))", result.Count, groupId);
+                logger.LogInformation("Retrieved group memberships({Count}) from group({GroupId}))", result.Count, groupId);
                 return result.Adapt<List<AadGroup>>();
             }
 
