@@ -17,6 +17,7 @@ POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/generate/ffc-demo/ffc-demo-cl
 # Create Team config
 POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/create/ffc-find
 Content-Type: application/json
+Api-Version: 1.0
 
 {
   "ProgrammeName": "ffc",

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 namespace ADP.Portal.Api.Controllers
 {
     [Route("api/[controller]")]
+    [ApiVersion("1")]
     [ApiController]
     public class AadGroupController : ControllerBase
     {

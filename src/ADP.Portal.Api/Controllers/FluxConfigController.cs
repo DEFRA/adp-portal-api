@@ -10,6 +10,7 @@ using YamlDotNet.Core;
 namespace ADP.Portal.Api.Controllers
 {
     [Route("api/[controller]")]
+    [ApiVersion("1")]
     [ApiController]
     public class FluxConfigController : Controller
     {
