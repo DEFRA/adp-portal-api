@@ -1,5 +1,5 @@
 ﻿using ADP.Portal.Api.Config;
-using ADP.Portal.Api.Models;
+using ADP.Portal.Api.Models.Group;
 using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Services;
 using Mapster;

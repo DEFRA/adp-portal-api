@@ -9,7 +9,64 @@ PUT {{ADP.Portal.Api_HostAddress}}/api/aadgroup/sync/ffc-demo/UserGroupsMembers
 # Generate Team templates
 POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/generate/ffc-demo
 
-
 ###
 # Generate Specific service templates
 POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/generate/ffc-demo/ffc-demo-claim-service
+
+###
+# Create Team config
+POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/create/ffc-find
+Content-Type: application/json
+
+{
+  "ProgrammeName": "ffc",
+  "ServiceCode": "ffc-find",
+  "Services": [
+    {
+      "Name": "ffc-find-web",
+      "IsFrontend": false,
+      "Environments": [
+        "snd1",
+        "snd2",
+        "snd3"
+      ],
+      "ConfigVariables": {
+        "INGRESS_ENDPOINT": "ffc-find-web"
+      }
+    }
+  ],
+  "ConfigVariables": {
+    "TEAM_CPU_QUOTA": "2000"
+  }
+}
+
+###
+
+###
+# Update Team config
+PUT {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/update/ffc-find
+Content-Type: application/json
+
+{
+  "ProgrammeName": "ffc",
+  "ServiceCode": "ffc-find",
+  "Services": [
+    {
+      "Name": "ffc-find-web",
+      "IsFrontend": true,
+      "Environments": [
+        "snd1",
+        "snd2",
+        "snd3"
+      ],
+      "ConfigVariables": {
+        "INGRESS_ENDPOINT": "ffc-find-web"
+      }
+    }
+  ],
+  "ConfigVariables": {
+    "TEAM_CPU_QUOTA": "2000"
+  }
+}
+
+###

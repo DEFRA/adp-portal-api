@@ -4,7 +4,9 @@ using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.TestManagement.TestPlanning.WebApi;
 using Octokit;
+using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services
 {
@@ -12,12 +14,39 @@ namespace ADP.Portal.Core.Git.Services
     {
         private readonly IGitOpsConfigRepository gitOpsConfigRepository;
         private readonly ILogger<GitOpsFluxTeamConfigService> logger;
+        private readonly ISerializer serializer;
 
-
-        public GitOpsFluxTeamConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsFluxTeamConfigService> logger)
+        public GitOpsFluxTeamConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsFluxTeamConfigService> logger, ISerializer serializer)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
             this.logger = logger;
+            this.serializer = serializer;
+        }
+
+        public async Task<CreateFluxConfigResult> CreateFluxConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig)
+        {
+            var result = new CreateFluxConfigResult();
+            
+            await gitOpsConfigRepository.CreateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
+
+            return result;
+        }
+
+        public async Task<CreateFluxConfigResult> UpdateFluxConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig)
+        {
+            var result = new CreateFluxConfigResult();
+
+            var existingConfig = await GetFluxConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
+            if (existingConfig != null)
+            {
+                await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
+            }
+            else
+            {
+                result.IsConfigExists = false;
+            }
+
+            return result;
         }
 
         public async Task<GenerateFluxConfigResult> GenerateFluxTeamConfigAsync(GitRepo gitRepo, GitRepo gitRepoFluxServices, string tenantName, string teamName, string? serviceName = null)
