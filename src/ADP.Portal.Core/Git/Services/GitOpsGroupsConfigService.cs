@@ -16,6 +16,8 @@ namespace ADP.Portal.Core.Git.Services
         private readonly ILogger<GitOpsGroupsConfigService> logger;
         private readonly IGroupService groupService;
         private readonly ISerializer serializer;
+        private const string GLOBAL_READ_GROUP = "AAG-Azure-ADP-GlobalRead";
+        private const string PLATFORM_ENGINEERS_GROUP = "AG-Azure-CDO-ADP-PlatformEngineers";
 
         public GitOpsGroupsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsGroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
         {
@@ -46,7 +48,7 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        private GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> groupMembers)
+        private static GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> groupMembers)
         {
             var environments = new List<string>();
             switch (tenantName)
@@ -65,12 +67,12 @@ namespace ADP.Portal.Core.Git.Services
                     new Group {
                         DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_TechUser",
                         Type = GroupType.UserGroup,
-                        GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                        GroupMemberships = [GLOBAL_READ_GROUP]
                     },
                     new Group {
                         DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_NonTechUser",
                         Type = GroupType.UserGroup,
-                        GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                        GroupMemberships = [GLOBAL_READ_GROUP]
                     },
                     new Group {
                         DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_Admin",
@@ -86,14 +88,16 @@ namespace ADP.Portal.Core.Git.Services
                 root.Groups.Add(new Group
                 {
                     DisplayName = $"AAG-Azure-ADP-{teamName.ToUpper()}-{item.ToUpper()}-PostgresDB_Reader",
+                    Description = "AD group to grant reader access to postgres DB",
                     Type = GroupType.AccessGroup,
-                    GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                    Members = [PLATFORM_ENGINEERS_GROUP]
                 });
                 root.Groups.Add(new Group
                 {
                     DisplayName = $"AAG-Azure-ADP-{teamName.ToUpper()}-{item.ToUpper()}-PostgresDB_Writer",
+                    Description = "AD group to grant writer access to postgres DB",
                     Type = GroupType.AccessGroup,
-                    GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                    Members = [PLATFORM_ENGINEERS_GROUP]
                 });
             });
 
