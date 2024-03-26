@@ -1,20 +1,21 @@
 ﻿@ADP.Portal.Api_HostAddress = https://localhost:7280
 
+# ADO Controller
 GET {{ADP.Portal.Api_HostAddress}}/api/adoproject/string
 
+# AD Group Controller
 ###
 PUT {{ADP.Portal.Api_HostAddress}}/api/aadgroup/sync/ffc-demo/UserGroupsMembers
 
+# Flux Config Controller
 ###
-# Generate Team templates
-POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/generate/ffc-demo
+@serviceName = ffc-demo-claim-service
+POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/generate/ffc-demo/{{serviceName}}
 
 ###
-# Generate Specific service templates
-POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/generate/ffc-demo/ffc-demo-claim-service
+GET {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/get/ffc-demo
 
 ###
-# Create Team config
 POST {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/create/ffc-find
 Content-Type: application/json
 Api-Version: 1.0
@@ -42,9 +43,6 @@ Api-Version: 1.0
 }
 
 ###
-
-###
-# Update Team config
 PUT {{ADP.Portal.Api_HostAddress}}/api/fluxconfig/update/ffc-find
 Content-Type: application/json
 
