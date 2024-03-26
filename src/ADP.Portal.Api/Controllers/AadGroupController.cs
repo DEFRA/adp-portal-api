@@ -27,6 +27,29 @@ namespace ADP.Portal.Api.Controllers
             this.teamGitRepoConfig = teamGitRepoConfig;
         }
 
+        [HttpGet("get/{teamName}")]
+        public async Task<ActionResult> GetGroupsAsync(string teamName)
+        {
+            var teamRepo = teamGitRepoConfig.Value.Adapt<GitRepo>();
+            var tenantName = azureAdConfig.Value.TenantName;
+
+            var groups = await gitOpsConfigService.GetGroupsConfigAsync(tenantName, teamName, teamRepo);
+
+            return Ok(groups);
+        }
+
+        [HttpPost("create/{teamName}")]
+        public async Task<ActionResult> CreateGroupsConfigAsync(string teamName, [FromBody] CreateGroupsConfigRequest createGroupsConfigRequest)
+        {
+            var teamRepo = teamGitRepoConfig.Value.Adapt<GitRepo>();
+            var tenantName = azureAdConfig.Value.TenantName;
+
+            var result = await gitOpsConfigService.CreateGroupsConfigAsync(tenantName, teamName, teamRepo, createGroupsConfigRequest.Members);
+            if (result.Errors.Count != 0) return BadRequest(result.Errors);
+
+            return Created();
+        }
+
         [HttpPut("sync/{teamName}/{groupType?}")]
         public async Task<ActionResult> SyncGroupsAsync(string teamName, string? groupType = null)
         {
@@ -42,7 +65,7 @@ namespace ADP.Portal.Api.Controllers
             var ownerId = azureAdConfig.Value.SpObjectId;
 
             logger.LogInformation("Sync Groups for the Team:'{TeamName}' and Group Type:'{GroupType}'", teamName, groupType);
-            var result = await gitOpsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, groupType != null ? (GroupType?)syncGroupTypeEnum : null, teamRepo);
+            var result = await gitOpsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, groupType != null ? (GroupType)syncGroupTypeEnum : null, teamRepo);
 
             if (result.Errors.Count > 0)
             {

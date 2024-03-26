@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using ADP.Portal.Core.Azure.Entities;
+﻿using ADP.Portal.Core.Azure.Entities;
 using ADP.Portal.Core.Azure.Services;
 using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
@@ -7,6 +6,7 @@ using Mapster;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
+using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services
 {
@@ -15,15 +15,89 @@ namespace ADP.Portal.Core.Git.Services
         private readonly IGitOpsConfigRepository gitOpsConfigRepository;
         private readonly ILogger<GitOpsGroupsConfigService> logger;
         private readonly IGroupService groupService;
+        private readonly ISerializer serializer;
 
-        [GeneratedRegex("(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])")]
-        private static partial Regex KebabCaseRegex();
-
-        public GitOpsGroupsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsGroupsConfigService> logger, IGroupService groupService)
+        public GitOpsGroupsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsGroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
             this.logger = logger;
             this.groupService = groupService;
+            this.serializer = serializer;
+        }
+
+        public async Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName, GitRepo gitRepo)
+        {
+            return await GetGroupsConfigAsync(tenantName, teamName, null, gitRepo);
+        }
+
+        public async Task<GroupConfigResult> CreateGroupsConfigAsync(string tenantName, string teamName, GitRepo gitRepo, IEnumerable<string> groupMembers)
+        {
+            var result = new GroupConfigResult();
+            
+            var fileName = $"{tenantName}/{teamName}.yaml";
+            var groups = BuildTeamGroups(tenantName, teamName, groupMembers);
+
+            logger.LogInformation("Create groups config for the team({TeamName})", teamName);
+            var response = await gitOpsConfigRepository.CreateConfigAsync(gitRepo, fileName, serializer.Serialize(groups));
+            if (string.IsNullOrEmpty(response))
+            {
+                result.Errors.Add($"Failed to save the config for the team: {teamName}");
+            }
+            return result;
+        }
+
+        private GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> groupMembers)
+        {
+            var environments = new List<string>();
+            switch (tenantName)
+            {
+                case "defradev":
+                    environments = ["snd1", "snd2", "snd3"];
+                    break;
+                case "defra":
+                    environments = ["snd4", "dev1", "tst1", "pre1", "prd1"];
+                    break;
+            }
+
+            var root = new GroupsRoot
+            {
+                Groups = [
+                    new Group {
+                        DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_TechUser",
+                        Type = GroupType.UserGroup,
+                        GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                    },
+                    new Group {
+                        DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_NonTechUser",
+                        Type = GroupType.UserGroup,
+                        GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                    },
+                    new Group {
+                        DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_Admin",
+                        Type = GroupType.UserGroup,
+                        Members = groupMembers.ToList()
+                    }
+                ]
+            };
+
+
+            environments.ForEach(item =>
+            {
+                root.Groups.Add(new Group
+                {
+                    DisplayName = $"AAG-Azure-ADP-{teamName.ToUpper()}-{item.ToUpper()}-PostgresDB_Reader",
+                    Type = GroupType.AccessGroup,
+                    GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                });
+                root.Groups.Add(new Group
+                {
+                    DisplayName = $"AAG-Azure-ADP-{teamName.ToUpper()}-{item.ToUpper()}-PostgresDB_Writer",
+                    Type = GroupType.AccessGroup,
+                    GroupMemberships = ["AAG-Azure-ADP-GlobalRead"]
+                });
+            });
+
+            return root;
         }
 
         public async Task<GroupSyncResult> SyncGroupsAsync(string tenantName, string teamName, string ownerId, GroupType? groupType, GitRepo gitRepo)
@@ -32,7 +106,7 @@ namespace ADP.Portal.Core.Git.Services
 
             var groups = await GetGroupsConfigAsync(tenantName, teamName, groupType, gitRepo);
 
-            if (groups.Count == 0)
+            if (!groups.Any())
             {
                 result.IsConfigExists = false;
                 result.Errors.Add($"Groups config not found for the team:{teamName} in the tenant:{tenantName}");
@@ -46,7 +120,7 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        private async Task ProcessGroupAsync(Entities.Group group, string ownerId, GroupSyncResult result)
+        private async Task ProcessGroupAsync(Group group, string ownerId, GroupSyncResult result)
         {
             logger.LogInformation("Getting groupId for the group({DisplayName})", group.DisplayName);
             var groupId = await groupService.GetGroupIdAsync(group.DisplayName);
@@ -68,7 +142,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task<List<Entities.Group>> GetGroupsConfigAsync(string tenantName, string teamName, GroupType? groupType, GitRepo gitRepo)
+        private async Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName, GroupType? groupType, GitRepo gitRepo)
         {
             try
             {
@@ -77,8 +151,7 @@ namespace ADP.Portal.Core.Git.Services
                 logger.LogInformation("Getting groups config for the team({TeamName})", teamName);
                 var result = await gitOpsConfigRepository.GetConfigAsync<GroupsRoot>(fileName, gitRepo);
 
-                return result?.Groups.Where(g => groupType == null || g.Type == groupType).ToList() ?? [];
-
+                return result?.Groups.Where(g => groupType == null || g.Type == groupType) ?? [];
             }
             catch (NotFoundException)
             {
@@ -86,7 +159,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task<string?> CreateNewGroupAsync(Entities.Group group, string ownerId)
+        private async Task<string?> CreateNewGroupAsync(Group group, string ownerId)
         {
             logger.LogInformation("Creating a new Group({DisplayName})", group.DisplayName);
 
@@ -96,7 +169,7 @@ namespace ADP.Portal.Core.Git.Services
             return await groupService.AddGroupAsync(aadGroup);
         }
 
-        private async Task SyncGroupMembersAsync(Entities.Group group, string groupId, GroupSyncResult result)
+        private async Task SyncGroupMembersAsync(Group group, string groupId, GroupSyncResult result)
         {
             logger.LogInformation("Syncing group members for the group({DisplayName})", group.DisplayName);
 
@@ -117,7 +190,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task SyncUserTypeMembersAsync(GroupSyncResult result, Entities.Group group, string? groupId, bool isNewGroup)
+        private async Task SyncUserTypeMembersAsync(GroupSyncResult result, Group group, string? groupId, bool isNewGroup)
         {
             if (groupId == null)
             {
@@ -154,7 +227,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task SyncGroupTypeMembersAsync(GroupSyncResult result, Entities.Group group, string groupId, bool isNewGroup)
+        private async Task SyncGroupTypeMembersAsync(GroupSyncResult result, Group group, string groupId, bool isNewGroup)
         {
 
             var existingMembers = isNewGroup ? [] : await groupService.GetGroupTypeGroupMembersAsync(groupId);
@@ -187,7 +260,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task SyncMembershipsAsync(GroupSyncResult result, Entities.Group group, string groupId, bool IsNewGroup)
+        private async Task SyncMembershipsAsync(GroupSyncResult result, Group group, string groupId, bool IsNewGroup)
         {
 
             var existingMemberShips = IsNewGroup ? [] : await groupService.GetGroupMemberShipsAsync(groupId);
