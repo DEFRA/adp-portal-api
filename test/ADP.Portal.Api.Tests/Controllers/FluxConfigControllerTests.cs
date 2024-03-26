@@ -223,5 +223,31 @@ namespace ADP.Portal.Api.Tests.Controllers
                 Assert.That(okResults, Is.Not.Null);
             }
         }
+
+        [Test]
+        public async Task GetConfigAsync_Returns_Ok()
+        {
+            // Arrange
+            var fluxTeam = fixture.Build<FluxTeamConfig>().Create();
+            teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
+            fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.GetFluxConfigAsync<FluxTeamConfig>(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(fluxTeam);
+
+            // Act
+            var result = await controller.GetConfigAsync("teamName");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            if (result != null)
+            {
+                var okResults = (OkObjectResult)result;
+                var fluxTeamConfig = okResults.Value as FluxTeamConfig;
+                
+                Assert.That(okResults, Is.Not.Null);
+                Assert.That(fluxTeamConfig, Is.Not.Null);
+                Assert.That(fluxTeamConfig?.Services.Count, Is.EqualTo(fluxTeam.Services.Count));
+            }
+        }
     }
 }

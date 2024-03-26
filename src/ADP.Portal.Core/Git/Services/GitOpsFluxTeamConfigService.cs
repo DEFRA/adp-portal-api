@@ -4,7 +4,6 @@ using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.TestManagement.TestPlanning.WebApi;
 using Octokit;
 using YamlDotNet.Serialization;
 
@@ -21,6 +20,22 @@ namespace ADP.Portal.Core.Git.Services
             this.gitOpsConfigRepository = gitOpsConfigRepository;
             this.logger = logger;
             this.serializer = serializer;
+        }
+
+        public async Task<T?> GetFluxConfigAsync<T>(GitRepo gitRepo, string? tenantName = null, string? teamName = null)
+        {
+            try
+            {
+                var path = string.IsNullOrEmpty(tenantName) ?
+                    string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName) :
+                    string.Format(FluxConstants.GIT_REPO_TENANT_CONFIG_PATH, tenantName);
+
+                return await gitOpsConfigRepository.GetConfigAsync<T>(path, gitRepo);
+            }
+            catch (NotFoundException)
+            {
+                return default;
+            }
         }
 
         public async Task<CreateFluxConfigResult> CreateFluxConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig)
@@ -73,22 +88,6 @@ namespace ADP.Portal.Core.Git.Services
             if (generatedFiles.Count > 0) await PushFilesToFluxRepository(gitRepoFluxServices, teamName, serviceName, generatedFiles, result);
 
             return result;
-        }
-
-        private async Task<T?> GetFluxConfigAsync<T>(GitRepo gitRepo, string? tenantName = null, string? teamName = null)
-        {
-            try
-            {
-                var path = string.IsNullOrEmpty(tenantName) ?
-                    string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName) :
-                    string.Format(FluxConstants.GIT_REPO_TENANT_CONFIG_PATH, tenantName);
-
-                return await gitOpsConfigRepository.GetConfigAsync<T>(path, gitRepo);
-            }
-            catch (NotFoundException)
-            {
-                return default;
-            }
         }
 
         private static Dictionary<string, Dictionary<object, object>> ProcessTemplates(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> files,

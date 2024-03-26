@@ -5,7 +5,6 @@ using ADP.Portal.Core.Git.Services;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using YamlDotNet.Core;
 
 namespace ADP.Portal.Api.Controllers
 {
@@ -28,6 +27,18 @@ namespace ADP.Portal.Api.Controllers
             this.teamGitRepoConfig = teamGitRepoConfig;
             this.azureAdConfig = azureAdConfig;
             this.fluxServicesGitRepoConfig = fluxServicesGitRepoConfig;
+        }
+
+        [HttpGet("get/{teamName}", Name = "Get")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> GetConfigAsync(string teamName)
+        {
+            var teamRepo = teamGitRepoConfig.Value.Adapt<GitRepo>();
+
+            var result = await gitOpsFluxTeamConfigService.GetFluxConfigAsync<FluxTeamConfig>(teamRepo, teamName: teamName);
+            
+            return Ok(result);
         }
 
         [HttpPost("create/{teamName}", Name = "Create")]
