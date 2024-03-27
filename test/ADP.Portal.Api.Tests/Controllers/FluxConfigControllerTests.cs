@@ -59,7 +59,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var result = await controller.GenerateAsync("teamName", "service1");
 
             // Assert
-            Assert.That(result, Is.InstanceOf<OkResult>());
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
         }
 
 
@@ -147,11 +147,11 @@ namespace ADP.Portal.Api.Tests.Controllers
             var result = await controller.CreateConfigAsync("teamName", request);
 
             // Assert
-            Assert.That(result, Is.InstanceOf<OkResult>());
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
             if (result != null)
             {
-                var okResults = (OkResult)result;
-                Assert.That(okResults, Is.Not.Null);
+                var results = (NoContentResult)result;
+                Assert.That(results, Is.Not.Null);
             }
         }
 

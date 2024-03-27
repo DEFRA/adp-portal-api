@@ -104,7 +104,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var result = await controller.SyncGroupsAsync("teamName", groupType);
 
             // Assert
-            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
         }
 
         [TestCase("UserGroup")]
@@ -131,14 +131,13 @@ namespace ADP.Portal.Api.Tests.Controllers
         {
             // Arrange
             var groups = fixture.Build<Group>().CreateMany(2).ToList();
-            gitOpsConfigServiceMock.GetGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<GitRepo>())
-                .Returns(groups);
+            gitOpsConfigServiceMock.GetGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(groups);
 
             adpTeamGitRepoConfigMock.Value.Returns(fixture.Create<TeamGitRepoConfig>());
             azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
             // Act
-            var result = await controller.GetGroupsAsync("teamName");
+            var result = await controller.GetGroupsConfigAsync("teamName");
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -158,8 +157,8 @@ namespace ADP.Portal.Api.Tests.Controllers
         {
             // Arrange
             var groups = fixture.Build<string>().CreateMany(2).ToList();
-            gitOpsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<GitRepo>(), Arg.Any<IEnumerable<string>>())
-                .Returns(new GroupConfigResult());
+            gitOpsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<GitRepo>(), Arg.Any<IEnumerable<string>>()).Returns(new GroupConfigResult());
+            gitOpsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), null, Arg.Any<GitRepo>()).Returns(new GroupSyncResult());
 
             adpTeamGitRepoConfigMock.Value.Returns(fixture.Create<TeamGitRepoConfig>());
             azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
@@ -173,12 +172,33 @@ namespace ADP.Portal.Api.Tests.Controllers
         }
 
         [Test]
-        public async Task CreateGroupsConfigAsync_CreatesConfig_ReturnsBadRequest()
+        public async Task CreateGroupsConfigAsync_CreatesConfig_OnConfigSave_ReturnsBadRequest()
         {
             // Arrange
             var groups = fixture.Build<string>().CreateMany(2).ToList();
             gitOpsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<GitRepo>(), Arg.Any<IEnumerable<string>>())
-                .Returns(new GroupConfigResult() { Errors = new List<string> { "Failed to save groups" } });
+                .Returns(new GroupConfigResult { Errors = ["Failed to save groups"] });
+
+            adpTeamGitRepoConfigMock.Value.Returns(fixture.Create<TeamGitRepoConfig>());
+            azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
+
+            // Act
+            var result = await controller.CreateGroupsConfigAsync("teamName", new Models.Group.CreateGroupsConfigRequest { Members = groups });
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That((BadRequestObjectResult)result, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task CreateGroupsConfigAsync_CreatesConfig_OnGroupSync_ReturnsBadRequest()
+        {
+            // Arrange
+            var groups = fixture.Build<string>().CreateMany(2).ToList();
+            gitOpsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<GitRepo>(), Arg.Any<IEnumerable<string>>())
+                .Returns(new GroupConfigResult());
+            gitOpsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), null, Arg.Any<GitRepo>())
+                .Returns(new GroupSyncResult { Errors = ["Failed to save groups"] });
 
             adpTeamGitRepoConfigMock.Value.Returns(fixture.Create<TeamGitRepoConfig>());
             azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
