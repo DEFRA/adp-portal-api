@@ -37,8 +37,13 @@ namespace ADP.Portal.Api.Controllers
             var teamRepo = teamGitRepoConfig.Value.Adapt<GitRepo>();
 
             var result = await gitOpsFluxTeamConfigService.GetFluxConfigAsync<FluxTeamConfig>(teamRepo, teamName: teamName);
-            
-            return Ok(result);
+
+            if (result != null)
+            {
+                return Ok(result);
+            }
+
+            return NotFound();
         }
 
         [HttpPost("create/{teamName}", Name = "Create")]
