@@ -35,7 +35,7 @@ namespace ADP.Portal.Core.Git.Services
         public async Task<GroupConfigResult> CreateGroupsConfigAsync(string tenantName, string teamName, GitRepo gitRepo, IEnumerable<string> groupMembers)
         {
             var result = new GroupConfigResult();
-            
+
             var fileName = $"{tenantName}/{teamName}.yaml";
             var groups = BuildTeamGroups(tenantName, teamName, groupMembers);
 
@@ -81,7 +81,6 @@ namespace ADP.Portal.Core.Git.Services
                     }
                 ]
             };
-
 
             environments.ForEach(item =>
             {
