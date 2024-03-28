@@ -36,6 +36,7 @@ namespace ADP.Portal.Api.Controllers
         /// <returns></returns>
         [HttpGet("get/{teamName}", Name = "Get")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetConfigAsync(string teamName)
         {
             var teamRepo = teamGitRepoConfig.Value.Adapt<GitRepo>();
