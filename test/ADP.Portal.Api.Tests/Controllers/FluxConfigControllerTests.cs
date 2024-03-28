@@ -60,7 +60,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var result = await controller.GenerateAsync("teamName", "service1");
 
             // Assert
-            Assert.That(result, Is.InstanceOf<OkResult>());
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
         }
 
 
@@ -119,7 +119,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
             gitOpsFluxTeamConfigServiceMock.CreateFluxConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<FluxTeamConfig>())
-                .Returns(new CreateFluxConfigResult() { Errors = ["Flux team config not found"] });
+                .Returns(new FluxConfigResult() { Errors = ["Flux team config not found"] });
 
             // Act
             var result = await controller.CreateConfigAsync("teamName", request);
@@ -142,17 +142,17 @@ namespace ADP.Portal.Api.Tests.Controllers
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
             gitOpsFluxTeamConfigServiceMock.CreateFluxConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<FluxTeamConfig>())
-                .Returns(new CreateFluxConfigResult());
+                .Returns(new FluxConfigResult());
 
             // Act
             var result = await controller.CreateConfigAsync("teamName", request);
 
             // Assert
-            Assert.That(result, Is.InstanceOf<OkResult>());
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
             if (result != null)
             {
-                var okResults = (OkResult)result;
-                Assert.That(okResults, Is.Not.Null);
+                var results = (NoContentResult)result;
+                Assert.That(results, Is.Not.Null);
             }
         }
 
@@ -164,7 +164,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
             gitOpsFluxTeamConfigServiceMock.UpdateFluxConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<FluxTeamConfig>())
-                .Returns(new CreateFluxConfigResult() { IsConfigExists = false });
+                .Returns(new FluxConfigResult() { IsConfigExists = false });
 
             // Act
             var result = await controller.UpdateConfigAsync("teamName", request);
@@ -188,7 +188,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
             gitOpsFluxTeamConfigServiceMock.UpdateFluxConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<FluxTeamConfig>())
-                .Returns(new CreateFluxConfigResult() { Errors = ["Flux team config not found"] });
+                .Returns(new FluxConfigResult() { Errors = ["Flux team config not found"] });
 
             // Act
             var result = await controller.UpdateConfigAsync("teamName", request);
@@ -211,17 +211,17 @@ namespace ADP.Portal.Api.Tests.Controllers
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
             gitOpsFluxTeamConfigServiceMock.UpdateFluxConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<FluxTeamConfig>())
-                .Returns(new CreateFluxConfigResult());
+                .Returns(new FluxConfigResult());
 
             // Act
             var result = await controller.UpdateConfigAsync("teamName", request);
 
             // Assert
-            Assert.That(result, Is.InstanceOf<OkResult>());
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
             if (result != null)
             {
-                var okResults = (OkResult)result;
-                Assert.That(okResults, Is.Not.Null);
+                var results = (NoContentResult)result;
+                Assert.That(results, Is.Not.Null);
             }
         }
 
