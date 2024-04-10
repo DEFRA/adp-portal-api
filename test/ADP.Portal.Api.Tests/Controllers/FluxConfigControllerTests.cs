@@ -135,7 +135,7 @@ namespace ADP.Portal.Api.Tests.Controllers
         }
 
         [Test]
-        public async Task CreateConfigAsync_Returns_Ok()
+        public async Task CreateConfigAsync_Returns_Created()
         {
             // Arrange
             var request = fixture.Build<TeamFluxConfigRequest>().Create();
@@ -148,10 +148,10 @@ namespace ADP.Portal.Api.Tests.Controllers
             var result = await controller.CreateConfigAsync("teamName", request);
 
             // Assert
-            Assert.That(result, Is.InstanceOf<NoContentResult>());
+            Assert.That(result, Is.InstanceOf<CreatedResult>());
             if (result != null)
             {
-                var results = (NoContentResult)result;
+                var results = (CreatedResult)result;
                 Assert.That(results, Is.Not.Null);
             }
         }
