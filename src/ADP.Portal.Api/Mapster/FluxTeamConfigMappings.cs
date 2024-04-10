@@ -10,6 +10,10 @@ namespace ADP.Portal.Api.Mapster
             TypeAdapterConfig<FluxService, Core.Git.Entities.FluxService>.NewConfig()
                 .Map(dest => dest.Environments, opt => opt.Environments.Select(x => new Core.Git.Entities.FluxEnvironment { Name = x }))
                 .Map(dest => dest.Type, opt => opt.IsFrontend ? Core.Git.Entities.FluxServiceType.Frontend : Core.Git.Entities.FluxServiceType.Backend);
+
+            TypeAdapterConfig<ServiceFluxConfigRequest, Core.Git.Entities.FluxService>.NewConfig()
+                .Map(dest => dest.Environments, opt => opt.Environments.Select(x => new Core.Git.Entities.FluxEnvironment { Name = x }))
+                .Map(dest => dest.Type, opt => opt.IsFrontend ? Core.Git.Entities.FluxServiceType.Frontend : Core.Git.Entities.FluxServiceType.Backend);
         }
     }
 }

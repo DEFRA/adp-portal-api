@@ -88,7 +88,7 @@ namespace ADP.Portal.Core.Git.Services
             {
                 result.IsConfigExists = true;
                 logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
-                if (!teamConfig.Services.Any(s => s.Name == fluxService.Name))
+                if (!teamConfig.Services.Exists(s => s.Name == fluxService.Name))
                 {
                     teamConfig.Services.Add(fluxService);
                     var response = await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
@@ -322,7 +322,5 @@ namespace ADP.Portal.Core.Git.Services
                 result.Errors.Add($"No changes found in the flux files for the team:'{teamName}' and service:{serviceDisplay}.");
             }
         }
-
-
     }
 }

@@ -18,7 +18,7 @@ using NUnit.Framework;
 namespace ADP.Portal.Api.Tests.Controllers
 {
     [TestFixture]
-    public class FluxConfigControllerTests
+    public class FluxTeamConfigControllerTests
     {
         private readonly FluxTeamConfigController controller;
         private readonly ILogger<FluxTeamConfigController> loggerMock;
@@ -32,10 +32,10 @@ namespace ADP.Portal.Api.Tests.Controllers
         public void SetUp()
         {
             TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
-            MapsterConfig.EntitiesConfigure(Substitute.For<IServiceCollection>());
+            MapsterConfig.Configure(Substitute.For<IServiceCollection>());
         }
 
-        public FluxConfigControllerTests()
+        public FluxTeamConfigControllerTests()
         {
             teamGitRepoConfigMock = Substitute.For<IOptions<TeamGitRepoConfig>>();
             azureAdConfigMock = Substitute.For<IOptions<AzureAdConfig>>();
@@ -265,6 +265,76 @@ namespace ADP.Portal.Api.Tests.Controllers
 
             // Assert
             Assert.That(result, Is.InstanceOf<NotFoundResult>());
+        }
+
+
+        [Test]
+        public async Task CreateServiceAsync_Returns_BadRequest_When_Errors()
+        {
+            // Arrange
+            var request = fixture.Build<ServiceFluxConfigRequest>().Create();
+            teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
+            fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.AddFluxServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
+                .Returns(new FluxConfigResult() { Errors = ["Flux team config not found"] });
+
+            // Act
+            var result = await controller.CreateServiceAsync("teamName", request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            if (result != null)
+            {
+                var badResults = (BadRequestObjectResult)result;
+                Assert.That(badResults, Is.Not.Null);
+                Assert.That(badResults.StatusCode, Is.EqualTo(400));
+            }
+        }
+
+        [Test]
+        public async Task CreateServiceAsync_Returns_Created()
+        {
+            // Arrange
+            var request = fixture.Build<ServiceFluxConfigRequest>().Create();
+            teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
+            fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.AddFluxServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
+                .Returns(new FluxConfigResult());
+
+            // Act
+            var result = await controller.CreateServiceAsync("teamName", request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<CreatedResult>());
+            if (result != null)
+            {
+                var results = (CreatedResult)result;
+                Assert.That(results, Is.Not.Null);
+            }
+        }
+
+        [Test]
+        public async Task CreateServiceAsync_Returns_BadRequest_When_TeamFlux_Not_Exists()
+        {
+            // Arrange
+            var request = fixture.Build<ServiceFluxConfigRequest>().Create();
+            teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
+            fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.AddFluxServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
+                .Returns(new FluxConfigResult() { IsConfigExists = false });
+
+            // Act
+            var result = await controller.CreateServiceAsync("teamName", request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            if (result != null)
+            {
+                var badResults = (BadRequestObjectResult)result;
+                Assert.That(badResults, Is.Not.Null);
+                Assert.That(badResults.StatusCode, Is.EqualTo(400));
+                Assert.That(badResults.Value, Is.EqualTo($"Flux config not found for the team:teamName"));
+            }
         }
     }
 }
