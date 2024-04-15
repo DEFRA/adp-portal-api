@@ -71,8 +71,10 @@ namespace ADP.Portal.Api
                 var connection = await vssConnectionProvider.GetConnectionAsync();
                 return connection;
             });
+
+            builder.Services.AddScoped<IAdoRestApiService, AdoRestApiService>();
             builder.Services.AddScoped<IAdoProjectService, AdoProjectService>();
-            builder.Services.AddScoped<IAdoService, AdoService>();
+            builder.Services.AddScoped<IAdoService, AdoService>();      
             builder.Services.AddScoped<IGroupService, GroupService>();
             builder.Services.AddScoped<IAzureAadGroupService, AzureAadGroupService>();
             builder.Services.AddScoped(provider =>
@@ -103,7 +105,7 @@ namespace ADP.Portal.Api
             {
                 return new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             });
-            builder.Services.EntitiesConfigure();
+            builder.Services.Configure();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
