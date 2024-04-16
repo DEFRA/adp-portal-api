@@ -187,8 +187,9 @@ namespace ADP.Portal.Core.Git.Services
                         serviceFiles.AddRange(CreateEnvironmentFiles([template], tenantConfig, teamConfig, [service]));
                     }
                 }
-                UpdateServiceDependencies(serviceFiles, service, teamConfig);
+                UpdateServicePatchFiles(serviceFiles, service, teamConfig);
 
+                service.ConfigVariables.Add(new FluxConfig { Key = FluxConstants.TEMPLATE_VAR_DEPENDS_ON, Value = CheckServiceConfigurationForDatabaseName(service) ? FluxConstants.PREDEPLOY_KEY : FluxConstants.INFRA_KEY });
                 service.ConfigVariables.Add(new FluxConfig { Key = FluxConstants.TEMPLATE_VAR_SERVICE_NAME, Value = service.Name });
                 service.ConfigVariables.ForEach(serviceFiles.ReplaceToken);
                 finalFiles.AddRange(serviceFiles);
@@ -270,35 +271,31 @@ namespace ADP.Portal.Core.Git.Services
             return finalFiles;
         }
 
-        private static void UpdateServiceDependencies(Dictionary<string, Dictionary<object, object>> serviceFiles, FluxService service, FluxTeamConfig teamConfig)
+        private static void UpdateServicePatchFiles(Dictionary<string, Dictionary<object, object>> serviceFiles, FluxService service, FluxTeamConfig teamConfig)
         {
-            service.ConfigVariables.Add(new FluxConfig { Key = FluxConstants.TEMPLATE_VAR_DEPENDS_ON, Value = CheckServiceConfigurationForDatabaseName(service) ? FluxConstants.PREDEPLOY_KEY : FluxConstants.INFRA_KEY });
-            if (service.Type.Equals(FluxServiceType.Backend))
+            foreach (var file in serviceFiles)
             {
-                foreach (var file in serviceFiles)
+                service.Environments.ForEach(env =>
                 {
-                    service.Environments.ForEach(env =>
+                    var filePattern = string.Format(FluxConstants.TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, service.Name, $"{env.Name[..3]}/0{env.Name[3..]}");
+                    if (service.Type.Equals(FluxServiceType.Backend) && file.Key.Equals(filePattern))
                     {
-                        var filePattern = string.Format(FluxConstants.TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, service.Name, $"{env.Name[..3]}/0{env.Name[3..]}");
-                        if (file.Key.Equals(filePattern))
-                        {
-                            new YamlQuery(file.Value)
-                                .On(FluxConstants.SPEC_KEY)
-                                .On(FluxConstants.VALUES_KEY)
-                                .Remove(FluxConstants.LABELS_KEY)
-                                .Remove(FluxConstants.INGRESS_KEY);
-                        }
-                        filePattern = string.Format(FluxConstants.TEAM_SERVICE_INFRA_ENV_PATCH_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, service.Name, $"{env.Name[..3]}/0{env.Name[3..]}");
-                        if (service.Type.Equals(FluxServiceType.Frontend) && file.Key.Equals(filePattern))
-                        {
-                            new YamlQuery(file.Value)
-                                .On(FluxConstants.SPEC_KEY)
-                                .On(FluxConstants.VALUES_KEY)
-                                .Remove(FluxConstants.POSTGRESRESOURCEGROUPNAME_KEY)
-                                .Remove(FluxConstants.POSTGRESSERVERNAME_KEY);
-                        }
-                    });
-                }
+                        new YamlQuery(file.Value)
+                            .On(FluxConstants.SPEC_KEY)
+                            .On(FluxConstants.VALUES_KEY)
+                            .Remove(FluxConstants.LABELS_KEY)
+                            .Remove(FluxConstants.INGRESS_KEY);
+                    }
+                    filePattern = string.Format(FluxConstants.TEAM_SERVICE_INFRA_ENV_PATCH_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, service.Name, $"{env.Name[..3]}/0{env.Name[3..]}");
+                    if (service.Type.Equals(FluxServiceType.Frontend) && file.Key.Equals(filePattern))
+                    {
+                        new YamlQuery(file.Value)
+                            .On(FluxConstants.SPEC_KEY)
+                            .On(FluxConstants.VALUES_KEY)
+                            .Remove(FluxConstants.POSTGRESRESOURCEGROUPNAME_KEY)
+                            .Remove(FluxConstants.POSTGRESSERVERNAME_KEY);
+                    }
+                });
             }
         }
 
