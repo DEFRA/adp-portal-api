@@ -67,6 +67,8 @@ properties:
             secretRef: sp-client-secret             
           - name: AzureAd__SpObjectId
             secretRef: sp-object-id 
+          - name: AzureAd__TenantName
+            value: "defradev" # Need to make it dynamic, Should be 'defra' for PRD. our current pipeline has no support to read it from varaibles.      
           - name: TeamGitRepo__Name
             value: "adp-teams-config"
           - name: TeamGitRepo__BranchName
