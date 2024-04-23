@@ -275,7 +275,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var request = fixture.Build<ServiceFluxConfigRequest>().Create();
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.AddFluxServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
+            gitOpsFluxTeamConfigServiceMock.AddServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
                 .Returns(new FluxConfigResult() { Errors = ["Flux team config not found"] });
 
             // Act
@@ -298,7 +298,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var request = fixture.Build<ServiceFluxConfigRequest>().Create();
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.AddFluxServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
+            gitOpsFluxTeamConfigServiceMock.AddServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
                 .Returns(new FluxConfigResult());
 
             // Act
@@ -320,7 +320,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             var request = fixture.Build<ServiceFluxConfigRequest>().Create();
             teamGitRepoConfigMock.Value.Returns(fixture.Build<TeamGitRepoConfig>().Create());
             fluxServicesGitRepoConfigMock.Value.Returns(fixture.Build<FluxServicesGitRepoConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.AddFluxServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
+            gitOpsFluxTeamConfigServiceMock.AddServiceAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<Core.Git.Entities.FluxService>())
                 .Returns(new FluxConfigResult() { IsConfigExists = false });
 
             // Act

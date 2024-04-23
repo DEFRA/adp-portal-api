@@ -445,7 +445,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(default(FluxTeamConfig));
 
             // Act
-            var result = await service.AddFluxServiceAsync(gitRepo, "team1", fluxService);
+            var result = await service.AddServiceAsync(gitRepo, "team1", fluxService);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -466,7 +466,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
-            var result = await service.AddFluxServiceAsync(gitRepo, teamName, fluxService);
+            var result = await service.AddServiceAsync(gitRepo, teamName, fluxService);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -490,7 +490,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
-            var result = await service.AddFluxServiceAsync(gitRepo, teamName, fluxServices[0]);
+            var result = await service.AddServiceAsync(gitRepo, teamName, fluxServices[0]);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -512,7 +512,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
 
             // Act
-            var result = await service.AddFluxServiceAsync(gitRepo, teamName, fluxService);
+            var result = await service.AddServiceAsync(gitRepo, teamName, fluxService);
 
             // Assert
             Assert.That(result, Is.Not.Null);
