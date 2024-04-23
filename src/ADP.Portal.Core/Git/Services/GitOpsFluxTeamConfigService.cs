@@ -150,7 +150,7 @@ namespace ADP.Portal.Core.Git.Services
                 return result;
             }
         
-            var service = teamConfig.Services.FirstOrDefault(s => s.Name == serviceName);
+            var service = teamConfig.Services.Find(s => s.Name == serviceName);
             if (service == null)
             {
                 var message = $"Service '{serviceName}' not found in the team:'{teamName}'.";
