@@ -310,34 +310,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task GenerateFluxTeamConfig_Return_Error_WhenNoChanged_InGeneratedFiles()
-        {
-            // Arrange
-            var gitRepo = fixture.Build<GitRepo>().Create();
-            var gitRepoFluxServices = fixture.Build<GitRepo>().Create();
-            string tenantName = "tenant1";
-            string teamName = "team1";
-            string serviceName = "service1";
-            var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).CreateMany(1).ToList();
-            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
-            var fluxTenantConfig = fixture.Build<FluxTenant>().Create();
-            var templates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2).AsEnumerable();
-
-            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
-            gitOpsConfigRepository.GetAllFilesAsync(gitRepo, FluxConstants.GIT_REPO_TEMPLATE_PATH).Returns(templates);
-            gitOpsConfigRepository.CreateCommitAsync(gitRepoFluxServices, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>()).Returns((Commit?)null);
-
-            // Act
-            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName);
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Errors.Count, Is.EqualTo(1));
-            Assert.That(result.Errors[0], Is.EqualTo($"No changes found in the flux files for the team:'{teamName}' and service:{serviceName}."));
-        }
-
-        [Test]
         public async Task CreateFluxConfigAsync_ShouldCreate_NewFile()
         {
             // Arrange

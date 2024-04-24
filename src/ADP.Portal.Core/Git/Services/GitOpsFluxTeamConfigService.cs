@@ -93,10 +93,10 @@ namespace ADP.Portal.Core.Git.Services
                 return result;
             }
 
-            logger.LogInformation("Reading flux templates");
+            logger.LogInformation("Reading flux templates.");
             var templates = await gitOpsConfigRepository.GetAllFilesAsync(gitRepo, FluxConstants.GIT_REPO_TEMPLATE_PATH);
 
-            logger.LogInformation("Processing templates");
+            logger.LogInformation("Generating flux config for the team:'{TeamName}' and service:'{ServiceName}'.", teamName, serviceName);
             var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, serviceName);
 
             if (generatedFiles.Count > 0) await PushFilesToFluxRepository(gitRepoFluxServices, teamName, serviceName, generatedFiles, result);
@@ -380,7 +380,6 @@ namespace ADP.Portal.Core.Git.Services
             else
             {
                 logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' and service:{ServiceDisplay}.", teamName, serviceDisplay);
-                result.Errors.Add($"No changes found in the flux files for the team:'{teamName}' and service:{serviceDisplay}.");
             }
         }
 
