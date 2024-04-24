@@ -3,7 +3,6 @@ using ADP.Portal.Core.Git.Extensions;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Helpers;
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using YamlDotNet.Serialization;
@@ -108,54 +107,51 @@ namespace ADP.Portal.Core.Git.Services
         public async Task<FluxConfigResult> AddServiceAsync(GitRepo gitRepo, string teamName, FluxService fluxService)
         {
             var result = new FluxConfigResult() { IsConfigExists = false };
-        
+
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
             if (teamConfig == null)
             {
                 return result;
             }
-        
+
             result.IsConfigExists = true;
-        
+
             if (teamConfig.Services.Exists(s => s.Name == fluxService.Name))
             {
-                var message = $"Service '{fluxService.Name}' already exists in the team:'{teamName}'.";
-                result.Errors.Add(message);
-                logger.LogInformation(message);
+                result.Errors.Add($"Service '{fluxService.Name}' already exists in the team:'{teamName}'.");
+                logger.LogInformation("Service '{ServiceName}' already exists in the team: '{TeamName}'.", fluxService.Name, teamName);
                 return result;
             }
-        
+
             logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
             teamConfig.Services.Add(fluxService);
             var response = await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
-        
+
             if (string.IsNullOrEmpty(response))
             {
                 result.Errors.Add($"Failed to save the config for the team: {teamName}");
             }
-        
+
             return result;
         }
 
         public async Task<FluxConfigResult> AddServiceEnvironmentAsync(GitRepo gitRepo, string teamName, string serviceName, FluxEnvironment newEnvironment)
         {
             var result = new FluxConfigResult() { IsConfigExists = false };
-        
+
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
             if (teamConfig == null)
             {
-                var message = $"Flux team config not found for the team:'{teamName}'.";
-                logger.LogWarning(message);
-                result.Errors.Add(message);
+                logger.LogWarning("Flux team config not found for the team:'{TeamName}'.", teamName);
+                result.Errors.Add($"Flux team config not found for the team:'{teamName}'.");
                 return result;
             }
-        
+
             var service = teamConfig.Services.Find(s => s.Name == serviceName);
             if (service == null)
             {
-                var message = $"Service '{serviceName}' not found in the team:'{teamName}'.";
-                logger.LogWarning(message);
-                result.Errors.Add(message);
+                logger.LogWarning("Service '{ServiceName}' not found in the team:'{TeamName}'.", serviceName, teamName);
+                result.Errors.Add($"Service '{serviceName}' not found in the team:'{teamName}'.");
                 return result;
             }
 
@@ -164,17 +160,17 @@ namespace ADP.Portal.Core.Git.Services
             {
                 return result;
             }
-        
+
             service.Environments.Add(newEnvironment);
-        
+
             logger.LogInformation("Adding environment '{EnvironmentName}' to the service:'{ServiceName}' in the team:'{TeamName}'.", newEnvironment.Name, serviceName, teamName);
             var response = await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
-        
+
             if (string.IsNullOrEmpty(response))
             {
                 result.Errors.Add($"Failed to save the config for the team: {teamName}");
             }
-        
+
             return result;
         }
 
