@@ -99,7 +99,7 @@ namespace ADP.Portal.Core.Git.Services
             logger.LogInformation("Generating flux config for the team:'{TeamName}' and service:'{ServiceName}'.", teamName, serviceName);
             var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, serviceName);
 
-            if (generatedFiles.Count > 0) await PushFilesToFluxRepository(gitRepoFluxServices, teamName, serviceName, generatedFiles, result);
+            if (generatedFiles.Count > 0) await PushFilesToFluxRepository(gitRepoFluxServices, teamName, serviceName, generatedFiles);
 
             return result;
         }
@@ -350,7 +350,7 @@ namespace ADP.Portal.Core.Git.Services
             teamConfig.ConfigVariables.Add(new FluxConfig { Key = FluxConstants.TEMPLATE_VAR_SERVICE_CODE, Value = teamConfig.ServiceCode ?? string.Empty });
         }
 
-        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, Dictionary<object, object>> generatedFiles, GenerateFluxConfigResult result)
+        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, Dictionary<object, object>> generatedFiles)
         {
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
             var branchRef = await gitOpsConfigRepository.GetBranchAsync(gitRepoFluxServices, branchName);
