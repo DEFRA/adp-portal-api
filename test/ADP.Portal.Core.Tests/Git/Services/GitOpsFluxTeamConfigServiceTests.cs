@@ -586,5 +586,44 @@ namespace ADP.Portal.Core.Tests.Git.Services
             await gitOpsConfigRepository.Received().CreateBranchAsync(gitRepoFluxServices, Arg.Any<string>(), Arg.Any<string>());
             await gitOpsConfigRepository.Received().CreatePullRequestAsync(gitRepoFluxServices, Arg.Any<string>(), Arg.Any<string>());
         }
+
+        [Test]
+        public async Task AddServiceEnvironmentAsync_Should_Not_Add_When_TeamConfig_NotFound()
+        {
+            // Arrange
+            var gitRepo = fixture.Build<GitRepo>().Create();
+            var fluxEnvironment = fixture.Build<FluxEnvironment>().Create();
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(default(FluxTeamConfig));
+
+            // Act
+            var result = await service.AddServiceEnvironmentAsync(gitRepo, "team1", "service1", fluxEnvironment);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+            Assert.That(result.Errors, Is.EqualTo(new List<string>() { "Flux team config not found for the team:'team1'." }));
+        }
+
+        [Test]
+        public async Task AddServiceEnvironmentAsync_Should_Not_Add_When_ServiceConfig_NotFound()
+        {
+            // Arrange
+            var gitRepo = fixture.Build<GitRepo>().Create();
+            string teamName = "team1";
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().Create();
+            var fluxEnvironment = fixture.Build<FluxEnvironment>().Create();
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+            gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
+
+            // Act
+            var result = await service.AddServiceEnvironmentAsync(gitRepo, "team1", "service1", fluxEnvironment);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+            Assert.That(result.Errors, Is.EqualTo(new List<string>() { "Service 'service1' not found in the team:'team1'." }));
+        }
     }
 }
