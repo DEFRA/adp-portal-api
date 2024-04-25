@@ -355,7 +355,15 @@ namespace ADP.Portal.Core.Git.Services
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
             var branchRef = await gitOpsConfigRepository.GetBranchAsync(gitRepoFluxServices, branchName);
 
-            var message = branchRef == null ? (string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()} Config" : $"{serviceName.ToUpper()} Config") : "Update config";
+            string message;
+            if (branchRef == null)
+            {
+                message = string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()} Config" : $"{serviceName.ToUpper()} Config";
+            }
+            else
+            {
+                message = "Update config";
+            }
 
             logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
             var commitRef = await gitOpsConfigRepository.CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchRef == null ? null : branchName);
@@ -378,7 +386,7 @@ namespace ADP.Portal.Core.Git.Services
             }
             else
             {
-                logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{ServiceDisplay}.", teamName, serviceName);
+                logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{serviceName}.", teamName, serviceName);
             }
         }
 
