@@ -1,15 +1,13 @@
-﻿using ADP.Portal.Core.Git.Entities;
+﻿using System.Net;
+using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Git.Services;
 using AutoFixture;
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Octokit;
-using System.Net;
-using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Tests.Git.Services

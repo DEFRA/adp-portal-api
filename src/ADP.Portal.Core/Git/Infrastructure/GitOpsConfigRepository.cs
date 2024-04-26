@@ -1,4 +1,5 @@
 ﻿using ADP.Portal.Core.Git.Entities;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using YamlDotNet.Serialization;
@@ -10,12 +11,14 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private readonly IGitHubClient gitHubClient;
         private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
+        private readonly ILogger<GitOpsConfigRepository> logger;
 
-        public GitOpsConfigRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer)
+        public GitOpsConfigRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer, ILogger<GitOpsConfigRepository> logger)
         {
             this.gitHubClient = gitHubClient;
             this.deserializer = deserializer;
             this.serializer = serializer;
+            this.logger = logger;
         }
 
         public async Task<T?> GetConfigAsync<T>(string fileName, GitRepo gitRepo)
@@ -54,45 +57,33 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return await GetAllFilesContentsAsync(gitRepo, path);
         }
 
-        public async Task<Reference?> GetBranchAsync(GitRepo gitRepo, string branchName)
+        public async Task PushFilesToRepository(GitRepo gitRepoFluxServices, string branchName, Dictionary<string, Dictionary<object, object>> generatedFiles)
         {
-            try
+            var branchRef = await GetBranchAsync(gitRepoFluxServices, branchName);
+            var message = branchRef == null ? $"{branchName.ToUpper()} Config": "Update config";
+            
+            logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
+            var commitRef = await CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchRef == null ? null : branchName);
+            if (commitRef != null)
             {
-                return await gitHubClient.Git.Reference.Get(gitRepo.Organisation, gitRepo.Name, branchName);
+                if (branchRef == null)
+                {
+                    logger.LogInformation("Creating branch:'{BranchName}'.", branchName);
+                    await CreateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
+
+                    logger.LogInformation("Creating pull request for the branch:'{BranchName}'.", branchName);
+                    await CreatePullRequestAsync(gitRepoFluxServices, branchName, message);
+                }
+                else
+                {
+                    logger.LogInformation("Updating branch:'{BranchName}' with the changes.", branchName);
+                    await UpdateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
+                }
             }
-            catch (NotFoundException)
+            else
             {
-                return default;
+                logger.LogInformation("No changes found in the files for the branch:'{BranchName}'.", branchName);
             }
-        }
-
-        public async Task<Reference> CreateBranchAsync(GitRepo gitRepo, string branchName, string sha)
-        {
-            return await gitHubClient.Git.Reference.Create(gitRepo.Organisation, gitRepo.Name, new NewReference(branchName, sha));
-        }
-
-        public async Task<Reference> UpdateBranchAsync(GitRepo gitRepo, string branchName, string sha)
-        {
-            return await gitHubClient.Git.Reference.Update(gitRepo.Organisation, gitRepo.Name, branchName, new ReferenceUpdate(sha));
-        }
-
-        public async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, Dictionary<object, object>> generatedFiles, string message, string? branchName = null)
-        {
-            var branch = branchName ?? $"heads/{gitRepo.BranchName}";
-
-            var repository = await gitHubClient.Repository.Get(gitRepo.Organisation, gitRepo.Name);
-
-            var branchRef = await gitHubClient.Git.Reference.Get(repository.Owner.Login, repository.Name, branch);
-
-            var latestCommit = await gitHubClient.Git.Commit.Get(repository.Owner.Login, repository.Name, branchRef.Object.Sha);
-
-            var featureBranchTree = await CreateTree(gitHubClient, repository, generatedFiles, latestCommit.Sha);
-            if (featureBranchTree != null)
-            {
-                var featureBranchCommit = await CreateCommit(gitHubClient, repository, message, featureBranchTree.Sha, branchRef.Object.Sha);
-                return featureBranchCommit;
-            }
-            return default;
         }
 
         public async Task<bool> CreatePullRequestAsync(GitRepo gitRepo, string branchName, string message)
@@ -130,6 +121,47 @@ namespace ADP.Portal.Core.Git.Infrastructure
             var allResults = await Task.WhenAll(allTasks);
 
             return allResults.SelectMany(x => x);
+        }
+
+        private async Task<Reference?> GetBranchAsync(GitRepo gitRepo, string branchName)
+        {
+            try
+            {
+                return await gitHubClient.Git.Reference.Get(gitRepo.Organisation, gitRepo.Name, branchName);
+            }
+            catch (NotFoundException)
+            {
+                return default;
+            }
+        }
+
+        private async Task<Reference> CreateBranchAsync(GitRepo gitRepo, string branchName, string sha)
+        {
+            return await gitHubClient.Git.Reference.Create(gitRepo.Organisation, gitRepo.Name, new NewReference(branchName, sha));
+        }
+
+        private async Task<Reference> UpdateBranchAsync(GitRepo gitRepo, string branchName, string sha)
+        {
+            return await gitHubClient.Git.Reference.Update(gitRepo.Organisation, gitRepo.Name, branchName, new ReferenceUpdate(sha));
+        }
+
+        private async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, Dictionary<object, object>> generatedFiles, string message, string? branchName = null)
+        {
+            var branch = branchName ?? $"heads/{gitRepo.BranchName}";
+
+            var repository = await gitHubClient.Repository.Get(gitRepo.Organisation, gitRepo.Name);
+
+            var branchRef = await gitHubClient.Git.Reference.Get(repository.Owner.Login, repository.Name, branch);
+
+            var latestCommit = await gitHubClient.Git.Commit.Get(repository.Owner.Login, repository.Name, branchRef.Object.Sha);
+
+            var featureBranchTree = await CreateTree(gitHubClient, repository, generatedFiles, latestCommit.Sha);
+            if (featureBranchTree != null)
+            {
+                var featureBranchCommit = await CreateCommit(gitHubClient, repository, message, featureBranchTree.Sha, branchRef.Object.Sha);
+                return featureBranchCommit;
+            }
+            return default;
         }
 
         private async Task<TreeResponse?> CreateTree(IGitHubClient client, Repository repository, Dictionary<string, Dictionary<object, object>> treeContents, string parentSha)
