@@ -205,7 +205,7 @@ namespace ADP.Portal.Core.Git.Services
                              !x.Key.StartsWith(FluxConstants.TEAM_ENV_FOLDER)).ForEach(file =>
             {
                 var key = file.Key.Replace(FluxConstants.PROGRAMME_FOLDER, teamConfig.ProgrammeName).Replace(FluxConstants.TEAM_KEY, teamConfig.TeamName);
-                finalFiles.Add(key, file.Value);
+                finalFiles.Add($"services/{key}", file.Value);
             });
 
             // Create team environments
@@ -223,8 +223,13 @@ namespace ADP.Portal.Core.Git.Services
                 {
                     if (!template.Key.Contains(FluxConstants.ENV_KEY))
                     {
+                        var serviceTemplate = template.Value.DeepCopy();
+                        if (template.Key.Equals(FluxConstants.TEAM_SERVICE_KUSTOMIZATION_FILE) && CheckServiceConfigurationForDatabaseName(service))
+                        {
+                            ((List<object>)serviceTemplate[FluxConstants.RESOURCES_KEY]).Add("pre-deploy-kustomize.yaml");
+                        }
                         var key = template.Key.Replace(FluxConstants.PROGRAMME_FOLDER, teamConfig.ProgrammeName).Replace(FluxConstants.TEAM_KEY, teamConfig.TeamName).Replace(FluxConstants.SERVICE_KEY, service.Name);
-                        serviceFiles.Add(key, template.Value.DeepCopy());
+                        serviceFiles.Add($"services/{key}", serviceTemplate);
                     }
                     else
                     {
@@ -275,6 +280,7 @@ namespace ADP.Portal.Core.Git.Services
                             .Replace(FluxConstants.TEAM_KEY, teamConfig.TeamName)
                             .Replace(FluxConstants.ENV_KEY, $"{environment.Name[..3]}/0{environment.Name[3..]}")
                             .Replace(FluxConstants.SERVICE_KEY, service.Name);
+                        key = $"services/{key}";
 
                         if (template.Key.Equals(FluxConstants.TEAM_ENV_KUSTOMIZATION_FILE, StringComparison.InvariantCultureIgnoreCase) &&
                             finalFiles.TryGetValue(key, out var existingEnv))
