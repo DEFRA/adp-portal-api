@@ -8,13 +8,26 @@ namespace ADP.Portal.Core.Git.Services
     internal class TemplateBuilder
     {
         public static Dictionary<string, Dictionary<object, object>> ProcessTemplates(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> files,
-            FluxTenant tenantConfig, FluxTeamConfig fluxTeamConfig, string? serviceName = null)
+            FluxTenant tenantConfig, FluxTeamConfig fluxTeamConfig, string? serviceName = null, string? environment = null)
         {
             var finalFiles = new Dictionary<string, Dictionary<object, object>>();
 
             var services = serviceName != null ? fluxTeamConfig.Services.Where(x => x.Name.Equals(serviceName)) : fluxTeamConfig.Services;
             if (services.Any())
             {
+                if (!string.IsNullOrEmpty(environment))
+                {
+                    foreach (var service in services)
+                    {
+                        service.Environments = service.Environments.Where(env => env.Name.Equals(environment)).ToList();
+                    }
+
+                    foreach (var service in fluxTeamConfig.Services)
+                    {
+                        service.Environments = service.Environments.Where(env => env.Name.Equals(environment)).ToList();
+                    }
+                }
+
                 // Create service files
                 finalFiles = CreateServices(files, tenantConfig, fluxTeamConfig, services);
 

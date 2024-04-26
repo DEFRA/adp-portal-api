@@ -76,7 +76,7 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        public async Task<GenerateFluxConfigResult> GenerateConfigAsync(GitRepo gitRepo, GitRepo gitRepoFluxServices, string tenantName, string teamName, string? serviceName = null)
+        public async Task<GenerateFluxConfigResult> GenerateConfigAsync(GitRepo gitRepo, GitRepo gitRepoFluxServices, string tenantName, string teamName, string? serviceName = null, string? environment = null)
         {
             var result = new GenerateFluxConfigResult();
 
@@ -93,8 +93,8 @@ namespace ADP.Portal.Core.Git.Services
             logger.LogInformation("Reading flux templates.");
             var templates = await gitOpsConfigRepository.GetAllFilesAsync(gitRepo, FluxConstants.GIT_REPO_TEMPLATE_PATH);
 
-            logger.LogInformation("Generating flux config for the team:'{TeamName}' and service:'{ServiceName}'.", teamName, serviceName);
-            var generatedFiles = TemplateBuilder.ProcessTemplates(templates, tenantConfig, teamConfig, serviceName);
+            logger.LogInformation("Generating flux config for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
+            var generatedFiles = TemplateBuilder.ProcessTemplates(templates, tenantConfig, teamConfig, serviceName, environment);
 
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
             if (generatedFiles.Count > 0) await gitOpsConfigRepository.PushFilesToRepository(gitRepoFluxServices, branchName, generatedFiles);
