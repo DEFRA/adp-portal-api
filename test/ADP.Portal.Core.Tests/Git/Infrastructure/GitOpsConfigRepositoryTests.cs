@@ -26,7 +26,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             gitHubClientMock = Substitute.For<IGitHubClient>();
             serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             deserializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-            repository = new GitOpsConfigRepository(gitHubClientMock, deserializer, serializer, Substitute.For<ILogger<GitOpsConfigRepository>>());
+            repository = new GitOpsConfigRepository(gitHubClientMock, deserializer, serializer);
             fixture = new Fixture();
         }
 

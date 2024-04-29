@@ -11,14 +11,12 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private readonly IGitHubClient gitHubClient;
         private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
-        private readonly ILogger<GitOpsConfigRepository> logger;
 
-        public GitOpsConfigRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer, ILogger<GitOpsConfigRepository> logger)
+        public GitOpsConfigRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer)
         {
             this.gitHubClient = gitHubClient;
             this.deserializer = deserializer;
             this.serializer = serializer;
-            this.logger = logger;
         }
 
         public async Task<T?> GetConfigAsync<T>(string fileName, GitRepo gitRepo)

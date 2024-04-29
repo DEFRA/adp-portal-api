@@ -100,7 +100,7 @@ namespace ADP.Portal.Core.Git.Services
             var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, serviceName, environment);
 
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
-            if (generatedFiles.Count > 0) await PushFilesToRepository(gitRepoFluxServices, branchName, generatedFiles);
+            if (generatedFiles.Count > 0) await PushFilesToFluxRepository(gitRepoFluxServices, teamName, serviceName, generatedFiles);
 
             return result;
         }
@@ -365,20 +365,30 @@ namespace ADP.Portal.Core.Git.Services
             teamConfig.ConfigVariables.Add(new FluxConfig { Key = FluxConstants.TEMPLATE_VAR_SERVICE_CODE, Value = teamConfig.ServiceCode ?? string.Empty });
         }
 
-        private async Task PushFilesToRepository(GitRepo gitRepoFluxServices, string branchName, Dictionary<string, Dictionary<object, object>> generatedFiles)
+        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, Dictionary<object, object>> generatedFiles)
         {
+            var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
             var branchRef = await gitOpsConfigRepository.GetBranchAsync(gitRepoFluxServices, branchName);
-            var message = branchRef == null ? $"{branchName.ToUpper()} Config" : "Update config";
+
+            string message;
+            if (branchRef == null)
+            {
+                message = string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()} Config" : $"{serviceName.ToUpper()} Config";
+            }
+            else
+            {
+                message = "Update config";
+            }
 
             logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
             var commitRef = await gitOpsConfigRepository.CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchRef == null ? null : branchName);
+
             if (commitRef != null)
             {
                 if (branchRef == null)
                 {
                     logger.LogInformation("Creating branch:'{BranchName}'.", branchName);
                     await gitOpsConfigRepository.CreateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
-
                     logger.LogInformation("Creating pull request for the branch:'{BranchName}'.", branchName);
                     await gitOpsConfigRepository.CreatePullRequestAsync(gitRepoFluxServices, branchName, message);
                 }
@@ -390,7 +400,7 @@ namespace ADP.Portal.Core.Git.Services
             }
             else
             {
-                logger.LogInformation("No changes found in the files for the branch:'{BranchName}'.", branchName);
+                logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{serviceName}.", teamName, serviceName);
             }
         }
 
