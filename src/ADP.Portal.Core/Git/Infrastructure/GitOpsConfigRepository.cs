@@ -57,35 +57,6 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return await GetAllFilesContentsAsync(gitRepo, path);
         }
 
-        public async Task PushFilesToRepository(GitRepo gitRepoFluxServices, string branchName, Dictionary<string, Dictionary<object, object>> generatedFiles)
-        {
-            var branchRef = await GetBranchAsync(gitRepoFluxServices, branchName);
-            var message = branchRef == null ? $"{branchName.ToUpper()} Config": "Update config";
-            
-            logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
-            var commitRef = await CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchRef == null ? null : branchName);
-            if (commitRef != null)
-            {
-                if (branchRef == null)
-                {
-                    logger.LogInformation("Creating branch:'{BranchName}'.", branchName);
-                    await CreateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
-
-                    logger.LogInformation("Creating pull request for the branch:'{BranchName}'.", branchName);
-                    await CreatePullRequestAsync(gitRepoFluxServices, branchName, message);
-                }
-                else
-                {
-                    logger.LogInformation("Updating branch:'{BranchName}' with the changes.", branchName);
-                    await UpdateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
-                }
-            }
-            else
-            {
-                logger.LogInformation("No changes found in the files for the branch:'{BranchName}'.", branchName);
-            }
-        }
-
         public async Task<bool> CreatePullRequestAsync(GitRepo gitRepo, string branchName, string message)
         {
             var repository = await gitHubClient.Repository.Get(gitRepo.Organisation, gitRepo.Name);
@@ -96,7 +67,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return createdPullRequest != null;
         }
 
-        private async Task<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>> GetAllFilesContentsAsync(GitRepo gitRepo, string path)
+        public async Task<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>> GetAllFilesContentsAsync(GitRepo gitRepo, string path)
         {
             var repositoryItems = await GetRepositoryFiles(gitRepo, path);
 
@@ -123,7 +94,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return allResults.SelectMany(x => x);
         }
 
-        private async Task<Reference?> GetBranchAsync(GitRepo gitRepo, string branchName)
+        public async Task<Reference?> GetBranchAsync(GitRepo gitRepo, string branchName)
         {
             try
             {
@@ -135,17 +106,17 @@ namespace ADP.Portal.Core.Git.Infrastructure
             }
         }
 
-        private async Task<Reference> CreateBranchAsync(GitRepo gitRepo, string branchName, string sha)
+        public async Task<Reference> CreateBranchAsync(GitRepo gitRepo, string branchName, string sha)
         {
             return await gitHubClient.Git.Reference.Create(gitRepo.Organisation, gitRepo.Name, new NewReference(branchName, sha));
         }
 
-        private async Task<Reference> UpdateBranchAsync(GitRepo gitRepo, string branchName, string sha)
+        public async Task<Reference> UpdateBranchAsync(GitRepo gitRepo, string branchName, string sha)
         {
             return await gitHubClient.Git.Reference.Update(gitRepo.Organisation, gitRepo.Name, branchName, new ReferenceUpdate(sha));
         }
 
-        private async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, Dictionary<object, object>> generatedFiles, string message, string? branchName = null)
+        public async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, Dictionary<object, object>> generatedFiles, string message, string? branchName = null)
         {
             var branch = branchName ?? $"heads/{gitRepo.BranchName}";
 
