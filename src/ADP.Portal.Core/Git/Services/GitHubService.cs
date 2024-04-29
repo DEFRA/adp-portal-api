@@ -176,13 +176,13 @@ public class GitHubService : IGitHubService
         }
     }
 
-    private async Task<GithubTeamDetails?> GetTeamDetails(int teamId)
+    private async Task<GithubTeamDetails?> GetTeamDetails(int? teamId)
     {
-        if (teamId <= 0)
+        if (teamId is not int id)
             return null;
 
         logger.LogInformation("Getting details of {TeamId}.", teamId);
-        var team = await TryGetTeam(teamId);
+        var team = await TryGetTeam(id);
         if (team is null || !StringComparer.OrdinalIgnoreCase.Equals(team.Organization.Login, options.Value.Organisation))
         {
             logger.LogInformation("Cannot find team {TeamId}.", teamId);

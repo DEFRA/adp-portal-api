@@ -2,7 +2,7 @@
 
 public sealed record GithubTeamUpdate
 {
-    public required int Id { get; set; }
+    public required int? Id { get; set; }
     public required string? Name { get; set; }
     public required IEnumerable<string>? Members { get; set; }
     public required IEnumerable<string>? Maintainers { get; set; }

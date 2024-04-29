@@ -35,7 +35,7 @@ public class GitHubServiceTests
     [Test]
     [TestCase(true, TeamPrivacy.Closed)]
     [TestCase(false, TeamPrivacy.Secret)]
-    public async Task SyncTeamAsync_CreatesATeamThatDoesntAlreadyExist_WhenTheIdIs0(bool isPublic, TeamPrivacy privacy)
+    public async Task SyncTeamAsync_CreatesATeamThatDoesntAlreadyExist_WhenTheIdIsNull(bool isPublic, TeamPrivacy privacy)
     {
         // arrange
         using var cts = new CancellationTokenSource();
@@ -43,7 +43,7 @@ public class GitHubServiceTests
         request.IsPublic = isPublic;
         request.Maintainers = fixture.CreateMany<string>(3).ToArray();
         request.Members = fixture.CreateMany<string>(3).ToArray();
-        request.Id = 0;
+        request.Id = null;
 
         var org = CreateOrganization(login: options.Organisation);
         var team = CreateTeam(privacy: privacy, organization: org);
@@ -89,12 +89,12 @@ public class GitHubServiceTests
         request.IsPublic = isPublic;
         request.Maintainers = fixture.CreateMany<string>(3).ToArray();
         request.Members = fixture.CreateMany<string>(3).ToArray();
-        request.Id = 0;
+        request.Id = 123;
 
         var org = CreateOrganization();
         var team = CreateTeam(privacy: privacy, organization: org);
 
-        client.Organization.Team.Get(request.Id)
+        client.Organization.Team.Get(123)
             .Returns(team);
 
         client.Organization.Team.Create(default, default)
@@ -104,7 +104,7 @@ public class GitHubServiceTests
         var actual = await sut.SyncTeamAsync(request, cts.Token);
 
         // assert
-        _ = client.Organization.Team.Received(0).Get(Arg.Any<int>());
+        _ = client.Organization.Team.Received(1).Get(123);
         _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
             t.Name == request.Name
             && t.Description == request.Description
@@ -142,7 +142,7 @@ public class GitHubServiceTests
         var org = CreateOrganization(login: options.Organisation);
         var team = CreateTeam(privacy: privacy, organization: org);
 
-        client.Organization.Team.Get(request.Id)
+        client.Organization.Team.Get(request.Id!.Value)
             .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
 
         client.Organization.Team.Create(default, default)
@@ -191,7 +191,7 @@ public class GitHubServiceTests
         var org = CreateOrganization(login: options.Organisation);
         var team = CreateTeam(privacy: privacy, organization: org);
 
-        client.Organization.Team.Get(request.Id)
+        client.Organization.Team.Get(request.Id!.Value)
             .Returns(team);
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Member))
@@ -261,7 +261,7 @@ public class GitHubServiceTests
             name: request.Name,
             organization: org);
 
-        client.Organization.Team.Get(request.Id)
+        client.Organization.Team.Get(request.Id!.Value)
             .Returns(team);
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Member))

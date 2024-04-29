@@ -20,10 +20,10 @@ public class GithubTeamsController : Controller
         this.logger = logger;
     }
 
-    [HttpPut("{teamId=0}")]
+    [HttpPut("{teamId?}")]
     [ProducesResponseType(StatusCodes.Status204NoContent, Type = typeof(GithubTeamDetails))]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> SyncTeam([FromRoute] int teamId, [FromBody] SyncTeamRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> SyncTeam([FromRoute] int? teamId, [FromBody] SyncTeamRequest request, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Setting github team: '{TeamId}'", teamId);
         var team = await github.SyncTeamAsync(new()
