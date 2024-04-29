@@ -177,7 +177,104 @@ public class GitHubServiceTests
     [Test]
     [TestCase(true, TeamPrivacy.Closed)]
     [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_ReturnsNullWhenCreateFails(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(3).ToArray();
+        request.Members = fixture.CreateMany<string>(3).ToArray();
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Get(request.Id!.Value)
+            .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
+
+        client.Organization.Team.Create(default, default)
+            .ThrowsAsyncForAnyArgs(new ApiValidationException());
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.SequenceEqual(request.Maintainers)));
+
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+
+        actual.Should().BeNull();
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
     public async Task SyncTeamAsync_UpdatesATeamThatAlreadyExists(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        var currentMaintainers = fixture.CreateMany<string>(3).ToArray();
+        var currentMembers = fixture.CreateMany<string>(3).ToArray();
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(2).Concat(currentMaintainers.Take(1)).ToArray();
+        request.Members = fixture.CreateMany<string>(2).Concat(currentMembers.Take(1)).ToArray();
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Get(request.Id!.Value)
+            .Returns(team);
+        client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
+            t.Role == TeamRoleFilter.Member))
+            .Returns(currentMembers.Select(CreateUserWithLogin).ToList());
+        client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
+            t.Role == TeamRoleFilter.Maintainer))
+            .Returns(currentMaintainers.Select(CreateUserWithLogin).ToList());
+        client.Organization.Team.Update(team.Id, Arg.Is<UpdateTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy))
+            .ThrowsAsync(new ApiValidationException());
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(1).Update(team.Id, Arg.Is<UpdateTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy));
+
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMembers[0]);
+        _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMembers[1]);
+        _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMembers[2]);
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Maintainers.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Maintainer));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Maintainers.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Maintainer));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Maintainers.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Maintainer));
+        _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMaintainers[0]);
+        _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMaintainers[1]);
+        _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMaintainers[2]);
+
+        actual.Should().BeNull();
+
+        static User CreateUserWithLogin(string login)
+            => new(default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, login: login, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!);
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_ReturnsNullWhenUpdateFails(bool isPublic, TeamPrivacy privacy)
     {
         // arrange
         using var cts = new CancellationTokenSource();
