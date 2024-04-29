@@ -67,7 +67,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Throws(new NotFoundException("Config not found", HttpStatusCode.NotFound));
 
             // Act
-            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName,environment);
+            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName, environment);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -92,7 +92,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
 
             // Act
-            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName,environment);
+            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName, environment);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -119,7 +119,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.GetAllFilesAsync(gitRepo, FluxConstants.GIT_REPO_TEMPLATE_PATH).Returns([]);
 
             // Act
-            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName,environment);
+            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, tenantName, teamName, serviceName, environment);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -176,7 +176,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.CreateCommitAsync(gitRepoFluxServices, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
 
             // Act
-            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, "tenant1", "team1", serviceName,environment);
+            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, "tenant1", "team1", serviceName, environment);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -217,7 +217,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             // Arrange
             var gitRepo = fixture.Build<GitRepo>().Create();
             var gitRepoFluxServices = fixture.Build<GitRepo>().Create();
-            
+
             var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
             var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).With(e => e.Environments, envList).CreateMany(1)
                                 .Union(fixture.Build<FluxService>().CreateMany(1)).ToList();
@@ -240,7 +240,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Returns(commit);
 
             // Act
-            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, "tenant1", "team1", serviceName,environment);
+            var result = await service.GenerateConfigAsync(gitRepo, gitRepoFluxServices, "tenant1", "team1", serviceName, environment);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -506,7 +506,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        [TestCase("service1","dev")]
+        [TestCase("service1", "dev")]
         [TestCase("service1", null)]
         [TestCase(null, null)]
         public async Task GenerateFluxTeamConfig_BackendService_UpdatePatchFiles(string? serviceName, string? environment)
@@ -514,7 +514,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             // Arrange
             var gitRepo = fixture.Build<GitRepo>().Create();
             var gitRepoFluxServices = fixture.Build<GitRepo>().Create();
-            
+
 
             var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
             var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).With(e => e.Environments, envList).With(x => x.Type, FluxServiceType.Backend)
@@ -550,7 +550,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             // Arrange
             var gitRepo = fixture.Build<GitRepo>().Create();
             var gitRepoFluxServices = fixture.Build<GitRepo>().Create();
-            
+
 
             var envList = fixture.Build<FluxEnvironment>().With(x => x.ConfigVariables, default(List<FluxConfig>)).CreateMany(1).ToList();
             var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).With(e => e.Environments, envList).With(x => x.Type, FluxServiceType.Frontend)
