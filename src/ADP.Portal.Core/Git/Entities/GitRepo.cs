@@ -4,7 +4,7 @@
     {
         public required string Name { get; set; }
         public string? BranchName { get; set; }
-        public string? Release { get; set; }
+        public string? Tag { get; set; }
         public required string Organisation { get; set; }
     }
 }
