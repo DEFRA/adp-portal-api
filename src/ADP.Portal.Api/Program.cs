@@ -58,8 +58,8 @@ namespace ADP.Portal.Api
             builder.Services.Configure<AzureAdConfig>(builder.Configuration.GetSection("AzureAd"));
             builder.Services.Configure<GitHubAppAuthConfig>(builder.Configuration.GetSection("GitHubAppAuth"));
             builder.Services.Configure<GitHubOptions>(builder.Configuration.GetSection("TeamGitRepo"));
-            builder.Services.Configure<TeamGitRepoConfig>(builder.Configuration.GetSection("TeamGitRepo"));
-            builder.Services.Configure<FluxServicesGitRepoConfig>(builder.Configuration.GetSection("FluxServicesGitRepo"));
+            builder.Services.Configure<GitRepo>(Core.Git.Entities.Constants.GitRepo.TEAM_REPO_CONFIG, builder.Configuration.GetSection(Core.Git.Entities.Constants.GitRepo.TEAM_REPO_CONFIG));
+            builder.Services.Configure<GitRepo>(Core.Git.Entities.Constants.GitRepo.TEAM_FLUX_SERVICES_CONFIG, builder.Configuration.GetSection(Core.Git.Entities.Constants.GitRepo.TEAM_FLUX_SERVICES_CONFIG));
             builder.Services.AddScoped<IAzureCredential>(provider =>
             {
                 return new DefaultAzureCredentialWrapper();
@@ -103,6 +103,7 @@ namespace ADP.Portal.Api
                 return new DeserializerBuilder()
                     .WithNamingConvention(CamelCaseNamingConvention.Instance)
                     .WithAttemptingUnquotedStringTypeDeserialization()
+                    .IgnoreUnmatchedProperties()
                     .Build();
             });
             builder.Services.AddSingleton(provider =>

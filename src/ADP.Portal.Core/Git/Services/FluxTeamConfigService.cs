@@ -2,7 +2,9 @@
 using ADP.Portal.Core.Git.Extensions;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using YamlDotNet.Serialization;
@@ -11,18 +13,23 @@ namespace ADP.Portal.Core.Git.Services
 {
     public class FluxTeamConfigService : IFluxTeamConfigService
     {
-        private readonly IGitHubRepository gitOpsConfigRepository;
+        private readonly IGitHubRepository gitHubRepository;
+        private readonly GitRepo teamGitRepo;
+        private readonly GitRepo fluxServiceRepo;
         private readonly ILogger<FluxTeamConfigService> logger;
         private readonly ISerializer serializer;
 
-        public FluxTeamConfigService(IGitHubRepository gitOpsConfigRepository, ILogger<FluxTeamConfigService> logger, ISerializer serializer)
+        public FluxTeamConfigService(IGitHubRepository gitHubRepository, IOptionsSnapshot<GitRepo> gitRepoOptions,
+            ILogger<FluxTeamConfigService> logger, ISerializer serializer)
         {
-            this.gitOpsConfigRepository = gitOpsConfigRepository;
+            this.gitHubRepository = gitHubRepository;
+            this.teamGitRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_REPO_CONFIG);
+            this.fluxServiceRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_FLUX_SERVICES_CONFIG);
             this.logger = logger;
             this.serializer = serializer;
         }
 
-        public async Task<T?> GetConfigAsync<T>(GitRepo gitRepo, string? tenantName = null, string? teamName = null)
+        public async Task<T?> GetConfigAsync<T>(string? tenantName = null, string? teamName = null)
         {
             try
             {
@@ -38,7 +45,7 @@ namespace ADP.Portal.Core.Git.Services
                     path = string.Format(FluxConstants.GIT_REPO_TENANT_CONFIG_PATH, tenantName);
                 }
 
-                return await gitOpsConfigRepository.GetConfigAsync<T>(path, gitRepo);
+                return await gitHubRepository.GetConfigAsync<T>(path, teamGitRepo);
             }
             catch (NotFoundException)
             {
@@ -46,12 +53,12 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        public async Task<FluxConfigResult> CreateConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig)
+        public async Task<FluxConfigResult> CreateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig)
         {
             var result = new FluxConfigResult();
 
             logger.LogInformation("Creating flux team config for the team:'{TeamName}'.", teamName);
-            var response = await gitOpsConfigRepository.CreateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
+            var response = await gitHubRepository.CreateConfigAsync(teamGitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
             if (string.IsNullOrEmpty(response))
             {
                 result.Errors.Add($"Failed to save the config for the team: {teamName}");
@@ -60,16 +67,16 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        public async Task<FluxConfigResult> UpdateConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig)
+        public async Task<FluxConfigResult> UpdateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig)
         {
             var result = new FluxConfigResult() { IsConfigExists = false };
 
-            var existingConfig = await GetConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
+            var existingConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (existingConfig != null)
             {
                 result.IsConfigExists = true;
                 logger.LogInformation("Updating flux team config for the team:'{TeamName}'.", teamName);
-                var response = await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
+                var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
                 if (string.IsNullOrEmpty(response))
                 {
                     result.Errors.Add($"Failed to save the config for the team: {teamName}");
@@ -79,12 +86,12 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        public async Task<GenerateFluxConfigResult> GenerateConfigAsync(GitRepo gitRepo, GitRepo gitRepoFluxServices, string tenantName, string teamName, string? serviceName = null, string? environment = null)
+        public async Task<GenerateFluxConfigResult> GenerateConfigAsync(string tenantName, string teamName, string? serviceName = null, string? environment = null)
         {
             var result = new GenerateFluxConfigResult();
 
-            var teamConfig = await GetConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
-            var tenantConfig = await GetConfigAsync<FluxTenant>(gitRepo, tenantName: tenantName);
+            var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
+            var tenantConfig = await GetConfigAsync<FluxTenant>(tenantName: tenantName);
 
             if (teamConfig == null || tenantConfig == null)
             {
@@ -94,22 +101,22 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             logger.LogInformation("Reading flux templates.");
-            var templates = await gitOpsConfigRepository.GetAllFilesAsync(gitRepo, FluxConstants.GIT_REPO_TEMPLATE_PATH);
+            var templates = await gitHubRepository.GetAllFilesAsync(teamGitRepo,FluxConstants.GIT_REPO_TEMPLATE_PATH);
 
             logger.LogInformation("Generating flux config for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
             var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, serviceName, environment);
 
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
-            if (generatedFiles.Count > 0) await PushFilesToFluxRepository(gitRepoFluxServices, teamName, serviceName, generatedFiles);
+            if (generatedFiles.Count > 0) await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, generatedFiles);
 
             return result;
         }
 
-        public async Task<FluxConfigResult> AddServiceAsync(GitRepo gitRepo, string teamName, FluxService fluxService)
+        public async Task<FluxConfigResult> AddServiceAsync(string teamName, FluxService fluxService)
         {
             var result = new FluxConfigResult() { IsConfigExists = false };
 
-            var teamConfig = await GetConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
+            var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
             {
                 return result;
@@ -126,7 +133,7 @@ namespace ADP.Portal.Core.Git.Services
 
             logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
             teamConfig.Services.Add(fluxService);
-            var response = await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
+            var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
             {
@@ -136,11 +143,11 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        public async Task<FluxConfigResult> AddServiceEnvironmentAsync(GitRepo gitRepo, string teamName, string serviceName, FluxEnvironment newEnvironment)
+        public async Task<FluxConfigResult> AddServiceEnvironmentAsync(string teamName, string serviceName, FluxEnvironment newEnvironment)
         {
             var result = new FluxConfigResult() { IsConfigExists = false };
 
-            var teamConfig = await GetConfigAsync<FluxTeamConfig>(gitRepo, teamName: teamName);
+            var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
             {
                 logger.LogWarning("Flux team config not found for the team:'{TeamName}'.", teamName);
@@ -165,7 +172,7 @@ namespace ADP.Portal.Core.Git.Services
             service.Environments.Add(newEnvironment);
 
             logger.LogInformation("Adding environment '{EnvironmentName}' to the service:'{ServiceName}' in the team:'{TeamName}'.", newEnvironment.Name, serviceName, teamName);
-            var response = await gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
+            var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(FluxConstants.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
             {
@@ -368,7 +375,7 @@ namespace ADP.Portal.Core.Git.Services
         private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, Dictionary<object, object>> generatedFiles)
         {
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
-            var branchRef = await gitOpsConfigRepository.GetBranchAsync(gitRepoFluxServices, branchName);
+            var branchRef = await gitHubRepository.GetBranchAsync(gitRepoFluxServices, branchName);
 
             string message;
             if (branchRef == null)
@@ -381,21 +388,21 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
-            var commitRef = await gitOpsConfigRepository.CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchRef == null ? null : branchName);
+            var commitRef = await gitHubRepository.CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchRef == null ? null : branchName);
 
             if (commitRef != null)
             {
                 if (branchRef == null)
                 {
                     logger.LogInformation("Creating branch:'{BranchName}'.", branchName);
-                    await gitOpsConfigRepository.CreateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
+                    await gitHubRepository.CreateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
                     logger.LogInformation("Creating pull request for the branch:'{BranchName}'.", branchName);
-                    await gitOpsConfigRepository.CreatePullRequestAsync(gitRepoFluxServices, branchName, message);
+                    await gitHubRepository.CreatePullRequestAsync(gitRepoFluxServices, branchName, message);
                 }
                 else
                 {
                     logger.LogInformation("Updating branch:'{BranchName}' with the changes.", branchName);
-                    await gitOpsConfigRepository.UpdateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
+                    await gitHubRepository.UpdateBranchAsync(gitRepoFluxServices, branchName, commitRef.Sha);
                 }
             }
             else

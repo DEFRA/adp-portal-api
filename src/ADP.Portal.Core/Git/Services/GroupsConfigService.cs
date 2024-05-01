@@ -3,7 +3,9 @@ using ADP.Portal.Core.Azure.Services;
 using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using Mapster;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using YamlDotNet.Serialization;
@@ -12,27 +14,30 @@ namespace ADP.Portal.Core.Git.Services
 {
     public partial class GroupsConfigService : IGroupsConfigService
     {
-        private readonly IGitHubRepository gitOpsConfigRepository;
+        private readonly IGitHubRepository gitHubRepository;
+        private readonly GitRepo teamGitRepo;
         private readonly ILogger<GroupsConfigService> logger;
         private readonly IGroupService groupService;
         private readonly ISerializer serializer;
         private const string GLOBAL_READ_GROUP = "AAG-Azure-ADP-GlobalRead";
         private const string PLATFORM_ENGINEERS_GROUP = "AG-Azure-CDO-ADP-PlatformEngineers";
 
-        public GroupsConfigService(IGitHubRepository gitOpsConfigRepository, ILogger<GroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
+        public GroupsConfigService(IGitHubRepository gitHubRepository, [FromKeyedServices(Constants.GitRepo.TEAM_REPO_CONFIG)] IOptions<GitRepo> teamGitRepoOptions,
+            ILogger<GroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
         {
-            this.gitOpsConfigRepository = gitOpsConfigRepository;
+            this.gitHubRepository = gitHubRepository;
+            this.teamGitRepo = teamGitRepoOptions.Value;
             this.logger = logger;
             this.groupService = groupService;
             this.serializer = serializer;
         }
 
-        public async Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName, GitRepo gitRepo)
+        public async Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName)
         {
-            return await GetGroupsConfigAsync(tenantName, teamName, null, gitRepo);
+            return await GetGroupsConfigAsync(tenantName, teamName, null);
         }
 
-        public async Task<GroupConfigResult> CreateGroupsConfigAsync(string tenantName, string teamName, GitRepo gitRepo, IEnumerable<string> groupMembers)
+        public async Task<GroupConfigResult> CreateGroupsConfigAsync(string tenantName, string teamName, IEnumerable<string> groupMembers)
         {
             var result = new GroupConfigResult();
 
@@ -40,7 +45,7 @@ namespace ADP.Portal.Core.Git.Services
             var groups = BuildTeamGroups(tenantName, teamName, groupMembers);
 
             logger.LogInformation("Create groups config for the team({TeamName})", teamName);
-            var response = await gitOpsConfigRepository.CreateConfigAsync(gitRepo, fileName, serializer.Serialize(groups));
+            var response = await gitHubRepository.CreateConfigAsync(teamGitRepo, fileName, serializer.Serialize(groups));
             if (string.IsNullOrEmpty(response))
             {
                 result.Errors.Add($"Failed to save the config for the team: {teamName}");
@@ -103,11 +108,11 @@ namespace ADP.Portal.Core.Git.Services
             return root;
         }
 
-        public async Task<GroupSyncResult> SyncGroupsAsync(string tenantName, string teamName, string ownerId, GroupType? groupType, GitRepo gitRepo)
+        public async Task<GroupSyncResult> SyncGroupsAsync(string tenantName, string teamName, string ownerId, GroupType? groupType)
         {
             var result = new GroupSyncResult();
 
-            var groups = await GetGroupsConfigAsync(tenantName, teamName, groupType, gitRepo);
+            var groups = await GetGroupsConfigAsync(tenantName, teamName, groupType);
 
             if (!groups.Any())
             {
@@ -145,14 +150,14 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName, GroupType? groupType, GitRepo gitRepo)
+        private async Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName, GroupType? groupType)
         {
             try
             {
                 var fileName = $"{tenantName}/{teamName}.yaml";
 
                 logger.LogInformation("Getting groups config for the team({TeamName})", teamName);
-                var result = await gitOpsConfigRepository.GetConfigAsync<GroupsRoot>(fileName, gitRepo);
+                var result = await gitHubRepository.GetConfigAsync<GroupsRoot>(fileName, teamGitRepo);
 
                 return result?.Groups.Where(g => groupType == null || g.Type == groupType) ?? [];
             }

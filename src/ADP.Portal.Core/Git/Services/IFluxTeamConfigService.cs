@@ -4,16 +4,16 @@ namespace ADP.Portal.Core.Git.Services
 {
     public interface IFluxTeamConfigService
     {
-        Task<T?> GetConfigAsync<T>(GitRepo gitRepo, string? tenantName = null, string? teamName = null);
+        Task<T?> GetConfigAsync<T>(string? tenantName = null, string? teamName = null);
 
-        Task<FluxConfigResult> CreateConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig);
+        Task<FluxConfigResult> CreateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig);
 
-        Task<FluxConfigResult> UpdateConfigAsync(GitRepo gitRepo, string teamName, FluxTeamConfig fluxTeamConfig);
+        Task<FluxConfigResult> UpdateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig);
 
-        Task<GenerateFluxConfigResult> GenerateConfigAsync(GitRepo gitRepo, GitRepo gitRepoFluxServices, string tenantName, string teamName, string? serviceName = null, string? environment = null);
+        Task<GenerateFluxConfigResult> GenerateConfigAsync(string tenantName, string teamName, string? serviceName = null, string? environment = null);
 
-        Task<FluxConfigResult> AddServiceAsync(GitRepo gitRepo, string teamName, FluxService fluxService);
+        Task<FluxConfigResult> AddServiceAsync(string teamName, FluxService fluxService);
 
-        Task<FluxConfigResult> AddServiceEnvironmentAsync(GitRepo gitRepo, string teamName, string serviceName, FluxEnvironment newEnvironment);
+        Task<FluxConfigResult> AddServiceEnvironmentAsync(string teamName, string serviceName, FluxEnvironment newEnvironment);
     }
 }
