@@ -185,7 +185,6 @@ public class GitHubService : IGitHubService
         var team = await TryGetTeam(id);
         if (team is null || !StringComparer.OrdinalIgnoreCase.Equals(team.Organization.Login, options.Value.Organisation))
         {
-            logger.LogInformation("Cannot find team {TeamId}.", teamId);
             return null;
         }
 
