@@ -3,7 +3,8 @@
     public class GitRepo
     {
         public required string Name { get; set; }
-        public required string BranchName { get; set; }
+        public string? BranchName { get; set; }
+        public string? Release { get; set; }
         public required string Organisation { get; set; }
     }
 }

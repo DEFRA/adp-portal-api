@@ -2,7 +2,6 @@
 using ADP.Portal.Core.Git.Extensions;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
@@ -14,17 +13,21 @@ namespace ADP.Portal.Core.Git.Services
     public class FluxTeamConfigService : IFluxTeamConfigService
     {
         private readonly IGitHubRepository gitHubRepository;
+        private readonly ICacheService cacheService;
         private readonly GitRepo teamGitRepo;
         private readonly GitRepo fluxServiceRepo;
+        private readonly GitRepo fluxTemplatesRepo;
         private readonly ILogger<FluxTeamConfigService> logger;
         private readonly ISerializer serializer;
 
-        public FluxTeamConfigService(IGitHubRepository gitHubRepository, IOptionsSnapshot<GitRepo> gitRepoOptions,
+        public FluxTeamConfigService(IGitHubRepository gitHubRepository, IOptionsSnapshot<GitRepo> gitRepoOptions, ICacheService cacheService,
             ILogger<FluxTeamConfigService> logger, ISerializer serializer)
         {
             this.gitHubRepository = gitHubRepository;
+            this.cacheService = cacheService;
             this.teamGitRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_REPO_CONFIG);
             this.fluxServiceRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_FLUX_SERVICES_CONFIG);
+            this.fluxTemplatesRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_FLUX_TEMPLATES_CONFIG);
             this.logger = logger;
             this.serializer = serializer;
         }
@@ -101,7 +104,14 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             logger.LogInformation("Reading flux templates.");
-            var templates = await gitHubRepository.GetAllFilesAsync(teamGitRepo,FluxConstants.GIT_REPO_TEMPLATE_PATH);
+
+            var cacheKey = $"flux-templates-{fluxTemplatesRepo.Release}";
+            var templates = cacheService.Get<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>>(cacheKey);
+            if (templates == null)
+            {
+                templates = await gitHubRepository.GetAllFilesAsync(fluxTemplatesRepo, FluxConstants.GIT_REPO_TEMPLATE_PATH);
+                cacheService.Set(cacheKey, templates);
+            }
 
             logger.LogInformation("Generating flux config for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
             var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, serviceName, environment);
