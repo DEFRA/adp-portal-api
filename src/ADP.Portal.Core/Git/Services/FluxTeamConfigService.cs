@@ -105,7 +105,7 @@ namespace ADP.Portal.Core.Git.Services
 
             logger.LogInformation("Reading flux templates.");
 
-            var cacheKey = $"flux-templates-{fluxTemplatesRepo.Tag}";
+            var cacheKey = $"flux-templates-{fluxTemplatesRepo.Reference}";
             var templates = cacheService.Get<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>>(cacheKey);
             if (templates == null)
             {

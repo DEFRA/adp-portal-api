@@ -32,7 +32,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
         public async Task<string> CreateConfigAsync(GitRepo gitRepo, string fileName, string content)
         {
-            var response = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.BranchName));
+            var response = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
             return response.Commit.Sha;
         }
 
@@ -43,7 +43,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             if (existingFile.Any())
             {
                 var response = await gitHubClient.Repository.Content.UpdateFile(gitRepo.Organisation, gitRepo.Name, fileName,
-                    new UpdateFileRequest($"Update config file: {fileName}", content, existingFile[0].Sha, gitRepo.BranchName));
+                    new UpdateFileRequest($"Update config file: {fileName}", content, existingFile[0].Sha, gitRepo.Reference));
                 return response.Commit.Sha;
             }
             return string.Empty;
@@ -58,7 +58,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
         {
             var repository = await gitHubClient.Repository.Get(gitRepo.Organisation, gitRepo.Name);
 
-            var pullRequest = new NewPullRequest(message, branchName, gitRepo.BranchName);
+            var pullRequest = new NewPullRequest(message, branchName, gitRepo.Reference);
             var createdPullRequest = await gitHubClient.PullRequest.Create(repository.Owner.Login, repository.Name, pullRequest);
 
             return createdPullRequest != null;
@@ -115,7 +115,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
         public async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, Dictionary<object, object>> generatedFiles, string message, string? branchName = null)
         {
-            var branch = branchName ?? $"heads/{gitRepo.BranchName}";
+            var branch = branchName ?? $"heads/{gitRepo.Reference}";
 
             var repository = await gitHubClient.Repository.Get(gitRepo.Organisation, gitRepo.Name);
 
@@ -177,7 +177,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
         private async Task<IReadOnlyList<RepositoryContent>> GetRepositoryFiles(GitRepo gitRepo, string filePathOrName)
         {
-            var reference = string.IsNullOrEmpty(gitRepo.BranchName) ? gitRepo.Tag : gitRepo.BranchName;
+            var reference = string.IsNullOrEmpty(gitRepo.Reference) ? gitRepo.Reference : gitRepo.Reference;
             return await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, filePathOrName, reference);
         }
     }
