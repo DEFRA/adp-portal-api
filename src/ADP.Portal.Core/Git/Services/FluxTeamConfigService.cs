@@ -36,18 +36,12 @@ namespace ADP.Portal.Core.Git.Services
         {
             try
             {
-                var path = string.Empty;
-                if (string.IsNullOrEmpty(tenantName))
-                {
-                    logger.LogInformation("Reading flux team config for the team:'{TeamName}'.", teamName);
-                    path = string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName);
-                }
-                else
-                {
-                    logger.LogInformation("Reading flux team config for the tenant:'{TenantName}'.", tenantName);
-                    path = string.Format(Constants.Flux.GIT_REPO_TENANT_CONFIG_PATH, tenantName);
-                }
-
+                var isTenant = !string.IsNullOrEmpty(tenantName);
+                var name = isTenant ? tenantName : teamName;
+                var pathFormat = isTenant ? Constants.Flux.GIT_REPO_TENANT_CONFIG_PATH : Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH;
+                var path = string.Format(pathFormat, name);
+        
+                logger.LogInformation(isTenant ? "Reading flux team config for the tenant:'{TenantName}'." : "Reading flux team config for the team:'{TeamName}'.", name);
                 return await gitHubRepository.GetConfigAsync<T>(path, teamGitRepo);
             }
             catch (NotFoundException)
@@ -104,7 +98,6 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             logger.LogInformation("Reading flux templates.");
-
             var cacheKey = $"flux-templates-{fluxTemplatesRepo.Reference}";
             var templates = cacheService.Get<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>>(cacheKey);
             if (templates == null)

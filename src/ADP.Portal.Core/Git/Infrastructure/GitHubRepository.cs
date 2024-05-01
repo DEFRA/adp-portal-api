@@ -177,8 +177,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
         private async Task<IReadOnlyList<RepositoryContent>> GetRepositoryFiles(GitRepo gitRepo, string filePathOrName)
         {
-            var reference = string.IsNullOrEmpty(gitRepo.Reference) ? gitRepo.Reference : gitRepo.Reference;
-            return await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, filePathOrName, reference);
+            return await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, filePathOrName, gitRepo.Reference);
         }
     }
 }
