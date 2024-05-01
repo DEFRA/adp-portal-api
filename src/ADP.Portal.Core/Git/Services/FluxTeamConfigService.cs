@@ -9,13 +9,13 @@ using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services
 {
-    public class GitOpsFluxTeamConfigService : IGitOpsFluxTeamConfigService
+    public class FluxTeamConfigService : IFluxTeamConfigService
     {
-        private readonly IGitOpsConfigRepository gitOpsConfigRepository;
-        private readonly ILogger<GitOpsFluxTeamConfigService> logger;
+        private readonly IGitHubRepository gitOpsConfigRepository;
+        private readonly ILogger<FluxTeamConfigService> logger;
         private readonly ISerializer serializer;
 
-        public GitOpsFluxTeamConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsFluxTeamConfigService> logger, ISerializer serializer)
+        public FluxTeamConfigService(IGitHubRepository gitOpsConfigRepository, ILogger<FluxTeamConfigService> logger, ISerializer serializer)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
             this.logger = logger;
@@ -177,7 +177,7 @@ namespace ADP.Portal.Core.Git.Services
 
         #region Private methods
 
-        public static Dictionary<string, Dictionary<object, object>> ProcessTemplates(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> files,
+        private static Dictionary<string, Dictionary<object, object>> ProcessTemplates(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> files,
             FluxTenant tenantConfig, FluxTeamConfig fluxTeamConfig, string? serviceName = null, string? environment = null)
         {
             var finalFiles = new Dictionary<string, Dictionary<object, object>>();

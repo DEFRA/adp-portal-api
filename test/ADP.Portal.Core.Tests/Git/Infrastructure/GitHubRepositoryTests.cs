@@ -1,32 +1,31 @@
-﻿using System.Text;
-using ADP.Portal.Core.Git.Entities;
+﻿using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using AutoFixture;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Octokit;
+using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace ADP.Portal.Core.Tests.Git.Infrastructure
 {
     [TestFixture]
-    public class GitOpsConfigRepositoryTests
+    public class GitHubRepositoryTests
     {
         private readonly IGitHubClient gitHubClientMock;
-        private readonly GitOpsConfigRepository repository;
+        private readonly GitHubRepository repository;
         private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
         private readonly Fixture fixture;
-        
-        public GitOpsConfigRepositoryTests()
+
+        public GitHubRepositoryTests()
         {
             gitHubClientMock = Substitute.For<IGitHubClient>();
             serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             deserializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-            repository = new GitOpsConfigRepository(gitHubClientMock, deserializer, serializer);
+            repository = new GitHubRepository(gitHubClientMock, deserializer, serializer);
             fixture = new Fixture();
         }
 
@@ -34,7 +33,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         public async Task GetConfigAsync_WhenCalledWithStringType_ReturnsStringContent_Test()
         {
             // Arrange
-            var gitRepo = new GitRepo("repo", "branch", "org") ;
+            var gitRepo = new GitRepo("repo", "branch", "org");
             var contentFile = CreateRepositoryContent("fileContent");
             gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, "fileName", gitRepo.BranchName)
                 .Returns([contentFile]);
@@ -241,7 +240,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
 
             gitHubClientMock.Repository.Get(gitRepo.Organisation, gitRepo.Name).Returns(repo);
             gitHubClientMock.PullRequest.Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<NewPullRequest>()).Returns(fixture.Create<PullRequest>());
-            
+
             // Act
             var actualValue = await repository.CreatePullRequestAsync(gitRepo, "test", "New PR");
 
@@ -261,7 +260,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             var yamlContent = "property:\n - name: \"test\"";
             var gitRepo = new GitRepo("repo", "branch", "org");
             gitHubClientMock.Repository.Content.CreateFile(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CreateFileRequest>()).Returns(content);
-            
+
             // Act
             var response = await repository.CreateConfigAsync(gitRepo, "test", yamlContent);
 

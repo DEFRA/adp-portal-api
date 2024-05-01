@@ -14,12 +14,12 @@ namespace ADP.Portal.Api.Controllers;
 [ApiController]
 public class AadGroupController : ControllerBase
 {
-    private readonly IGitOpsGroupsConfigService gitOpsConfigService;
+    private readonly IGroupsConfigService gitOpsConfigService;
     private readonly ILogger<AadGroupController> logger;
     public readonly IOptions<AzureAdConfig> azureAdConfig;
     private readonly IOptions<TeamGitRepoConfig> teamGitRepoConfig;
 
-    public AadGroupController(IGitOpsGroupsConfigService gitOpsConfigService, ILogger<AadGroupController> logger,
+    public AadGroupController(IGroupsConfigService gitOpsConfigService, ILogger<AadGroupController> logger,
         IOptions<AzureAdConfig> azureAdConfig, IOptions<TeamGitRepoConfig> teamGitRepoConfig)
     {
         this.gitOpsConfigService = gitOpsConfigService;

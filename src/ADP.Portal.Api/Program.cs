@@ -95,9 +95,9 @@ namespace ADP.Portal.Api
             });
 
             builder.Services.AddScoped<IGitHubService, GitHubService>();
-            builder.Services.AddScoped<IGitOpsConfigRepository, GitOpsConfigRepository>();
-            builder.Services.AddScoped<IGitOpsGroupsConfigService, GitOpsGroupsConfigService>();
-            builder.Services.AddScoped<IGitOpsFluxTeamConfigService, GitOpsFluxTeamConfigService>();
+            builder.Services.AddScoped<IGitHubRepository, GitHubRepository>();
+            builder.Services.AddScoped<IGroupsConfigService, GroupsConfigService>();
+            builder.Services.AddScoped<IFluxTeamConfigService, FluxTeamConfigService>();
             builder.Services.AddSingleton(provider =>
             {
                 return new DeserializerBuilder()

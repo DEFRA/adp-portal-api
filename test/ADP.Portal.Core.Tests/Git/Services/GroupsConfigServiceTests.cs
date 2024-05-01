@@ -16,21 +16,21 @@ using YamlDotNet.Serialization;
 namespace ADP.Portal.Core.Tests.Git.Services
 {
     [TestFixture]
-    public class GitOpsGroupsConfigServiceTests
+    public class GroupsConfigServiceTests
     {
-        private readonly IGitOpsConfigRepository gitOpsConfigRepositoryMock;
-        private readonly GitOpsGroupsConfigService gitOpsConfigService;
-        private readonly ILogger<GitOpsGroupsConfigService> loggerMock;
+        private readonly IGitHubRepository gitOpsConfigRepositoryMock;
+        private readonly GroupsConfigService gitOpsConfigService;
+        private readonly ILogger<GroupsConfigService> loggerMock;
         private readonly IGroupService groupServiceMock;
         private readonly Fixture fixture;
         private readonly GitRepo gitRepo;
 
-        public GitOpsGroupsConfigServiceTests()
+        public GroupsConfigServiceTests()
         {
-            gitOpsConfigRepositoryMock = Substitute.For<IGitOpsConfigRepository>();
-            loggerMock = Substitute.For<ILogger<GitOpsGroupsConfigService>>();
+            gitOpsConfigRepositoryMock = Substitute.For<IGitHubRepository>();
+            loggerMock = Substitute.For<ILogger<GroupsConfigService>>();
             groupServiceMock = Substitute.For<IGroupService>();
-            gitOpsConfigService = new GitOpsGroupsConfigService(gitOpsConfigRepositoryMock, loggerMock, groupServiceMock, Substitute.For<ISerializer>());
+            gitOpsConfigService = new GroupsConfigService(gitOpsConfigRepositoryMock, loggerMock, groupServiceMock, Substitute.For<ISerializer>());
             fixture = new Fixture();
             gitRepo = fixture.Build<GitRepo>().With(i => i.BranchName, "main").With(i => i.Organisation, "defra").With(i => i.Name, "test").Create();
         }

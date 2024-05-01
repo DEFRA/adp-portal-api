@@ -1,18 +1,17 @@
 ﻿using ADP.Portal.Core.Git.Entities;
-using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Infrastructure
 {
-    public class GitOpsConfigRepository : IGitOpsConfigRepository
+    public class GitHubRepository : IGitHubRepository
     {
         private readonly IGitHubClient gitHubClient;
         private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
 
-        public GitOpsConfigRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer)
+        public GitHubRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer)
         {
             this.gitHubClient = gitHubClient;
             this.deserializer = deserializer;

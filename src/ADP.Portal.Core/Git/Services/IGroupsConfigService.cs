@@ -2,7 +2,7 @@
 
 namespace ADP.Portal.Core.Git.Services
 {
-    public interface IGitOpsGroupsConfigService
+    public interface IGroupsConfigService
     {
         Task<IEnumerable<Group>> GetGroupsConfigAsync(string tenantName, string teamName, GitRepo gitRepo);
 

@@ -10,16 +10,16 @@ using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services
 {
-    public partial class GitOpsGroupsConfigService : IGitOpsGroupsConfigService
+    public partial class GroupsConfigService : IGroupsConfigService
     {
-        private readonly IGitOpsConfigRepository gitOpsConfigRepository;
-        private readonly ILogger<GitOpsGroupsConfigService> logger;
+        private readonly IGitHubRepository gitOpsConfigRepository;
+        private readonly ILogger<GroupsConfigService> logger;
         private readonly IGroupService groupService;
         private readonly ISerializer serializer;
         private const string GLOBAL_READ_GROUP = "AAG-Azure-ADP-GlobalRead";
         private const string PLATFORM_ENGINEERS_GROUP = "AG-Azure-CDO-ADP-PlatformEngineers";
 
-        public GitOpsGroupsConfigService(IGitOpsConfigRepository gitOpsConfigRepository, ILogger<GitOpsGroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
+        public GroupsConfigService(IGitHubRepository gitOpsConfigRepository, ILogger<GroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
         {
             this.gitOpsConfigRepository = gitOpsConfigRepository;
             this.logger = logger;

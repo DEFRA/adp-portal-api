@@ -2,7 +2,7 @@
 
 namespace ADP.Portal.Core.Git.Services
 {
-    public interface IGitOpsFluxTeamConfigService
+    public interface IFluxTeamConfigService
     {
         Task<T?> GetConfigAsync<T>(GitRepo gitRepo, string? tenantName = null, string? teamName = null);
 

@@ -25,7 +25,7 @@ namespace ADP.Portal.Api.Tests.Controllers
         private readonly IOptions<TeamGitRepoConfig> teamGitRepoConfigMock;
         private readonly IOptions<AzureAdConfig> azureAdConfigMock;
         private readonly IOptions<FluxServicesGitRepoConfig> fluxServicesGitRepoConfigMock;
-        private readonly IGitOpsFluxTeamConfigService gitOpsFluxTeamConfigServiceMock;
+        private readonly IFluxTeamConfigService gitOpsFluxTeamConfigServiceMock;
         private readonly Fixture fixture;
 
         [SetUp]
@@ -41,7 +41,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             azureAdConfigMock = Substitute.For<IOptions<AzureAdConfig>>();
             fluxServicesGitRepoConfigMock = Substitute.For<IOptions<FluxServicesGitRepoConfig>>();
             loggerMock = Substitute.For<ILogger<FluxTeamConfigController>>();
-            gitOpsFluxTeamConfigServiceMock = Substitute.For<IGitOpsFluxTeamConfigService>();
+            gitOpsFluxTeamConfigServiceMock = Substitute.For<IFluxTeamConfigService>();
             controller = new FluxTeamConfigController(gitOpsFluxTeamConfigServiceMock, loggerMock, teamGitRepoConfigMock, azureAdConfigMock, fluxServicesGitRepoConfigMock);
             fixture = new Fixture();
         }

@@ -15,12 +15,12 @@ namespace ADP.Portal.Api.Controllers;
 public class FluxTeamConfigController : Controller
 {
     private readonly GitRepo teamRepo;
-    private readonly IGitOpsFluxTeamConfigService gitOpsFluxTeamConfigService;
+    private readonly IFluxTeamConfigService gitOpsFluxTeamConfigService;
     private readonly ILogger<FluxTeamConfigController> logger;
     private readonly IOptions<AzureAdConfig> azureAdConfig;
     private readonly IOptions<FluxServicesGitRepoConfig> fluxServicesGitRepoConfig;
 
-    public FluxTeamConfigController(IGitOpsFluxTeamConfigService gitOpsFluxTeamConfigService, ILogger<FluxTeamConfigController> logger,
+    public FluxTeamConfigController(IFluxTeamConfigService gitOpsFluxTeamConfigService, ILogger<FluxTeamConfigController> logger,
         IOptions<TeamGitRepoConfig> teamGitRepoConfig, IOptions<AzureAdConfig> azureAdConfig, IOptions<FluxServicesGitRepoConfig> fluxServicesGitRepoConfig)
     {
         this.gitOpsFluxTeamConfigService = gitOpsFluxTeamConfigService;

@@ -20,7 +20,7 @@ namespace ADP.Portal.Api.Tests.Controllers
         private readonly IOptions<AzureAdConfig> azureAdConfigMock;
         private readonly ILogger<AadGroupController> loggerMock;
         private readonly IOptions<TeamGitRepoConfig> adpTeamGitRepoConfigMock;
-        private readonly IGitOpsGroupsConfigService gitOpsConfigServiceMock;
+        private readonly IGroupsConfigService gitOpsConfigServiceMock;
         private readonly Fixture fixture;
 
         [SetUp]
@@ -35,7 +35,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             azureAdConfigMock = Substitute.For<IOptions<AzureAdConfig>>();
             adpTeamGitRepoConfigMock = Substitute.For<IOptions<TeamGitRepoConfig>>();
             loggerMock = Substitute.For<ILogger<AadGroupController>>();
-            gitOpsConfigServiceMock = Substitute.For<IGitOpsGroupsConfigService>();
+            gitOpsConfigServiceMock = Substitute.For<IGroupsConfigService>();
             controller = new AadGroupController(gitOpsConfigServiceMock, loggerMock, azureAdConfigMock, adpTeamGitRepoConfigMock);
             fixture = new Fixture();
         }

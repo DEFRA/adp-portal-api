@@ -13,18 +13,18 @@ using YamlDotNet.Serialization;
 namespace ADP.Portal.Core.Tests.Git.Services
 {
     [TestFixture]
-    public class GitOpsFluxTeamConfigServiceTests
+    public class FluxTeamConfigServiceTests
     {
-        private readonly GitOpsFluxTeamConfigService service;
-        private readonly IGitOpsConfigRepository gitOpsConfigRepository;
-        private readonly ILogger<GitOpsFluxTeamConfigService> logger;
+        private readonly FluxTeamConfigService service;
+        private readonly IGitHubRepository gitOpsConfigRepository;
+        private readonly ILogger<FluxTeamConfigService> logger;
         private readonly Fixture fixture;
 
-        public GitOpsFluxTeamConfigServiceTests()
+        public FluxTeamConfigServiceTests()
         {
-            gitOpsConfigRepository = Substitute.For<IGitOpsConfigRepository>();
-            logger = Substitute.For<ILogger<GitOpsFluxTeamConfigService>>();
-            service = new GitOpsFluxTeamConfigService(gitOpsConfigRepository, logger, Substitute.For<ISerializer>());
+            gitOpsConfigRepository = Substitute.For<IGitHubRepository>();
+            logger = Substitute.For<ILogger<FluxTeamConfigService>>();
+            service = new FluxTeamConfigService(gitOpsConfigRepository, logger, Substitute.For<ISerializer>());
             fixture = new Fixture();
         }
 
