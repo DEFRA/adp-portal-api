@@ -3,7 +3,6 @@ using ADP.Portal.Core.Azure.Services;
 using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using Mapster;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
@@ -22,11 +21,11 @@ namespace ADP.Portal.Core.Git.Services
         private const string GLOBAL_READ_GROUP = "AAG-Azure-ADP-GlobalRead";
         private const string PLATFORM_ENGINEERS_GROUP = "AG-Azure-CDO-ADP-PlatformEngineers";
 
-        public GroupsConfigService(IGitHubRepository gitHubRepository, [FromKeyedServices(Constants.GitRepo.TEAM_REPO_CONFIG)] IOptions<GitRepo> teamGitRepoOptions,
+        public GroupsConfigService(IGitHubRepository gitHubRepository, IOptionsSnapshot<GitRepo> gitRepoOptions,
             ILogger<GroupsConfigService> logger, IGroupService groupService, ISerializer serializer)
         {
             this.gitHubRepository = gitHubRepository;
-            this.teamGitRepo = teamGitRepoOptions.Value;
+            this.teamGitRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_REPO_CONFIG);
             this.logger = logger;
             this.groupService = groupService;
             this.serializer = serializer;
