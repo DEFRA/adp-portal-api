@@ -8,12 +8,14 @@ namespace ADP.Portal.Core.Git.Services
 
         Task<FluxConfigResult> CreateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig);
 
-        Task<FluxConfigResult> UpdateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig);
-
-        Task<GenerateFluxConfigResult> GenerateConfigAsync(string tenantName, string teamName, string? serviceName = null, string? environment = null);
+        Task<GenerateManifestResult> GenerateManifestAsync(string tenantName, string teamName, string? serviceName = null, string? environment = null);
 
         Task<FluxConfigResult> AddServiceAsync(string teamName, FluxService fluxService);
 
-        Task<FluxConfigResult> AddServiceEnvironmentAsync(string teamName, string serviceName, FluxEnvironment newEnvironment);
+        Task<ServiceEnvironmentResult> GetServiceEnvironmentAsync(string teamName,string serviceName, string environment);
+
+        Task<FluxConfigResult> AddServiceEnvironmentAsync(string teamName, string serviceName, string environment);
+
+        Task<FluxConfigResult> UpdateServiceEnvironmentManifestAsync(string teamName, string serviceName, string environment, bool generate);
     }
 }

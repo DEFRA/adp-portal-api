@@ -40,7 +40,7 @@ namespace ADP.Portal.Core.Git.Services
                 var name = isTenant ? tenantName : teamName;
                 var pathFormat = isTenant ? Constants.Flux.GIT_REPO_TENANT_CONFIG_PATH : Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH;
                 var path = string.Format(pathFormat, name);
-        
+
                 logger.LogInformation(isTenant ? "Reading flux team config for the tenant:'{TenantName}'." : "Reading flux team config for the team:'{TeamName}'.", name);
                 return await gitHubRepository.GetConfigAsync<T>(path, teamGitRepo);
             }
@@ -55,6 +55,13 @@ namespace ADP.Portal.Core.Git.Services
             var result = new FluxConfigResult();
 
             logger.LogInformation("Creating flux team config for the team:'{TeamName}'.", teamName);
+
+
+            fluxTeamConfig.Services.ForEach(service =>
+            {
+                service.Environments.ForEach(env => env.Manifest = new FluxManifest { Generate = true });
+            });
+
             var response = await gitHubRepository.CreateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
             if (string.IsNullOrEmpty(response))
             {
@@ -64,35 +71,16 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        public async Task<FluxConfigResult> UpdateConfigAsync(string teamName, FluxTeamConfig fluxTeamConfig)
+        public async Task<GenerateManifestResult> GenerateManifestAsync(string tenantName, string teamName, string? serviceName = null, string? environment = null)
         {
-            var result = new FluxConfigResult() { IsConfigExists = false };
-
-            var existingConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
-            if (existingConfig != null)
-            {
-                result.IsConfigExists = true;
-                logger.LogInformation("Updating flux team config for the team:'{TeamName}'.", teamName);
-                var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
-                if (string.IsNullOrEmpty(response))
-                {
-                    result.Errors.Add($"Failed to save the config for the team: {teamName}");
-                }
-            }
-
-            return result;
-        }
-
-        public async Task<GenerateFluxConfigResult> GenerateConfigAsync(string tenantName, string teamName, string? serviceName = null, string? environment = null)
-        {
-            var result = new GenerateFluxConfigResult();
+            var result = new GenerateManifestResult();
 
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             var tenantConfig = await GetConfigAsync<FluxTenant>(tenantName: tenantName);
 
             if (teamConfig == null || tenantConfig == null)
             {
-                logger.LogWarning("Flux team config not found for the team:'{TeamName}'.", teamName);
+                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
                 result.IsConfigExists = false;
                 return result;
             }
@@ -109,7 +97,10 @@ namespace ADP.Portal.Core.Git.Services
             logger.LogInformation("Generating flux config for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
             var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, serviceName, environment);
 
-            if (generatedFiles.Count > 0) await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, generatedFiles);
+            if (generatedFiles.Count > 0)
+            {
+                await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, generatedFiles);
+            }
 
             return result;
         }
@@ -134,6 +125,9 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
+
+            fluxService.Environments.ForEach(_ => new FluxManifest { Generate = true });
+
             teamConfig.Services.Add(fluxService);
             var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
@@ -145,14 +139,46 @@ namespace ADP.Portal.Core.Git.Services
             return result;
         }
 
-        public async Task<FluxConfigResult> AddServiceEnvironmentAsync(string teamName, string serviceName, FluxEnvironment newEnvironment)
+        public async Task<ServiceEnvironmentResult> GetServiceEnvironmentAsync(string teamName, string serviceName, string environment)
+        {
+            var result = new ServiceEnvironmentResult() { IsConfigExists = false };
+
+            var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
+            if (teamConfig == null)
+            {
+                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
+                return result;
+            }
+
+            var service = teamConfig.Services.Find(s => s.Name == serviceName);
+            if (service == null)
+            {
+                logger.LogDebug("Service '{ServiceName}' not found in the team:'{TeamName}'.", serviceName, teamName);
+                return result;
+            }
+
+            var env = service.Environments.Find(e => e.Name == environment);
+            if (env == null)
+            {
+                logger.LogDebug("Environment '{EnvironmentName}' not found for the service:'{ServiceName}' in the team:'{TeamName}'.", environment, serviceName, teamName);
+                return result;
+            }
+
+            result.IsConfigExists = true;
+
+            result.Environments = service.Environments.Where(e => e.Name == environment).ToList();
+
+            return result;
+        }
+
+        public async Task<FluxConfigResult> AddServiceEnvironmentAsync(string teamName, string serviceName, string environment)
         {
             var result = new FluxConfigResult() { IsConfigExists = false };
 
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
             {
-                logger.LogWarning("Flux team config not found for the team:'{TeamName}'.", teamName);
+                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
                 result.Errors.Add($"Flux team config not found for the team:'{teamName}'.");
                 return result;
             }
@@ -160,20 +186,64 @@ namespace ADP.Portal.Core.Git.Services
             var service = teamConfig.Services.Find(s => s.Name == serviceName);
             if (service == null)
             {
-                logger.LogWarning("Service '{ServiceName}' not found in the team:'{TeamName}'.", serviceName, teamName);
+                logger.LogDebug("Service '{ServiceName}' not found in the team:'{TeamName}'.", serviceName, teamName);
                 result.Errors.Add($"Service '{serviceName}' not found in the team:'{teamName}'.");
                 return result;
             }
 
             result.IsConfigExists = true;
-            if (service.Environments.Exists(e => e.Name == newEnvironment.Name))
+            if (service.Environments.Exists(e => e.Name == environment))
             {
                 return result;
             }
 
+            var newEnvironment = new FluxEnvironment { Name = environment, Manifest = new FluxManifest { Generate = true } };
             service.Environments.Add(newEnvironment);
 
             logger.LogInformation("Adding environment '{EnvironmentName}' to the service:'{ServiceName}' in the team:'{TeamName}'.", newEnvironment.Name, serviceName, teamName);
+            var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
+
+            if (string.IsNullOrEmpty(response))
+            {
+                result.Errors.Add($"Failed to save the config for the team: {teamName}");
+            }
+
+            return result;
+        }
+
+        public async Task<FluxConfigResult> UpdateServiceEnvironmentManifestAsync(string teamName, string serviceName, string environment, bool generate)
+        {
+            var result = new FluxConfigResult() { IsConfigExists = false };
+
+            var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
+            if (teamConfig == null)
+            {
+                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
+                result.Errors.Add($"Flux team config not found for the team:'{teamName}'.");
+                return result;
+            }
+
+            var service = teamConfig.Services.Find(s => s.Name == serviceName);
+            if (service == null)
+            {
+                logger.LogDebug("Service '{ServiceName}' not found in the team:'{TeamName}'.", serviceName, teamName);
+                result.Errors.Add($"Service '{serviceName}' not found in the team:'{teamName}'.");
+                return result;
+            }
+
+            var enironment = service.Environments.Find(e => e.Name == environment);
+            if (enironment == null)
+            {
+                logger.LogDebug("Environment '{EnvironmentName}' not found for the service:'{ServiceName}' in the team:'{TeamName}'.", environment, serviceName, teamName);
+                result.Errors.Add($"Environment '{environment}' not found for the service:'{serviceName}' in the team:'{teamName}'.");
+                return result;
+            }
+
+            result.IsConfigExists = true;
+
+            logger.LogInformation("Updating manifest for the environment '{EnvironmentName}' for the service:'{ServiceName}' in the team:'{TeamName}'.", environment, serviceName, teamName);
+            enironment.Manifest.Generate = false;
+            enironment.Manifest.GeneratedVersion = fluxTemplatesRepo.Reference;
             var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
@@ -409,7 +479,7 @@ namespace ADP.Portal.Core.Git.Services
             }
             else
             {
-                logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{serviceName}.", teamName, serviceName);
+                logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{ServiceName}.", teamName, serviceName);
             }
         }
 
