@@ -41,7 +41,15 @@ namespace ADP.Portal.Core.Git.Services
                 var pathFormat = isTenant ? Constants.Flux.GIT_REPO_TENANT_CONFIG_PATH : Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH;
                 var path = string.Format(pathFormat, name);
 
-                logger.LogInformation(isTenant ? "Reading flux team config for the tenant:'{TenantName}'." : "Reading flux team config for the team:'{TeamName}'.", name);
+                if (isTenant)
+                {
+                    logger.LogInformation("Reading flux team config for the tenant:'{TenantName}'.", name);
+                }
+                else
+                {
+                    logger.LogInformation("Reading flux team config for the team:'{TeamName}'.", name);
+                }
+
                 return await gitHubRepository.GetConfigAsync<T>(path, teamGitRepo);
             }
             catch (NotFoundException)
@@ -123,7 +131,7 @@ namespace ADP.Portal.Core.Git.Services
 
             logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
 
-            fluxService.Environments.ForEach(_ => new FluxManifest { Generate = true });
+            fluxService.Environments.ForEach(e => e.Manifest = new FluxManifest { Generate = true });
 
             teamConfig.Services.Add(fluxService);
             var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
@@ -309,10 +317,8 @@ namespace ADP.Portal.Core.Git.Services
                     if (!template.Key.Contains(Constants.Flux.ENV_KEY))
                     {
                         var serviceTemplate = template.Value.DeepCopy();
-                        if (template.Key.Equals(Constants.Flux.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.HasDatastore())
-                        {
-                            ((List<object>)serviceTemplate[Constants.Flux.RESOURCES_KEY]).Add("pre-deploy-kustomize.yaml");
-                        }
+                        serviceTemplate = UpdateServiceKustomizationFiles(serviceTemplate, template.Key, service);
+
                         var key = template.Key.Replace(Constants.Flux.PROGRAMME_FOLDER, teamConfig.ProgrammeName).Replace(Constants.Flux.TEAM_KEY, teamConfig.TeamName).Replace(Constants.Flux.SERVICE_KEY, service.Name);
                         serviceFiles.Add($"services/{key}", serviceTemplate);
                     }
@@ -322,8 +328,10 @@ namespace ADP.Portal.Core.Git.Services
                     }
                 }
                 UpdateServicePatchFiles(serviceFiles, service, teamConfig);
-
-                service.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.TEMPLATE_VAR_DEPENDS_ON, Value = service.HasDatastore() ? Constants.Flux.PREDEPLOY_KEY : Constants.Flux.INFRA_KEY });
+                if (service.Type != FluxServiceType.HelmOnly)
+                {
+                    service.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.TEMPLATE_VAR_DEPENDS_ON, Value = service.HasDatastore() ? Constants.Flux.PREDEPLOY_KEY : Constants.Flux.INFRA_KEY });
+                }
                 service.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.TEMPLATE_VAR_SERVICE_NAME, Value = service.Name });
                 service.ConfigVariables.ForEach(serviceFiles.ReplaceToken);
                 finalFiles.AddRange(serviceFiles);
@@ -340,6 +348,14 @@ namespace ADP.Portal.Core.Git.Services
                 if (!service.HasDatastore())
                 {
                     matched = !filter.Key.StartsWith(Constants.Flux.SERVICE_PRE_DEPLOY_FOLDER) && !filter.Key.StartsWith(Constants.Flux.PRE_DEPLOY_KUSTOMIZE_FILE);
+                }
+                return matched;
+            }).Where(filter =>
+            {
+                var matched = true;
+                if (service.Type == FluxServiceType.HelmOnly)
+                {
+                    matched = !filter.Key.StartsWith(Constants.Flux.SERVICE_INFRA_FOLDER) && !filter.Key.StartsWith(Constants.Flux.INFRA_KUSTOMIZE_FILE);
                 }
                 return matched;
             });
@@ -399,6 +415,23 @@ namespace ADP.Portal.Core.Git.Services
                 }
             }
             return finalFiles;
+        }
+
+        private static Dictionary<object, object> UpdateServiceKustomizationFiles(Dictionary<object, object> serviceTemplate, string templateKey, FluxService service)
+        {
+            if (templateKey.Equals(Constants.Flux.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.HasDatastore())
+            {
+                ((List<object>)serviceTemplate[Constants.Flux.RESOURCES_KEY]).Add("pre-deploy-kustomize.yaml");
+            }
+            if (templateKey.Equals(Constants.Flux.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.Type == FluxServiceType.HelmOnly)
+            {
+                ((List<object>)serviceTemplate[Constants.Flux.RESOURCES_KEY]).Remove("infra-kustomize.yaml");
+            }
+            if (templateKey.Equals(Constants.Flux.DEPLOY_KUSTOMIZE_FILE) && service.Type == FluxServiceType.HelmOnly)
+            {
+                ((Dictionary<object, object>)serviceTemplate[Constants.Flux.SPEC_KEY]).Remove(Constants.Flux.DEPENDS_ON_KEY);
+            }
+            return serviceTemplate;
         }
 
         private static void UpdateServicePatchFiles(Dictionary<string, Dictionary<object, object>> serviceFiles, FluxService service, FluxTeamConfig teamConfig)

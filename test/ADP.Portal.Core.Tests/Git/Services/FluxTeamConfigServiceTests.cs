@@ -2,8 +2,10 @@
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Git.Services;
 using AutoFixture;
+using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -356,7 +358,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddFluxServiceAsync_Should_Not_Add_When_TeamConfig_NotFound()
+        public async Task AddServiceAsync_Should_Not_Add_When_TeamConfig_NotFound()
         {
             // Arrange
             var fluxService = fixture.Build<FluxService>().Create();
@@ -373,7 +375,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddFluxServiceAsync_Should_AddService_When_Service_Not_Exists()
+        public async Task AddServiceAsync_Should_AddService_When_Service_Not_Exists()
         {
             // Arrange
             var teamName = "team1";
@@ -394,7 +396,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
 
         [Test]
-        public async Task AddFluxServiceAsync_Should_Not_AddService_When_Service_Exists()
+        public async Task AddServiceAsync_Should_Not_AddService_When_Service_Exists()
         {
             // Arrange
             var gitRepo = fixture.Build<GitRepo>().Create();
@@ -418,7 +420,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddFluxServiceAsync_Should_Return_Error_TeamConfig_Update_Failed()
+        public async Task AddServiceAsync_Should_Return_Error_TeamConfig_Update_Failed()
         {
             // Arrange
             var teamName = "team1";
@@ -503,7 +505,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddServiceEnvironmentAsync_Should_Not_Add_When_TeamConfig_NotFound()
+        public async Task AddServiceEnvironment_Should_Not_Add_When_TeamConfig_NotFound()
         {
             // Arrange
             var fluxEnvironment = "dev";
@@ -520,7 +522,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddServiceEnvironmentAsync_Should_Not_Add_When_ServiceConfig_NotFound()
+        public async Task AddServiceEnvironment_Should_Not_Add_When_ServiceConfig_NotFound()
         {
             // Arrange
             var teamName = "team1";
@@ -541,7 +543,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddServiceEnvironmentAsync_Should_Add_When_Config_NotFound()
+        public async Task AddServiceEnvironment_Should_Add_When_Config_NotFound()
         {
             // Arrange
             var teamName = "team1";
@@ -567,7 +569,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddServiceEnvironmentAsync_Should_Not_Add_When_Environment_Exists()
+        public async Task AddServiceEnvironment_Should_Not_Add_When_Environment_Exists()
         {
             // Arrange
             var teamName = "team1";
@@ -593,7 +595,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task AddServiceEnvironmentAsyncc_Should_Return_Error_TeamConfig_Update_Failed()
+        public async Task AddServiceEnvironment_Should_Return_Error_TeamConfig_Update_Failed()
         {
             // Arrange
             var teamName = "team1";
@@ -618,14 +620,11 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task GenerateFluxTeamConfig_HelmOnlyService()
+        public async Task GenerateManifest_HelmOnlyService()
         {
             // Arrange
-            var gitRepo = fixture.Build<GitRepo>().Create();
-            var gitRepoFluxServices = fixture.Build<GitRepo>().Create();
             string serviceName = "helm-only-service";
-
-            var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
+            var envList = fixture.Build<FluxEnvironment>().With(x => x.ConfigVariables, default(List<FluxConfig>)).CreateMany(1).ToList();
             var fluxServices = fixture.Build<FluxService>()
                                     .With(p => p.Name, serviceName)
                                     .With(e => e.Environments, envList)
@@ -646,19 +645,11 @@ namespace ADP.Portal.Core.Tests.Git.Services
                     };
                 });
 
-            var serviceEnvTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>("flux/templates/programme/team/service/deploy-kustomize.yaml", new Dictionary<object, object>() { { "spec", new Dictionary<object, object>() { { "dependsOn", new object() } } } }));
-            var resources = new Dictionary<object, object>() { { "resources", new List<object>() } };
-
-            var teamEnvTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>("flux/templates/programme/team/environment/kustomization.yaml",
-                                        x.Value.Union(resources).ToDictionary()));
-
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
-            gitOpsConfigRepository.GetAllFilesAsync(gitRepo, Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates.Union(serviceEnvTemplates).Union(teamEnvTemplates));
+            gitOpsConfigRepository.GetAllFilesAsync(Arg.Any<GitRepo>(), Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(gitRepoFluxServices, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
+            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(fixture.Build<Commit>().Create());
 
             // Act
@@ -666,8 +657,220 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(gitRepoFluxServices, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(gitRepoFluxServices, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().CreateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().CreatePullRequestAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Test]
+        public async Task GetServiceEnvironment_Should_Not_Return_Environment_When_TeamConfig_NotFound()
+        {
+            // Arrange
+            var fluxEnvironment = "dev";
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(default(FluxTeamConfig));
+
+            // Act
+            var result = await service.GetServiceEnvironmentAsync("team1", "service1", fluxEnvironment);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+            Assert.That(result.Environment, Is.Null);
+        }
+
+        [Test]
+        public async Task GetServiceEnvironment_Should_Not_Return_Environment_When_ServiceConfig_NotFound()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().Create();
+            var fluxEnvironment = "dev";
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+
+            // Act
+            var result = await service.GetServiceEnvironmentAsync(teamName, serviceName, fluxEnvironment);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+            Assert.That(result.Environment, Is.Null);
+        }
+
+        [Test]
+        public async Task GetServiceEnvironment_Should_Not_Return_When_EnvironmentConfig_NotFound()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var fluxEnvironment = "dev";
+            var fulxTeamServices = fixture.Build<FluxService>().With(i => i.Name, serviceName)
+              .CreateMany(1).ToList();
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>()
+                .With(c => c.Services, fulxTeamServices)
+                .Create();
+
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+
+            // Act
+            var result = await service.GetServiceEnvironmentAsync(teamName, serviceName, fluxEnvironment);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+            Assert.That(result.Environment, Is.Null);
+        }
+
+        [Test]
+        public async Task GetServiceEnvironment_Should_Return_When_Config_Found()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var fluxEnvironment = "dev";
+
+            var fulxTeamServices = fixture.Build<FluxService>()
+                .With(i => i.Name, serviceName)
+                .With(i=>i.Environments, fixture.Build<FluxEnvironment>().With(i => i.Name, fluxEnvironment).CreateMany(1).ToList())
+                .CreateMany(1).ToList();
+
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>()
+                .With(c => c.Services, fulxTeamServices)
+                .Create();
+
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+
+            // Act
+            var result = await service.GetServiceEnvironmentAsync(teamName, serviceName, fluxEnvironment);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.True);
+            Assert.That(result.Environment, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task UpdateServiceEnvironmentManifest_Should_Not_Return_Environment_When_TeamConfig_NotFound()
+        {
+            // Arrange
+            var fluxEnvironment = "dev";
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(default(FluxTeamConfig));
+
+            // Act
+            var result = await service.UpdateServiceEnvironmentManifestAsync("team1", "service1", fluxEnvironment, true);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+        }
+
+        [Test]
+        public async Task UpdateServiceEnvironmentManifest_Should_Not_Return_Environment_When_ServiceConfig_NotFound()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().Create();
+            var fluxEnvironment = "dev";
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+
+            // Act
+            var result = await service.UpdateServiceEnvironmentManifestAsync(teamName, serviceName, fluxEnvironment, true);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+        }
+
+        [Test]
+        public async Task UpdateServiceEnvironmentManifest_Should_Not_Return_When_EnvironmentConfig_NotFound()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var fluxEnvironment = "dev";
+            var fulxTeamServices = fixture.Build<FluxService>().With(i => i.Name, serviceName)
+              .CreateMany(1).ToList();
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>()
+                .With(c => c.Services, fulxTeamServices)
+                .Create();
+
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+
+            // Act
+            var result = await service.UpdateServiceEnvironmentManifestAsync(teamName, serviceName, fluxEnvironment, true);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.False);
+        }
+
+        [Test]
+        public async Task UpdateServiceEnvironmentManifest_Should_Update_Manifest_When_Config_Found()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var environment = "env1";
+            var generate = true;
+
+
+            var fulxTeamServices = fixture.Build<FluxService>()
+                .With(i => i.Name, serviceName)
+                .With(i => i.Environments, fixture.Build<FluxEnvironment>().With(i => i.Name, environment).CreateMany(1).ToList())
+                .CreateMany(1).ToList();
+
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>()
+                .With(c => c.Services, fulxTeamServices)
+                .Create();
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("response");
+
+            // Act
+            var result = await service.UpdateServiceEnvironmentManifestAsync(teamName, serviceName, environment, generate);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.True);
+        }
+
+
+        [Test]
+        public async Task UpdateServiceEnvironmentManifest_Should_Return_Error_When_Failed_To_Save_Config_Found()
+        {
+            // Arrange
+            var teamName = "team1";
+            var serviceName = "service1";
+            var environment = "env1";
+            var generate = true;
+
+
+            var fulxTeamServices = fixture.Build<FluxService>()
+                .With(i => i.Name, serviceName)
+                .With(i => i.Environments, fixture.Build<FluxEnvironment>().With(i => i.Name, environment).CreateMany(1).ToList())
+                .CreateMany(1).ToList();
+
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>()
+                .With(c => c.Services, fulxTeamServices)
+                .Create();
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("");
+
+            // Act
+            var result = await service.UpdateServiceEnvironmentManifestAsync(teamName, serviceName, environment, generate);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsConfigExists, Is.True);
+            Assert.That(result.Errors, Is.EqualTo(new List<string>() { $"Failed to save the config for the team: {teamName}" }));
         }
     }
 }
