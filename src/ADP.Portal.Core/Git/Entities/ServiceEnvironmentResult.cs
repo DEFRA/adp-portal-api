@@ -2,6 +2,8 @@
 {
     public class ServiceEnvironmentResult : FluxConfigResult
     {
-        public List<FluxEnvironment>? Environments { get; set; }
+        public FluxEnvironment? Environment { get; set; }
+
+        public required string FluxTemplatesVersion { get; set; }
     }
 }

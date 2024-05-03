@@ -138,7 +138,7 @@ namespace ADP.Portal.Core.Git.Services
 
         public async Task<ServiceEnvironmentResult> GetServiceEnvironmentAsync(string teamName, string serviceName, string environment)
         {
-            var result = new ServiceEnvironmentResult() { IsConfigExists = false };
+            var result = new ServiceEnvironmentResult() { IsConfigExists = false, FluxTemplatesVersion = fluxTemplatesRepo.Reference };
 
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
@@ -163,7 +163,7 @@ namespace ADP.Portal.Core.Git.Services
 
             result.IsConfigExists = true;
 
-            result.Environments = service.Environments.Where(e => e.Name == environment).ToList();
+            result.Environment = service.Environments.First(e => e.Name == environment);
 
             return result;
         }

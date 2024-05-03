@@ -146,7 +146,7 @@ public class FluxTeamConfigController : Controller
 
         if (result.IsConfigExists)
         {
-            return Ok(result.Environments);
+            return Ok(new { result.Environment, result.FluxTemplatesVersion });
         }
 
         return NotFound();
