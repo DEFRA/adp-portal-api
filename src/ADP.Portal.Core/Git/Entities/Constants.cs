@@ -66,5 +66,9 @@
             public const string TEMPLATE_IMAGEPOLICY_KEY_VALUE = " # {\"$imagepolicy\": \"flux-config";
         }
 
+        public static class Logger
+        {
+            public const string FLUX_TEAM_CONFIG_NOT_FOUND = "Flux team config not found for the team:'{TeamName}'.";
+        }
     }
 }
