@@ -23,7 +23,7 @@ namespace ADP.Portal.Core.Git.Services
             cache.Set(key, value, new MemoryCacheEntryOptions().SetAbsoluteExpiration(defaultExpiration));
         }
 
-        private TimeSpan CalculateExpiration()
+        private static TimeSpan CalculateExpiration()
         {
             DateTime now = DateTime.Now;
             DateTime nextMidnight = now.Date.AddDays(1);

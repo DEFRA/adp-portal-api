@@ -41,7 +41,15 @@ namespace ADP.Portal.Core.Git.Services
                 var pathFormat = isTenant ? Constants.Flux.GIT_REPO_TENANT_CONFIG_PATH : Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH;
                 var path = string.Format(pathFormat, name);
 
-                logger.LogInformation(isTenant ? "Reading flux team config for the tenant:'{TenantName}'." : "Reading flux team config for the team:'{TeamName}'.", name);
+                if (isTenant)
+                {
+                    logger.LogInformation("Reading flux team config for the tenant:'{TenantName}'.", name);
+                }
+                else
+                {
+                    logger.LogInformation("Reading flux team config for the team:'{TeamName}'.", name);
+                }
+
                 return await gitHubRepository.GetConfigAsync<T>(path, teamGitRepo);
             }
             catch (NotFoundException)
@@ -123,7 +131,7 @@ namespace ADP.Portal.Core.Git.Services
 
             logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
 
-            fluxService.Environments.ForEach(_ => new FluxManifest { Generate = true });
+            fluxService.Environments.ForEach(e => e.Manifest = new FluxManifest { Generate = true });
 
             teamConfig.Services.Add(fluxService);
             var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
