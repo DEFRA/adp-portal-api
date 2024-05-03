@@ -84,7 +84,7 @@ namespace ADP.Portal.Core.Git.Services
 
             if (teamConfig == null || tenantConfig == null)
             {
-                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
+                logger.LogDebug(Constants.Logger.FLUX_TEAM_CONFIG_NOT_FOUND, teamName);
                 result.IsConfigExists = false;
                 return result;
             }
@@ -151,7 +151,7 @@ namespace ADP.Portal.Core.Git.Services
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
             {
-                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
+                logger.LogDebug(Constants.Logger.FLUX_TEAM_CONFIG_NOT_FOUND, teamName);
                 return result;
             }
 
@@ -183,7 +183,7 @@ namespace ADP.Portal.Core.Git.Services
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
             {
-                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
+                logger.LogDebug(Constants.Logger.FLUX_TEAM_CONFIG_NOT_FOUND, teamName);
                 result.Errors.Add($"Flux team config not found for the team:'{teamName}'.");
                 return result;
             }
@@ -223,7 +223,7 @@ namespace ADP.Portal.Core.Git.Services
             var teamConfig = await GetConfigAsync<FluxTeamConfig>(teamName: teamName);
             if (teamConfig == null)
             {
-                logger.LogDebug("Flux team config not found for the team:'{TeamName}'.", teamName);
+                logger.LogDebug(Constants.Logger.FLUX_TEAM_CONFIG_NOT_FOUND, teamName);
                 result.Errors.Add($"Flux team config not found for the team:'{teamName}'.");
                 return result;
             }
