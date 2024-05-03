@@ -56,11 +56,7 @@ namespace ADP.Portal.Core.Git.Services
 
             logger.LogInformation("Creating flux team config for the team:'{TeamName}'.", teamName);
 
-
-            fluxTeamConfig.Services.ForEach(service =>
-            {
-                service.Environments.ForEach(env => env.Manifest = new FluxManifest { Generate = true });
-            });
+            fluxTeamConfig.Services.ForEach(service => service.Environments.ForEach(env => env.Manifest = new FluxManifest { Generate = true }));
 
             var response = await gitHubRepository.CreateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
             if (string.IsNullOrEmpty(response))
@@ -86,6 +82,7 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             logger.LogInformation("Reading flux templates.");
+
             var cacheKey = $"flux-templates-{fluxTemplatesRepo.Reference}";
             var templates = cacheService.Get<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>>(cacheKey);
             if (templates == null)
@@ -119,8 +116,8 @@ namespace ADP.Portal.Core.Git.Services
 
             if (teamConfig.Services.Exists(s => s.Name == fluxService.Name))
             {
+                logger.LogDebug("Service '{ServiceName}' already exists in the team: '{TeamName}'.", fluxService.Name, teamName);
                 result.Errors.Add($"Service '{fluxService.Name}' already exists in the team:'{teamName}'.");
-                logger.LogInformation("Service '{ServiceName}' already exists in the team: '{TeamName}'.", fluxService.Name, teamName);
                 return result;
             }
 
@@ -231,8 +228,8 @@ namespace ADP.Portal.Core.Git.Services
                 return result;
             }
 
-            var enironment = service.Environments.Find(e => e.Name == environment);
-            if (enironment == null)
+            var env = service.Environments.Find(e => e.Name == environment);
+            if (env == null)
             {
                 logger.LogDebug("Environment '{EnvironmentName}' not found for the service:'{ServiceName}' in the team:'{TeamName}'.", environment, serviceName, teamName);
                 result.Errors.Add($"Environment '{environment}' not found for the service:'{serviceName}' in the team:'{teamName}'.");
@@ -242,8 +239,9 @@ namespace ADP.Portal.Core.Git.Services
             result.IsConfigExists = true;
 
             logger.LogInformation("Updating manifest for the environment '{EnvironmentName}' for the service:'{ServiceName}' in the team:'{TeamName}'.", environment, serviceName, teamName);
-            enironment.Manifest.Generate = false;
-            enironment.Manifest.GeneratedVersion = fluxTemplatesRepo.Reference;
+            env.Manifest ??= new FluxManifest() { Generate = generate };
+            env.Manifest.Generate = generate;
+            env.Manifest.GeneratedVersion = fluxTemplatesRepo.Reference;
             var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
@@ -262,19 +260,13 @@ namespace ADP.Portal.Core.Git.Services
             var finalFiles = new Dictionary<string, Dictionary<object, object>>();
 
             var services = serviceName != null ? fluxTeamConfig.Services.Where(x => x.Name.Equals(serviceName)) : fluxTeamConfig.Services;
+
             if (services.Any())
             {
                 if (!string.IsNullOrEmpty(environment))
                 {
-                    foreach (var service in services)
-                    {
-                        service.Environments = service.Environments.Where(env => env.Name.Equals(environment)).ToList();
-                    }
-
-                    foreach (var service in fluxTeamConfig.Services)
-                    {
-                        service.Environments = service.Environments.Where(env => env.Name.Equals(environment)).ToList();
-                    }
+                    FilterEnvironmentsByName(services.ToList(), environment);
+                    FilterEnvironmentsByName(fluxTeamConfig.Services, environment);
                 }
 
                 // Create service files
@@ -294,12 +286,12 @@ namespace ADP.Portal.Core.Git.Services
             var finalFiles = new Dictionary<string, Dictionary<object, object>>();
 
             // Collect all non-service files
-            templates.Where(x => !x.Key.StartsWith(Constants.Flux.SERVICE_FOLDER) &&
-                             !x.Key.StartsWith(Constants.Flux.TEAM_ENV_FOLDER)).ForEach(file =>
-                             {
-                                 var key = file.Key.Replace(Constants.Flux.PROGRAMME_FOLDER, teamConfig.ProgrammeName).Replace(Constants.Flux.TEAM_KEY, teamConfig.TeamName);
-                                 finalFiles.Add($"services/{key}", file.Value);
-                             });
+            templates.Where(x => !x.Key.StartsWith(Constants.Flux.SERVICE_FOLDER) && !x.Key.StartsWith(Constants.Flux.TEAM_ENV_FOLDER))
+                     .ForEach(file =>
+                     {
+                         var key = file.Key.Replace(Constants.Flux.PROGRAMME_FOLDER, teamConfig.ProgrammeName).Replace(Constants.Flux.TEAM_KEY, teamConfig.TeamName);
+                         finalFiles.Add($"services/{key}", file.Value);
+                     });
 
             // Create team environments
             var envTemplates = templates.Where(x => x.Key.Contains(Constants.Flux.TEAM_ENV_FOLDER));
@@ -444,6 +436,14 @@ namespace ADP.Portal.Core.Git.Services
             teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.TEMPLATE_VAR_SERVICE_CODE, Value = teamConfig.ServiceCode ?? string.Empty });
         }
 
+        private static void FilterEnvironmentsByName(List<FluxService> services, string environment)
+        {
+            foreach (var service in services)
+            {
+                service.Environments = service.Environments.Where(env => env.Name.Equals(environment)).ToList();
+            }
+        }
+
         private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, Dictionary<object, object>> generatedFiles)
         {
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
@@ -452,11 +452,11 @@ namespace ADP.Portal.Core.Git.Services
             string message;
             if (branchRef == null)
             {
-                message = string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()} Config" : $"{serviceName.ToUpper()} Config";
+                message = string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()} Manifest" : $"{serviceName.ToUpper()} Manifest";
             }
             else
             {
-                message = "Update config";
+                message = "Manifest Update";
             }
 
             logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
@@ -482,7 +482,6 @@ namespace ADP.Portal.Core.Git.Services
                 logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{ServiceName}.", teamName, serviceName);
             }
         }
-
         #endregion
     }
 }

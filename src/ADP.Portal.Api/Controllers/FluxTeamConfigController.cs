@@ -105,16 +105,16 @@ public class FluxTeamConfigController : Controller
     /// </summary>
     /// <param name="teamName">Required: Name of the Team, like ffc-demo</param>
     /// <param name="service">Required: Name of the Service</param>
-    /// <param name="request">The request object containing all the necessary information to update the service in the Flux Config.</param>
+    /// <param name="manifestConfigRequest">The request object containing all the necessary information to update the service in the Flux Config.</param>
     /// <returns></returns>
     [HttpPatch("{teamName}/services/{service}/environments/{environment}/manifest", Name = "SetEnvironmentManifestForTeamService")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> SetEnvironmentManifestAsync(string teamName, string service, string environment, [FromBody] ManifestConfigRequest request)
+    public async Task<ActionResult> SetEnvironmentManifestAsync(string teamName, string service, string environment, [FromBody] ManifestConfigRequest  manifestConfigRequest)
     {
         logger.LogInformation("Setting Manifest for the Environment:'{Environment}' for the Service:'{Service}' in the Team:'{TeamName}'", environment, service, teamName);
 
-        var result = await fluxTeamConfigService.UpdateServiceEnvironmentManifestAsync(teamName, service, environment, request.Generate);
+        var result = await fluxTeamConfigService.UpdateServiceEnvironmentManifestAsync(teamName, service, environment, manifestConfigRequest.Generate);
         if (!result.IsConfigExists)
         {
             return BadRequest(result.Errors[0]);

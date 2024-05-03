@@ -1,6 +1,6 @@
 ﻿namespace ADP.Portal.Api.Models.Flux
 {
-    public class ServiceConfigRequest
+    public sealed class ServiceConfigRequest
     {
         public required string Name { get; set; }
         public required bool IsFrontend { get; set; }

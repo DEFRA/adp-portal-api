@@ -173,8 +173,6 @@ namespace ADP.Portal.Core.Git.Infrastructure
             var newCommit = new NewCommit(message, sha, parent);
             return await client.Git.Commit.Create(repository.Owner.Login, repository.Name, newCommit);
         }
-
-
         private async Task<IReadOnlyList<RepositoryContent>> GetRepositoryFiles(GitRepo gitRepo, string filePathOrName)
         {
             return await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, filePathOrName, gitRepo.Reference);

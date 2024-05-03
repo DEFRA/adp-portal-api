@@ -26,7 +26,7 @@ namespace ADP.Portal.Core.Git.Services
         private TimeSpan CalculateExpiration()
         {
             DateTime now = DateTime.Now;
-            DateTime nextMidnight = new DateTime(now.Year, now.Month, now.Day).AddDays(1);
+            DateTime nextMidnight = now.Date.AddDays(1);
             return nextMidnight - now;
         }
     }
