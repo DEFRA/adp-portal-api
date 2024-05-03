@@ -30,14 +30,14 @@
             public const string POSTGRESRESOURCEGROUPNAME_KEY = "postgresResourceGroupName";
             public const string POSTGRESSERVERNAME_KEY = "postgresServerName";
 
-            public const string PROGRAMME_FOLDER = "flux/templates/programme";
-            public const string SERVICE_FOLDER = "flux/templates/programme/team/service";
-            public const string TEAM_ENV_FOLDER = "flux/templates/programme/team/environment";
-            public const string SERVICE_PRE_DEPLOY_FOLDER = "flux/templates/programme/team/service/pre-deploy";
+            public const string PROGRAMME_FOLDER = GIT_REPO_TEMPLATE_PATH + "/programme";
+            public const string SERVICE_FOLDER = PROGRAMME_FOLDER + "/team/service";
+            public const string TEAM_ENV_FOLDER = PROGRAMME_FOLDER + "/team/environment";
+            public const string SERVICE_PRE_DEPLOY_FOLDER = PROGRAMME_FOLDER + "/team/service/pre-deploy";
 
-            public const string PRE_DEPLOY_KUSTOMIZE_FILE = "flux/templates/programme/team/service/pre-deploy-kustomize.yaml";
-            public const string TEAM_ENV_KUSTOMIZATION_FILE = "flux/templates/programme/team/environment/kustomization.yaml";
-            public const string TEAM_SERVICE_KUSTOMIZATION_FILE = "flux/templates/programme/team/service/kustomization.yaml";
+            public const string PRE_DEPLOY_KUSTOMIZE_FILE = PROGRAMME_FOLDER + "/team/service/pre-deploy-kustomize.yaml";
+            public const string TEAM_ENV_KUSTOMIZATION_FILE = PROGRAMME_FOLDER + "/team/environment/kustomization.yaml";
+            public const string TEAM_SERVICE_KUSTOMIZATION_FILE = PROGRAMME_FOLDER + "/team/service/kustomization.yaml";
             public const string TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE = "{0}/{1}/{2}/deploy/{3}/patch.yaml";
             public const string TEAM_SERVICE_INFRA_ENV_PATCH_FILE = "{0}/{1}/{2}/infra/{3}/patch.yaml";
 

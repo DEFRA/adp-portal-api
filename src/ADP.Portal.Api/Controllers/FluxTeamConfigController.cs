@@ -138,7 +138,7 @@ public class FluxTeamConfigController : Controller
     /// <returns></returns>
     [HttpGet("{teamName}/services/{service}/environments/{environment}", Name = "GetEnvironmentForTeamService")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetServiceEnvironmentAsync(string teamName, string service, string environment)
     {
         logger.LogInformation("Getting Environment for the Service:'{ServiceName}' in the Team:'{TeamName}'", service, teamName);
