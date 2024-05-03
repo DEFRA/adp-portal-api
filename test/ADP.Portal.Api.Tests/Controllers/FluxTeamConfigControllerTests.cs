@@ -81,6 +81,99 @@ namespace ADP.Portal.Api.Tests.Controllers
         }
 
         [Test]
+        public async Task GetServiceEnvironmentAsync_Returns_Ok()
+        {
+            // Arrange
+            azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.GetServiceEnvironmentAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(new ServiceEnvironmentResult { FluxTemplatesVersion = "1.0.0" });
+
+            // Act
+            var result = await controller.GetServiceEnvironmentAsync("teamName", "service1", "environment1");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        }
+
+        [Test]
+        public async Task GenerateAsync_Returns_NotFound()
+        {
+            // Arrange
+            azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.GetServiceEnvironmentAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(new ServiceEnvironmentResult { IsConfigExists = false, FluxTemplatesVersion = "1.0.0" });
+
+            // Act
+            var result = await controller.GetServiceEnvironmentAsync("teamName", "service1", "environment1");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<NotFoundResult>());
+        }
+
+        [Test]
+        public async Task SetEnvironmentManifestAsync_Returns_NoContent()
+        {
+            // Arrange
+            var manifest = fixture.Build<ManifestConfigRequest>().Create();
+            azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                .Returns(new FluxConfigResult { IsConfigExists = true });
+
+            // Act
+            var result = await controller.SetEnvironmentManifestAsync("teamName", "service1", "environment1", manifest);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
+        }
+
+        [Test]
+        public async Task SetEnvironmentManifestAsync_Returns_BadRequest_When_Config_NotFound()
+        {
+            // Arrange
+            var manifest = fixture.Build<ManifestConfigRequest>().Create();
+            azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                .Returns(new FluxConfigResult { IsConfigExists = false, Errors = ["Flux team config not found"] });
+
+            // Act
+            var result = await controller.SetEnvironmentManifestAsync("teamName", "service1", "environment1", manifest);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            if (result != null)
+            {
+                var badResults = (BadRequestObjectResult)result;
+                Assert.That(badResults, Is.Not.Null);
+                Assert.That(badResults.StatusCode, Is.EqualTo(400));
+                Assert.That(badResults.Value, Is.EqualTo("Flux team config not found"));
+            }
+        }
+
+        [Test]
+        public async Task SetEnvironmentManifestAsync_Returns_BadRequest()
+        {
+            // Arrange
+            var manifest = fixture.Build<ManifestConfigRequest>().Create();
+            azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
+            gitOpsFluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                .Returns(new FluxConfigResult { IsConfigExists = true, Errors = ["Flux team config not found"] });
+
+            // Act
+            var result = await controller.SetEnvironmentManifestAsync("teamName", "service1", "environment1", manifest);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            if (result != null)
+            {
+                var badResults = (BadRequestObjectResult)result;
+                Assert.That(badResults, Is.Not.Null);
+                Assert.That(badResults.StatusCode, Is.EqualTo(400));
+                var list = (badResults.Value as List<string>;
+                Assert.That(badResults.Value, Is.EqualTo(new List<string>() { "Flux team config not found" }));
+            }
+        }
+
+        [Test]
         public async Task GenerateAsync_Returns_BadRequest_When_CompletedWithErros()
         {
             // Arrange
