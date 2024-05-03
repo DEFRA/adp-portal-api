@@ -29,13 +29,17 @@
             public const string INFRA_KEY = "infra";
             public const string POSTGRESRESOURCEGROUPNAME_KEY = "postgresResourceGroupName";
             public const string POSTGRESSERVERNAME_KEY = "postgresServerName";
+            public const string DEPENDS_ON_KEY = "dependsOn";
 
             public const string PROGRAMME_FOLDER = GIT_REPO_TEMPLATE_PATH + "/programme";
             public const string SERVICE_FOLDER = PROGRAMME_FOLDER + "/team/service";
             public const string TEAM_ENV_FOLDER = PROGRAMME_FOLDER + "/team/environment";
             public const string SERVICE_PRE_DEPLOY_FOLDER = PROGRAMME_FOLDER + "/team/service/pre-deploy";
+            public const string SERVICE_INFRA_FOLDER = PROGRAMME_FOLDER + "/team/service/infra";
 
             public const string PRE_DEPLOY_KUSTOMIZE_FILE = PROGRAMME_FOLDER + "/team/service/pre-deploy-kustomize.yaml";
+            public const string DEPLOY_KUSTOMIZE_FILE = PROGRAMME_FOLDER + "/team/service/deploy-kustomize.yaml";
+            public const string INFRA_KUSTOMIZE_FILE = PROGRAMME_FOLDER + "/team/service/infra-kustomize.yaml";
             public const string TEAM_ENV_KUSTOMIZATION_FILE = PROGRAMME_FOLDER + "/team/environment/kustomization.yaml";
             public const string TEAM_SERVICE_KUSTOMIZATION_FILE = PROGRAMME_FOLDER + "/team/service/kustomization.yaml";
             public const string TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE = "{0}/{1}/{2}/deploy/{3}/patch.yaml";
