@@ -85,7 +85,7 @@ namespace ADP.Portal.Api.Tests.Controllers
         {
             // Arrange
             azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.GetServiceEnvironmentAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            fluxTeamConfigServiceMock.GetServiceEnvironmentAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(new ServiceEnvironmentResult { FluxTemplatesVersion = "1.0.0" });
 
             // Act
@@ -100,7 +100,7 @@ namespace ADP.Portal.Api.Tests.Controllers
         {
             // Arrange
             azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.GetServiceEnvironmentAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            fluxTeamConfigServiceMock.GetServiceEnvironmentAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(new ServiceEnvironmentResult { IsConfigExists = false, FluxTemplatesVersion = "1.0.0" });
 
             // Act
@@ -116,7 +116,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             var manifest = fixture.Build<ManifestConfigRequest>().Create();
             azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            fluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
                 .Returns(new FluxConfigResult { IsConfigExists = true });
 
             // Act
@@ -132,7 +132,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             var manifest = fixture.Build<ManifestConfigRequest>().Create();
             azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            fluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
                 .Returns(new FluxConfigResult { IsConfigExists = false, Errors = ["Flux team config not found"] });
 
             // Act
@@ -155,7 +155,7 @@ namespace ADP.Portal.Api.Tests.Controllers
             // Arrange
             var manifest = fixture.Build<ManifestConfigRequest>().Create();
             azureAdConfigMock.Value.Returns(fixture.Build<AzureAdConfig>().Create());
-            gitOpsFluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            fluxTeamConfigServiceMock.UpdateServiceEnvironmentManifestAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
                 .Returns(new FluxConfigResult { IsConfigExists = true, Errors = ["Flux team config not found"] });
 
             // Act
@@ -168,7 +168,6 @@ namespace ADP.Portal.Api.Tests.Controllers
                 var badResults = (BadRequestObjectResult)result;
                 Assert.That(badResults, Is.Not.Null);
                 Assert.That(badResults.StatusCode, Is.EqualTo(400));
-                var list = (badResults.Value as List<string>;
                 Assert.That(badResults.Value, Is.EqualTo(new List<string>() { "Flux team config not found" }));
             }
         }
