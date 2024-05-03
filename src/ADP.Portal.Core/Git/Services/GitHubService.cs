@@ -192,7 +192,6 @@ public class GitHubService : IGitHubService
         var members = await client.Organization.Team.GetAllMembers(team.Id, new TeamMembersRequest(TeamRoleFilter.Member));
         var maintainers = await client.Organization.Team.GetAllMembers(team.Id, new TeamMembersRequest(TeamRoleFilter.Maintainer));
 
-        logger.LogInformation("Retreived all needed data about team {TeamId}.", teamId);
         return new()
         {
             Id = team.Id,
