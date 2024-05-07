@@ -177,7 +177,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             var commit = fixture.Create<Commit>();
             var treeItem = fixture.Create<TreeItem>();
             var tree = new TreeResponse(commit.Sha, "", [treeItem], false);
-            var files = fixture.Create<Dictionary<string, Dictionary<object, object>>>();
+            var files = fixture.Create<Dictionary<string, FluxTemplateFile>>();
             var repo = new Repository("", "", "", "", "", "", "", "", default, "", fixture.Create<User>(), "", "", default, "", "", "", default, default, default, default, "", default, default, default, default, fixture.Create<RepositoryPermissions>(),
                 fixture.Create<Repository>(), fixture.Create<Repository>(), fixture.Create<LicenseMetadata>(), default, default, default, default, default, default, default, default, default, default, default, default, default,
                 fixture.Create<RepositoryVisibility>(), new List<string>(), default, default, default);
@@ -208,7 +208,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             var commit = fixture.Create<Commit>();
             var treeItem = fixture.Create<TreeItem>();
             var tree = new TreeResponse(commit.Sha, "", [treeItem], false);
-            var files = Substitute.For<Dictionary<string, Dictionary<object, object>>>();
+            var files = Substitute.For<Dictionary<string, FluxTemplateFile>>();
             var repo = new Repository("", "", "", "", "", "", "", "", default, "", fixture.Create<User>(), "", "", default, "", "", "", default, default, default, default, "", default, default, default, default, fixture.Create<RepositoryPermissions>(),
                 fixture.Create<Repository>(), fixture.Create<Repository>(), fixture.Create<LicenseMetadata>(), default, default, default, default, default, default, default, default, default, default, default, default, default,
                 fixture.Create<RepositoryVisibility>(), new List<string>(), default, default, default);

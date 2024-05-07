@@ -49,7 +49,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return string.Empty;
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>> GetAllFilesAsync(GitRepo gitRepo, string path)
+        public async Task<IEnumerable<KeyValuePair<string, FluxTemplateFile>>> GetAllFilesAsync(GitRepo gitRepo, string path)
         {
             return await GetAllFilesContentsAsync(gitRepo, path);
         }
@@ -64,7 +64,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return createdPullRequest != null;
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>> GetAllFilesContentsAsync(GitRepo gitRepo, string path)
+        public async Task<IEnumerable<KeyValuePair<string, FluxTemplateFile>>> GetAllFilesContentsAsync(GitRepo gitRepo, string path)
         {
             var repositoryItems = await GetRepositoryFiles(gitRepo, path);
 
@@ -74,16 +74,13 @@ namespace ADP.Portal.Core.Git.Infrastructure
                 {
                     var file = await GetRepositoryFiles(gitRepo, item.Path);
                     var result = deserializer.Deserialize<Dictionary<object, object>>(file[0].Content);
-                    var list = new List<KeyValuePair<string, Dictionary<object, object>>>() { (new KeyValuePair<string, Dictionary<object, object>>(item.Path, result)) };
+                    var list = new List<KeyValuePair<string, FluxTemplateFile>>() { new(item.Path, new FluxTemplateFile(result)) };
                     return list.AsEnumerable();
                 });
 
             var dirTasks = repositoryItems
                 .Where(item => item.Type == ContentType.Dir)
-                .Select(async item =>
-                {
-                    return await GetAllFilesContentsAsync(gitRepo, item.Path);
-                });
+                .Select(async item => await GetAllFilesContentsAsync(gitRepo, item.Path));
 
             var allTasks = fileTasks.Concat(dirTasks);
             var allResults = await Task.WhenAll(allTasks);
@@ -113,7 +110,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return await gitHubClient.Git.Reference.Update(gitRepo.Organisation, gitRepo.Name, branchName, new ReferenceUpdate(sha));
         }
 
-        public async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, Dictionary<object, object>> generatedFiles, string message, string? branchName = null)
+        public async Task<Commit?> CreateCommitAsync(GitRepo gitRepo, Dictionary<string, FluxTemplateFile> generatedFiles, string message, string? branchName = null)
         {
             var branch = branchName ?? $"heads/{gitRepo.Reference}";
 
@@ -132,7 +129,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return default;
         }
 
-        private async Task<TreeResponse?> CreateTree(IGitHubClient client, Repository repository, Dictionary<string, Dictionary<object, object>> treeContents, string parentSha)
+        private async Task<TreeResponse?> CreateTree(IGitHubClient client, Repository repository, Dictionary<string, FluxTemplateFile> treeContents, string parentSha)
         {
             var newTree = new NewTree() { BaseTree = parentSha };
 

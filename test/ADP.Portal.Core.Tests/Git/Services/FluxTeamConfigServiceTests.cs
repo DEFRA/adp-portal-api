@@ -35,8 +35,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
             logger = Substitute.For<ILogger<FluxTeamConfigService>>();
             cacheService = Substitute.For<ICacheService>();
 
-            IEnumerable<KeyValuePair<string, Dictionary<object, object>>>? templates = null;
-            cacheService.Get<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>>(Arg.Any<string>()).Returns(templates);
+            IEnumerable<KeyValuePair<string, FluxTemplateFile>>? templates = null;
+            cacheService.Get<IEnumerable<KeyValuePair<string, FluxTemplateFile>>>(Arg.Any<string>()).Returns(templates);
             teamRepo = fixture.Build<GitRepo>().Create();
             fluxServicesRepo = fixture.Build<GitRepo>().Create();
             fluxTemplateRepo = fixture.Build<GitRepo>().Create();
@@ -148,13 +148,13 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().Create();
-            var templates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2).AsEnumerable();
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2).AsEnumerable();
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(Arg.Any<GitRepo>(), Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(templates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
+            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
 
             // Act
             var result = await service.GenerateManifestAsync("tenant1", "team1");
@@ -177,13 +177,13 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().Create();
-            var templates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2).AsEnumerable();
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2).AsEnumerable();
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(templates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
 
             // Act
             var result = await service.GenerateManifestAsync("tenant1", "team1", serviceName, environment);
@@ -225,19 +225,19 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
-            var templates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>(Constants.Flux.TEAM_ENV_FOLDER, x.Value));
-            var templates_Services = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>($"{Constants.Flux.SERVICE_FOLDER}/{x.Key}", x.Value));
-            var templates_Service_Env = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>($"{Constants.Flux.SERVICE_FOLDER}/{x.Key}/environment", x.Value));
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>(Constants.Flux.TEAM_ENV_FOLDER, x.Value));
+            var templates_Services = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>($"{Constants.Flux.SERVICE_FOLDER}/{x.Key}", x.Value));
+            var templates_Service_Env = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>($"{Constants.Flux.SERVICE_FOLDER}/{x.Key}/environment", x.Value));
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(templates.Union(templates_Services).Union(templates_Service_Env));
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
             var commit = fixture.Build<Commit>().Create();
-            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(commit);
 
             // Act
@@ -261,21 +261,21 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
-            var serviceTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>($"flux/templates/programme/team/service/pre-deploy/{x.Key}", x.Value));
-            var serviceEnvTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>("flux/templates/programme/team/service/pre-deploy-kustomize.yaml", x.Value));
+            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/pre-deploy/{x.Key}", x.Value));
+            var serviceEnvTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>("flux/templates/programme/team/service/pre-deploy-kustomize.yaml", x.Value));
             var resources = new Dictionary<object, object>() { { "resources", new List<object>() } };
 
-            var teamEnvTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>("flux/templates/programme/team/environment/kustomization.yaml",
-                                        x.Value.Union(resources).ToDictionary()));
+            var teamEnvTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>("flux/templates/programme/team/environment/kustomization.yaml",
+                                        new FluxTemplateFile( x.Value.Content.Union(resources).ToDictionary())));
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates.Union(serviceEnvTemplates).Union(teamEnvTemplates));
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(fixture.Build<Commit>().Create());
 
             // Act
@@ -298,13 +298,13 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().Create();
-            var templates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2).AsEnumerable();
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2).AsEnumerable();
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(templates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns(fixture.Build<Reference>().Create());
-            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(fixture.Build<Commit>().Create());
 
             // Act
             var result = await service.GenerateManifestAsync(tenantName, teamName, serviceName);
@@ -453,14 +453,14 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
-            var serviceTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>($"flux/templates/programme/team/service/deploy/{envList[0].Name[..3]}/0{envList[0].Name[3..]}/patch.yaml", x.Value));
+            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/deploy/{envList[0].Name[..3]}/0{envList[0].Name[3..]}/patch.yaml", x.Value));
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(Arg.Any<GitRepo>(), Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
+            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(fixture.Build<Commit>().Create());
 
             // Act
@@ -485,14 +485,14 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
-            var serviceTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(1)
-                .Select(x => new KeyValuePair<string, Dictionary<object, object>>($"flux/templates/programme/team/service/infra/{envList[0].Name[..3]}/0{envList[0].Name[3..]}/patch.yaml", x.Value));
+            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/infra/{envList[0].Name[..3]}/0{envList[0].Name[3..]}/patch.yaml", x.Value));
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(Arg.Any<GitRepo>(), Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
+            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(fixture.Build<Commit>().Create());
 
             // Act
@@ -634,14 +634,14 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
-            var serviceTemplates = fixture.Build<KeyValuePair<string, Dictionary<object, object>>>().CreateMany(2)
+            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
                 .Select((x, index) =>
                 {
                     return index switch
                     {
-                        0 => new KeyValuePair<string, Dictionary<object, object>>($"flux/templates/programme/team/service/deploy/{x.Key}", x.Value),
-                        1 => new KeyValuePair<string, Dictionary<object, object>>($"flux/templates/programme/team/service/kustomization.yaml", new Dictionary<object, object>() { { "resources", new List<string>() { "infra-kustomize.yaml", "deploy-kustomize.yaml" } } }),
-                        _ => new KeyValuePair<string, Dictionary<object, object>>($"flux/templates/programme/team/service/deploy/{x.Key}", x.Value),
+                        0 => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/deploy/{x.Key}", x.Value),
+                        1 => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/kustomization.yaml", new FluxTemplateFile(new Dictionary<object, object>() { { "resources", new List<string>() { "infra-kustomize.yaml", "deploy-kustomize.yaml" } } })),
+                        _ => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/deploy/{x.Key}", x.Value),
                     };
                 });
 
@@ -649,7 +649,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
             gitOpsConfigRepository.GetAllFilesAsync(Arg.Any<GitRepo>(), Constants.Flux.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates);
             gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
-            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, Dictionary<object, object>>>(), Arg.Any<string>(), Arg.Any<string>())
+            gitOpsConfigRepository.CreateCommitAsync(Arg.Any<GitRepo>(), Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(fixture.Build<Commit>().Create());
 
             // Act
@@ -733,7 +733,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             var fulxTeamServices = fixture.Build<FluxService>()
                 .With(i => i.Name, serviceName)
-                .With(i=>i.Environments, fixture.Build<FluxEnvironment>().With(i => i.Name, fluxEnvironment).CreateMany(1).ToList())
+                .With(i => i.Environments, fixture.Build<FluxEnvironment>().With(i => i.Name, fluxEnvironment).CreateMany(1).ToList())
                 .CreateMany(1).ToList();
 
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>()

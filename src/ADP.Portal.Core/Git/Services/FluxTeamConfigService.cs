@@ -92,7 +92,7 @@ namespace ADP.Portal.Core.Git.Services
             logger.LogInformation("Reading flux templates.");
 
             var cacheKey = $"flux-templates-{fluxTemplatesRepo.Reference}";
-            var templates = cacheService.Get<IEnumerable<KeyValuePair<string, Dictionary<object, object>>>>(cacheKey);
+            var templates = cacheService.Get<IEnumerable<KeyValuePair<string, FluxTemplateFile>>>(cacheKey);
             if (templates == null)
             {
                 templates = await gitHubRepository.GetAllFilesAsync(fluxTemplatesRepo, Constants.Flux.GIT_REPO_TEMPLATE_PATH);
@@ -262,10 +262,10 @@ namespace ADP.Portal.Core.Git.Services
 
         #region Private methods
 
-        private static Dictionary<string, Dictionary<object, object>> ProcessTemplates(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> files,
+        private static Dictionary<string, FluxTemplateFile> ProcessTemplates(IEnumerable<KeyValuePair<string, FluxTemplateFile>> files,
             FluxTenant tenantConfig, FluxTeamConfig fluxTeamConfig, string? serviceName = null, string? environment = null)
         {
-            var finalFiles = new Dictionary<string, Dictionary<object, object>>();
+            var finalFiles = new Dictionary<string, FluxTemplateFile>();
 
             var services = serviceName != null ? fluxTeamConfig.Services.Where(x => x.Name.Equals(serviceName)) : fluxTeamConfig.Services;
 
@@ -282,16 +282,17 @@ namespace ADP.Portal.Core.Git.Services
 
                 // Replace tokens
                 CreateTeamVariables(fluxTeamConfig);
+
                 fluxTeamConfig.ConfigVariables.Union(tenantConfig.ConfigVariables).ForEach(finalFiles.ReplaceToken);
             }
 
             return finalFiles;
         }
 
-        private static Dictionary<string, Dictionary<object, object>> CreateServices(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> templates,
+        private static Dictionary<string, FluxTemplateFile> CreateServices(IEnumerable<KeyValuePair<string, FluxTemplateFile>> templates,
             FluxTenant tenantConfig, FluxTeamConfig teamConfig, IEnumerable<FluxService> services)
         {
-            var finalFiles = new Dictionary<string, Dictionary<object, object>>();
+            var finalFiles = new Dictionary<string, FluxTemplateFile>();
 
             // Collect all non-service files
             templates.Where(x => !x.Key.StartsWith(Constants.Flux.SERVICE_FOLDER) && !x.Key.StartsWith(Constants.Flux.TEAM_ENV_FOLDER))
@@ -309,7 +310,7 @@ namespace ADP.Portal.Core.Git.Services
             var serviceTemplates = templates.Where(x => x.Key.StartsWith(Constants.Flux.SERVICE_FOLDER)).ToList();
             foreach (var service in services)
             {
-                var serviceFiles = new Dictionary<string, Dictionary<object, object>>();
+                var serviceFiles = new Dictionary<string, FluxTemplateFile>();
                 var serviceTypeBasedTemplates = ServiceTypeBasedFiles(serviceTemplates, service);
 
                 foreach (var template in serviceTypeBasedTemplates)
@@ -328,6 +329,7 @@ namespace ADP.Portal.Core.Git.Services
                     }
                 }
                 UpdateServicePatchFiles(serviceFiles, service, teamConfig);
+
                 if (service.Type != FluxServiceType.HelmOnly)
                 {
                     service.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.TEMPLATE_VAR_DEPENDS_ON, Value = service.HasDatastore() ? Constants.Flux.PREDEPLOY_KEY : Constants.Flux.INFRA_KEY });
@@ -340,7 +342,7 @@ namespace ADP.Portal.Core.Git.Services
             return finalFiles;
         }
 
-        private static IEnumerable<KeyValuePair<string, Dictionary<object, object>>> ServiceTypeBasedFiles(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> serviceTemplates, FluxService service)
+        private static IEnumerable<KeyValuePair<string, FluxTemplateFile>> ServiceTypeBasedFiles(IEnumerable<KeyValuePair<string, FluxTemplateFile>> serviceTemplates, FluxService service)
         {
             return serviceTemplates.Where(filter =>
             {
@@ -361,9 +363,9 @@ namespace ADP.Portal.Core.Git.Services
             });
         }
 
-        private static Dictionary<string, Dictionary<object, object>> CreateEnvironmentFiles(IEnumerable<KeyValuePair<string, Dictionary<object, object>>> templates, FluxTenant tenantConfig, FluxTeamConfig teamConfig, IEnumerable<FluxService> services)
+        private static Dictionary<string, FluxTemplateFile> CreateEnvironmentFiles(IEnumerable<KeyValuePair<string, FluxTemplateFile>> templates, FluxTenant tenantConfig, FluxTeamConfig teamConfig, IEnumerable<FluxService> services)
         {
-            var finalFiles = new Dictionary<string, Dictionary<object, object>>();
+            var finalFiles = new Dictionary<string, FluxTemplateFile>();
 
             foreach (var service in services)
             {
@@ -381,14 +383,16 @@ namespace ADP.Portal.Core.Git.Services
                             if (template.Key.Equals(Constants.Flux.TEAM_ENV_KUSTOMIZATION_FILE, StringComparison.InvariantCultureIgnoreCase) &&
                                 finalFiles.TryGetValue(key, out var existingEnv))
                             {
-                                ((List<object>)existingEnv[Constants.Flux.RESOURCES_KEY]).Add($"../../{service.Name}");
+                                var content = existingEnv.Content[Constants.Flux.RESOURCES_KEY];
+                                AddTemplateItemToList(content, $"../../{service.Name}");
                             }
                             else
                             {
                                 var newFile = template.Value.DeepCopy();
                                 if (template.Key.Equals(Constants.Flux.TEAM_ENV_KUSTOMIZATION_FILE, StringComparison.InvariantCultureIgnoreCase))
                                 {
-                                    ((List<object>)newFile[Constants.Flux.RESOURCES_KEY]).Add($"../../{service.Name}");
+                                    var content = newFile.Content[Constants.Flux.RESOURCES_KEY];
+                                    AddTemplateItemToList(content, $"../../{service.Name}");
                                 }
 
                                 var tokens = new List<FluxConfig>
@@ -399,16 +403,16 @@ namespace ADP.Portal.Core.Git.Services
                                 new() { Key = Constants.Flux.TEMPLATE_VAR_MIGRATION_VERSION_TAG, Value = Constants.Flux.TEMPLATE_VAR_DEFAULT_MIGRATION_VERSION_TAG },
                                 new() { Key = Constants.Flux.TEMPLATE_VAR_PS_EXEC_VERSION, Value = Constants.Flux.TEMPLATE_VAR_PS_EXEC_DEFAULT_VERSION }
                             };
-                                tokens.ForEach(newFile.ReplaceToken);
+                                tokens.ForEach(newFile.Content.ReplaceToken);
 
                                 tokens =
                                 [
                                     new() { Key = Constants.Flux.TEMPLATE_VAR_ENVIRONMENT, Value = environment.Name[..3]},
-                                new() { Key = Constants.Flux.TEMPLATE_VAR_ENV_INSTANCE, Value = environment.Name[3..]},
-                            ];
+                                    new() { Key = Constants.Flux.TEMPLATE_VAR_ENV_INSTANCE, Value = environment.Name[3..]},
+                                ];
                                 var tenantConfigVariables = tenantConfig.Environments.First(x => x.Name.Equals(environment.Name)).ConfigVariables ?? [];
 
-                                tokens.Union(environment.ConfigVariables).Union(tenantConfigVariables).ForEach(newFile.ReplaceToken);
+                                tokens.Union(environment.ConfigVariables).Union(tenantConfigVariables).ForEach(newFile.Content.ReplaceToken);
                                 finalFiles.Add(key, newFile);
                             }
                         });
@@ -417,24 +421,27 @@ namespace ADP.Portal.Core.Git.Services
             return finalFiles;
         }
 
-        private static Dictionary<object, object> UpdateServiceKustomizationFiles(Dictionary<object, object> serviceTemplate, string templateKey, FluxService service)
+        private static FluxTemplateFile UpdateServiceKustomizationFiles(FluxTemplateFile serviceTemplate, string templateKey, FluxService service)
         {
             if (templateKey.Equals(Constants.Flux.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.HasDatastore())
             {
-                ((List<object>)serviceTemplate[Constants.Flux.RESOURCES_KEY]).Add("pre-deploy-kustomize.yaml");
+                var content = serviceTemplate.Content[Constants.Flux.RESOURCES_KEY];
+                AddTemplateItemToList(content, "pre-deploy-kustomize.yaml");
             }
             if (templateKey.Equals(Constants.Flux.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.Type == FluxServiceType.HelmOnly)
             {
-                ((List<object>)serviceTemplate[Constants.Flux.RESOURCES_KEY]).Remove("infra-kustomize.yaml");
+                var content = serviceTemplate.Content[Constants.Flux.RESOURCES_KEY];
+                RemoveTemplateItemFromList(content, "infra-kustomize.yaml");
             }
             if (templateKey.Equals(Constants.Flux.DEPLOY_KUSTOMIZE_FILE) && service.Type == FluxServiceType.HelmOnly)
             {
-                ((Dictionary<object, object>)serviceTemplate[Constants.Flux.SPEC_KEY]).Remove(Constants.Flux.DEPENDS_ON_KEY);
+                var content = serviceTemplate.Content[Constants.Flux.RESOURCES_KEY];
+                RemoveTemplateItemFromDictionary(content, Constants.Flux.DEPENDS_ON_KEY);
             }
             return serviceTemplate;
         }
 
-        private static void UpdateServicePatchFiles(Dictionary<string, Dictionary<object, object>> serviceFiles, FluxService service, FluxTeamConfig teamConfig)
+        private static void UpdateServicePatchFiles(Dictionary<string, FluxTemplateFile> serviceFiles, FluxService service, FluxTeamConfig teamConfig)
         {
             foreach (var file in serviceFiles)
             {
@@ -477,7 +484,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, Dictionary<object, object>> generatedFiles)
+        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, FluxTemplateFile> generatedFiles)
         {
             var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
             var branchRef = await gitHubRepository.GetBranchAsync(gitRepoFluxServices, branchName);
@@ -513,6 +520,42 @@ namespace ADP.Portal.Core.Git.Services
             else
             {
                 logger.LogInformation("No changes found in the flux files for the team:'{TeamName}' or the service:{ServiceName}.", teamName, serviceName);
+            }
+        }
+
+        private static void AddTemplateItemToList(object content, string item)
+        {
+            if (content is not List<object> list)
+            {
+                throw new InvalidOperationException($"Unexpected type: {content.GetType()}");
+            }
+            else
+            {
+                list.Add(item);
+            }
+        }
+
+        private static void RemoveTemplateItemFromList(object content, string item)
+        {
+            if (content is not List<object> list)
+            {
+                throw new InvalidOperationException($"Unexpected type: {content.GetType()}");
+            }
+            else
+            {
+                list.Remove(item);
+            }
+        }
+
+        private static void RemoveTemplateItemFromDictionary(object content, string item)
+        {
+            if (content is not Dictionary<object, object> dictionary)
+            {
+                throw new InvalidOperationException($"Unexpected type: {content.GetType()}");
+            }
+            else
+            {
+                dictionary.Remove(item);
             }
         }
         #endregion
