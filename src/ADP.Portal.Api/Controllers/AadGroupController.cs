@@ -13,15 +13,15 @@ namespace ADP.Portal.Api.Controllers;
 [ApiController]
 public class AadGroupController : ControllerBase
 {
-    private readonly IGroupsConfigService gitOpsConfigService;
+    private readonly IGroupsConfigService groupsConfigService;
     private readonly ILogger<AadGroupController> logger;
     public readonly IOptions<AzureAdConfig> azureAdConfig;
 
 
-    public AadGroupController(IGroupsConfigService gitOpsConfigService, ILogger<AadGroupController> logger,
+    public AadGroupController(IGroupsConfigService groupsConfigService, ILogger<AadGroupController> logger,
         IOptions<AzureAdConfig> azureAdConfig)
     {
-        this.gitOpsConfigService = gitOpsConfigService;
+        this.groupsConfigService = groupsConfigService;
         this.logger = logger;
         this.azureAdConfig = azureAdConfig;
     }
@@ -38,7 +38,7 @@ public class AadGroupController : ControllerBase
         var tenantName = azureAdConfig.Value.TenantName;
 
         logger.LogInformation("Reading Groups Config for the Team:'{TeamName}'", teamName);
-        var groups = await gitOpsConfigService.GetGroupsConfigAsync(tenantName, teamName);
+        var groups = await groupsConfigService.GetGroupsConfigAsync(tenantName, teamName);
 
         return Ok(groups);
     }
@@ -60,7 +60,7 @@ public class AadGroupController : ControllerBase
         teamName = teamName.ToLower();
 
         logger.LogInformation("Creating Groups Config for the Team:'{TeamName}'", teamName);
-        var result = await gitOpsConfigService.CreateGroupsConfigAsync(tenantName, teamName, createGroupsConfigRequest.Members);
+        var result = await groupsConfigService.CreateGroupsConfigAsync(tenantName, teamName, createGroupsConfigRequest.Members);
         if (result.Errors.Count != 0)
         {
             logger.LogError("Error while creating groups config for the Team:'{TeamName}'", teamName);
@@ -68,7 +68,7 @@ public class AadGroupController : ControllerBase
         }
 
         logger.LogInformation("Sync Groups for the Team:'{TeamName}'", teamName);
-        var syncResult = await gitOpsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, null);
+        var syncResult = await groupsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, null);
         if (syncResult.Errors.Count != 0)
         {
             logger.LogError("Error while syncing groups for the Team:'{TeamName}'", teamName);
@@ -100,7 +100,7 @@ public class AadGroupController : ControllerBase
         var ownerId = azureAdConfig.Value.SpObjectId;
 
         logger.LogInformation("Sync Groups for the Team:'{TeamName}' and Group Type:'{GroupType}'", teamName, groupType);
-        var result = await gitOpsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, groupType != null ? (GroupType)syncGroupTypeEnum : null);
+        var result = await groupsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, groupType != null ? (GroupType)syncGroupTypeEnum : null);
 
         if (result.Errors.Count > 0)
         {
