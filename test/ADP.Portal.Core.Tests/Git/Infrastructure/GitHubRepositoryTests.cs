@@ -15,7 +15,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
     public class GitHubRepositoryTests
     {
         private IGitHubClient gitHubClientMock = null!;
-        private GitHubRepository repository= null!;
+        private GitHubRepository repository = null!;
         private IDeserializer deserializer = null!;
         private ISerializer serializer = null!;
         private Fixture fixture = null!;
