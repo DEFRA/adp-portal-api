@@ -369,22 +369,25 @@ namespace ADP.Portal.Core.Git.Services
                     service.Environments.Where(env => tenantConfig.Environments.Exists(x => x.Name.Equals(env.Name)))
                         .ForEach(environment =>
                         {
+
                             var key = template.Key.Replace(Constants.Flux.Templates.PROGRAMME_FOLDER, teamConfig.ProgrammeName)
                                 .Replace(Constants.Flux.Templates.TEAM_KEY, teamConfig.TeamName)
                                 .Replace(Constants.Flux.Templates.ENV_KEY, $"{environment.Name[..3]}/0{environment.Name[3..]}")
                                 .Replace(Constants.Flux.Templates.SERVICE_KEY, service.Name);
                             key = $"services/{key}";
 
-                            var newFile = template.Value.DeepCopy();
-                            var tokens = new List<FluxConfig>
+                            if (!finalFiles.Any(file => file.Key.Equals(key)))
                             {
-                                new() { Key = Constants.Flux.Templates.VERSION_TOKEN, Value = Constants.Flux.Templates.DEFAULT_VERSION_TOKEN_VALUE },
-                                new() { Key = Constants.Flux.Templates.VERSION_TAG_TOKEN, Value = Constants.Flux.Templates.DEFAULT_VERSION_TAG_TOKEN_VALUE },
-                                new() { Key = Constants.Flux.Templates.MIGRATION_VERSION_TOKEN, Value = Constants.Flux.Templates.DEFAULT_MIGRATION_VERSION_TOKEN_VALUE },
-                                new() { Key = Constants.Flux.Templates.MIGRATION_VERSION_TAG_TOKEN, Value = Constants.Flux.Templates.DEFAULT_MIGRATION_VERSION_TAG_TOKEN_VALUE },
-                                new() { Key = Constants.Flux.Templates.PS_EXEC_VERSION_TOKEN, Value = Constants.Flux.Templates.PS_EXEC_DEFAULT_VERSION_TOKEN_VALUE }
-                            };
-                            tokens.ForEach(newFile.Content.ReplaceToken);
+                                var newFile = template.Value.DeepCopy();
+                                var tokens = new List<FluxConfig>
+                                {
+                                    new() { Key = Constants.Flux.Templates.VERSION_TOKEN, Value = Constants.Flux.Templates.DEFAULT_VERSION_TOKEN_VALUE },
+                                    new() { Key = Constants.Flux.Templates.VERSION_TAG_TOKEN, Value = Constants.Flux.Templates.DEFAULT_VERSION_TAG_TOKEN_VALUE },
+                                    new() { Key = Constants.Flux.Templates.MIGRATION_VERSION_TOKEN, Value = Constants.Flux.Templates.DEFAULT_MIGRATION_VERSION_TOKEN_VALUE },
+                                    new() { Key = Constants.Flux.Templates.MIGRATION_VERSION_TAG_TOKEN, Value = Constants.Flux.Templates.DEFAULT_MIGRATION_VERSION_TAG_TOKEN_VALUE },
+                                    new() { Key = Constants.Flux.Templates.PS_EXEC_VERSION_TOKEN, Value = Constants.Flux.Templates.PS_EXEC_DEFAULT_VERSION_TOKEN_VALUE }
+                                };
+                                tokens.ForEach(newFile.Content.ReplaceToken);
 
                             tokens =
                             [
@@ -393,8 +396,9 @@ namespace ADP.Portal.Core.Git.Services
                             ];
                             var tenantConfigVariables = tenantConfig.Environments.First(x => x.Name.Equals(environment.Name)).ConfigVariables;
 
-                            tokens.Union(environment.ConfigVariables).Union(tenantConfigVariables).ForEach(newFile.Content.ReplaceToken);
-                            finalFiles.Add(key, newFile);
+                                tokens.Union(environment.ConfigVariables).Union(tenantConfigVariables).ForEach(newFile.Content.ReplaceToken);
+                                finalFiles.Add(key, newFile);
+                            }
                         });
                 }
             }
@@ -430,7 +434,7 @@ namespace ADP.Portal.Core.Git.Services
                     var filePattern = string.Format(Constants.Flux.Services.TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, service.Name, $"{env.Name[..3]}/0{env.Name[3..]}");
                     if (service.Type.Equals(FluxServiceType.Backend) && file.Key.Equals(filePattern))
                     {
-                        new YamlQuery(file.Value)
+                        new YamlQuery(file.Value.Content)
                             .On(Constants.Flux.Templates.SPEC_KEY)
                             .On(Constants.Flux.Templates.VALUES_KEY)
                             .Remove(Constants.Flux.Templates.LABELS_KEY)
@@ -439,7 +443,7 @@ namespace ADP.Portal.Core.Git.Services
                     filePattern = string.Format(Constants.Flux.Services.TEAM_SERVICE_INFRA_ENV_PATCH_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, service.Name, $"{env.Name[..3]}/0{env.Name[3..]}");
                     if (service.Type.Equals(FluxServiceType.Frontend) && file.Key.Equals(filePattern))
                     {
-                        new YamlQuery(file.Value)
+                        new YamlQuery(file.Value.Content)
                             .On(Constants.Flux.Templates.SPEC_KEY)
                             .On(Constants.Flux.Templates.VALUES_KEY)
                             .Remove(Constants.Flux.Templates.POSTGRESRESOURCEGROUPNAME_KEY)
