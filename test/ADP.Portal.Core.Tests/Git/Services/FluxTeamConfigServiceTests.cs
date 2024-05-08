@@ -344,7 +344,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Select(x => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/pre-deploy/{x.Key}", x.Value));
             var serviceEnvTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
                 .Select(x => new KeyValuePair<string, FluxTemplateFile>("flux/templates/programme/team/service/pre-deploy-kustomize.yaml", x.Value));
-            var resources = new Dictionary<object, object>() { { "resources", new List<object>() } };
+            var resources = new Dictionary<object, object> { { "resources", new List<object>() } };
 
             var teamEnvTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
                 .Select(x => new KeyValuePair<string, FluxTemplateFile>("flux/templates/programme/team/environment/kustomization.yaml",
@@ -393,6 +393,44 @@ namespace ADP.Portal.Core.Tests.Git.Services
             await gitOpsConfigRepository.Received().UpdateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
             await gitOpsConfigRepository.DidNotReceive().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
             await gitOpsConfigRepository.DidNotReceive().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task GenerateManifest_MergeManifests(bool configExists)
+        {
+            // Arrange
+            var serviceName = "service1";
+
+            var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
+            var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).With(e => e.Environments, envList).With(x => x.Type, FluxServiceType.Backend)
+                                    .With(x => x.ConfigVariables, [new FluxConfig { Key = Constants.Flux.Templates.POSTGRES_DB_KEY, Value = "db" }]).CreateMany(1).ToList();
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
+
+            var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
+
+            var envPath = $"{envList[0].Name[..3]}/0{envList[0].Name[3..]}";
+            var content = new FluxTemplateFile(new Dictionary<object, object> { { Constants.Flux.Templates.RESOURCES_KEY, new List<object>() } });
+
+            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>(string.Format("{0}/{1}/{2}/kustomization.yaml", fluxTeamConfig.ProgrammeName, fluxTeamConfig.TeamName, envPath), content));
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+            gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
+            gitOpsConfigRepository.GetConfigAsync<Dictionary<object, object>>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(configExists ? content.Content : null);
+            gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.Templates.GIT_REPO_TEMPLATE_PATH).Returns(serviceTemplates);
+            gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(fixture.Build<Commit>().Create());
+
+            // Act
+            var result = await service.GenerateManifestAsync("tenant1", "team1", serviceName);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
