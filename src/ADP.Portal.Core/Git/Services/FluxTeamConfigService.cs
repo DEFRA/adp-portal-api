@@ -103,34 +103,15 @@ namespace ADP.Portal.Core.Git.Services
                     FilterEnvironmentsByName(services.ToList(), environment);
                 }
 
+                logger.LogDebug("Processing templates for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
                 var generatedFiles = ProcessTemplates(templates, tenantConfig, teamConfig, services);
 
                 if (generatedFiles.Count > 0)
                 {
-                    foreach (var service in services)
-                    {
-                        foreach (var envName in service.Environments.Select(env => env.Name))
-                        {
-                            //Get Config. 
-                            var fileName = string.Format(Constants.Flux.Services.TEAM_ENV_KUSTOMIZATION_FILE, teamConfig.ProgrammeName, teamConfig.TeamName, $"{envName[..3]}/0{envName[3..]}");
-                            var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
-                            if (config != null)
-                            {
-                                var content = config[Constants.Flux.Templates.RESOURCES_KEY];
-                                AddTemplateItemToList(content, $"../../{service.Name}");
-                            }
-                            else
-                            {
-                                var content = generatedFiles[fileName].Content[Constants.Flux.Templates.RESOURCES_KEY];
-                                AddTemplateItemToList(content, $"../../{service.Name}");
-                            }
+                    logger.LogDebug("Merging manifests for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
+                    await MergeManifests(teamConfig.ProgrammeName, teamConfig.TeamName, services, generatedFiles);
 
-                            if (generatedFiles.ContainsKey(fileName))
-                            {
-                                generatedFiles[fileName] = new FluxTemplateFile(config);
-                            }
-                        }
-                    }
+                    logger.LogDebug("Pushing manifests to the repository:{FluxServiceRepo} for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", fluxServiceRepo.Name, teamName, serviceName, environment);
                     await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, generatedFiles);
                 }
             }
@@ -426,17 +407,17 @@ namespace ADP.Portal.Core.Git.Services
             if (templateKey.Equals(Constants.Flux.Templates.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.HasDatastore())
             {
                 var content = serviceTemplate.Content[Constants.Flux.Templates.RESOURCES_KEY];
-                AddTemplateItemToList(content, "pre-deploy-kustomize.yaml");
+                AddItemToList(content, "pre-deploy-kustomize.yaml");
             }
             if (templateKey.Equals(Constants.Flux.Templates.TEAM_SERVICE_KUSTOMIZATION_FILE) && service.Type == FluxServiceType.HelmOnly)
             {
                 var content = serviceTemplate.Content[Constants.Flux.Templates.RESOURCES_KEY];
-                RemoveTemplateItemFromList(content, "infra-kustomize.yaml");
+                RemoveItemFromList(content, "infra-kustomize.yaml");
             }
             if (templateKey.Equals(Constants.Flux.Templates.DEPLOY_KUSTOMIZE_FILE) && service.Type == FluxServiceType.HelmOnly)
             {
                 var content = serviceTemplate.Content[Constants.Flux.Templates.RESOURCES_KEY];
-                RemoveTemplateItemFromDictionary(content, Constants.Flux.Templates.DEPENDS_ON_KEY);
+                RemoveItemFromDictionary(content, Constants.Flux.Templates.DEPENDS_ON_KEY);
             }
             return serviceTemplate;
         }
@@ -482,7 +463,6 @@ namespace ADP.Portal.Core.Git.Services
             {
                 service.Environments = service.Environments.Where(env => env.Name.Equals(environment)).ToList();
             }
-
         }
 
         private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, FluxTemplateFile> generatedFiles)
@@ -524,7 +504,7 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private static void AddTemplateItemToList(object content, string item)
+        private static void AddItemToList(object content, string item)
         {
             if (content is not List<object> list)
             {
@@ -537,39 +517,47 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private static List<object> GetListFromTemplateItem(object content)
+        private static void RemoveItemFromList(object content, string item)
         {
             if (content is not List<object> list)
             {
                 throw new InvalidOperationException($"Unexpected type: {content.GetType()}");
             }
-            else
-            {
-                return list;
-            }
+            list.Remove(item);
         }
 
-        private static void RemoveTemplateItemFromList(object content, string item)
-        {
-            if (content is not List<object> list)
-            {
-                throw new InvalidOperationException($"Unexpected type: {content.GetType()}");
-            }
-            else
-            {
-                list.Remove(item);
-            }
-        }
-
-        private static void RemoveTemplateItemFromDictionary(object content, string item)
+        private static void RemoveItemFromDictionary(object content, string item)
         {
             if (content is not Dictionary<object, object> dictionary)
             {
                 throw new InvalidOperationException($"Unexpected type: {content.GetType()}");
             }
-            else
+            dictionary.Remove(item);
+        }
+
+        private async Task MergeManifests(string programmeName, string teamName, IEnumerable<FluxService> services, Dictionary<string, FluxTemplateFile> generatedFiles)
+        {
+            foreach (var service in services)
             {
-                dictionary.Remove(item);
+                foreach (var envName in service.Environments.Select(env => env.Name))
+                {
+                    var fileName = string.Format(Constants.Flux.Services.TEAM_ENV_KUSTOMIZATION_FILE, programmeName, teamName, $"{envName[..3]}/0{envName[3..]}");
+                    if (generatedFiles.ContainsKey(fileName))
+                    {
+                        var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
+                        if (config != null)
+                        {
+                            var content = config[Constants.Flux.Templates.RESOURCES_KEY];
+                            AddItemToList(content, $"../../{service.Name}");
+                            generatedFiles[fileName] = new FluxTemplateFile(config);
+                        }
+                        else
+                        {
+                            var content = generatedFiles[fileName].Content[Constants.Flux.Templates.RESOURCES_KEY];
+                            AddItemToList(content, $"../../{service.Name}");
+                        }
+                    }
+                }
             }
         }
         #endregion

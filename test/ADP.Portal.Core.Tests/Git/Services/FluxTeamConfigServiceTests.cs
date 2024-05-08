@@ -59,7 +59,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var teamName = "team1";
 
             gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>())
-                .Throws(new NotFoundException("Config not found", HttpStatusCode.NotFound));
+                .Returns(default(FluxTeamConfig));
 
             // Act
             var result = await service.GenerateManifestAsync(tenantName, teamName, serviceName, environment);
@@ -80,7 +80,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var teamName = "team1";
 
             gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>())
-                .Throws(new NotFoundException("Config not found", HttpStatusCode.NotFound));
+                .Returns(default(FluxTenant));
 
             // Act
             var result = await service.GenerateManifestAsync(tenantName, teamName, serviceName, environment);
