@@ -14,13 +14,15 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
     [TestFixture]
     public class GitHubRepositoryTests
     {
-        private readonly IGitHubClient gitHubClientMock;
-        private readonly GitHubRepository repository;
-        private readonly IDeserializer deserializer;
-        private readonly ISerializer serializer;
-        private readonly Fixture fixture;
+        private IGitHubClient gitHubClientMock = null!;
+        private GitHubRepository repository = null!;
+        private IDeserializer deserializer = null!;
+        private ISerializer serializer = null!;
+        private Fixture fixture = null!;
 
-        public GitHubRepositoryTests()
+
+        [SetUp]
+        public void SetUp()
         {
             gitHubClientMock = Substitute.For<IGitHubClient>();
             serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
