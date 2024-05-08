@@ -64,6 +64,21 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         }
 
         [Test]
+        public async Task GetConfigAsync_NotFound_Test()
+        {
+            // Arrange
+            var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, "fileName", gitRepo.Reference)
+                .Throws(new NotFoundException("", System.Net.HttpStatusCode.NotFound));
+
+            // Act
+            var result = await repository.GetConfigAsync<TestType>("fileName", gitRepo);
+
+            // Assert
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
         public async Task GetAllFilesAsync_SingleFile_Test()
         {
             // Arrange
