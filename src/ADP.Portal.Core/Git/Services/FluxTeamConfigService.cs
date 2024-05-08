@@ -5,7 +5,6 @@ using ADP.Portal.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
-using Octokit;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services
@@ -390,8 +389,8 @@ namespace ADP.Portal.Core.Git.Services
                             tokens =
                             [
                                 new() { Key = Constants.Flux.Templates.ENVIRONMENT_TOKEN, Value = environment.Name[..3]},
-                                    new() { Key = Constants.Flux.Templates.ENV_INSTANCE_TOKEN, Value = environment.Name[3..]},
-                                ];
+                                new() { Key = Constants.Flux.Templates.ENV_INSTANCE_TOKEN, Value = environment.Name[3..]},
+                            ];
                             var tenantConfigVariables = tenantConfig.Environments.First(x => x.Name.Equals(environment.Name)).ConfigVariables ?? [];
 
                             tokens.Union(environment.ConfigVariables).Union(tenantConfigVariables).ForEach(newFile.Content.ReplaceToken);
