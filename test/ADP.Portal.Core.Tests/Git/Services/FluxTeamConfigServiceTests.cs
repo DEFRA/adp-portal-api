@@ -375,7 +375,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                                     .With(x => x.ConfigVariables, [new FluxConfig { Key = Constants.Flux.Templates.POSTGRES_DB_KEY, Value = "db" }]).CreateMany(1).ToList();
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
-            var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
+            var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList.Select(x => new FluxEnvironment { Manifest = x.Manifest, Name = x.Name }).ToList()).Create();
             var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
                 .Select(x => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/pre-deploy/{x.Key}", x.Value));
             var serviceEnvTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
