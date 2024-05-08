@@ -432,6 +432,33 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
+        public async Task GenerateManifest_RegerateConfig_Nochanges()
+        {
+            // Arrange
+            var tenantName = "tenant1";
+            var teamName = "team1";
+            var serviceName = "service1";
+            var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).CreateMany(1).ToList();
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
+
+            var fluxTenantConfig = fixture.Build<FluxTenant>().Create();
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2).AsEnumerable();
+
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+            gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
+            gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.Templates.GIT_REPO_TEMPLATE_PATH).Returns(templates);
+            gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns(fixture.Build<Reference>().Create());
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>()).Returns(default(Commit));
+
+            // Act
+            var result = await service.GenerateManifestAsync(tenantName, teamName, serviceName);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            await gitOpsConfigRepository.Received().CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Test]
         [TestCase(true)]
         [TestCase(false)]
         public async Task GenerateManifest_MergeManifests(bool configExists)
