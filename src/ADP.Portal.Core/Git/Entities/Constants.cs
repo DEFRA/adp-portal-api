@@ -14,8 +14,8 @@
         {
             public static class Services
             {
-                public const string TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE = "{0}/{1}/{2}/deploy/{3}/patch.yaml";
-                public const string TEAM_SERVICE_INFRA_ENV_PATCH_FILE = "{0}/{1}/{2}/infra/{3}/patch.yaml";
+                public const string TEAM_SERVICE_DEPLOY_ENV_PATCH_FILE = "services/{0}/{1}/{2}/deploy/{3}/patch.yaml";
+                public const string TEAM_SERVICE_INFRA_ENV_PATCH_FILE = "services/{0}/{1}/{2}/infra/{3}/patch.yaml";
                 public const string TEAM_ENV_KUSTOMIZATION_FILE = "services/{0}/{1}/{2}/kustomization.yaml";
                 
             }
