@@ -252,7 +252,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "templates/programme/team/service/kustomization.yaml", true)]
         [TestCase("service1", "templates/programme/team/service/kustomization.yaml", false)]
-        public async Task GenerateManifest_UpdateServiceKustomizationFiles_ForListObjects(string? serviceName, string template, bool helmOnly)
+        public async Task GenerateManifest_UpdateServiceKustomizationFiles_ForListObjects(string serviceName, string template, bool helmOnly)
         {
             // Arrange
             var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
@@ -290,8 +290,44 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        [TestCase("service1", "templates/programme/team/service/deploy-kustomize.yaml", true, false)]
-        public async Task GenerateManifest_UpdateServiceKustomizationFiles_ForDictionaryObjects(string? serviceName, string template, bool helmOnly, bool? hasDatabase)
+        [TestCase("service1", "templates/programme/team/service/kustomization.yaml", true)]
+        [TestCase("service1", "templates/programme/team/service/kustomization.yaml", false)]
+        [TestCase("service1", "templates/programme/team/service/deploy-kustomize.yaml", true)]
+        public void GenerateManifest_UpdateServiceKustomizationFiles_ForListObjects_ThrowsError(string serviceName, string template, bool helmOnly)
+        {
+            // Arrange
+            var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
+            var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName)
+                                                            .With(t => t.Type, helmOnly ? FluxServiceType.HelmOnly : FluxServiceType.Backend)
+                                                            .With(c => c.ConfigVariables, value: helmOnly ? [] : [new FluxConfig { Key = Constants.Flux.Templates.POSTGRES_DB_KEY, Value = "datastore1" }])
+                                                            .With(e => e.Environments, envList).CreateMany(1).ToList();
+            var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
+
+            var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
+
+            var templateValue = new Dictionary<object, object>
+            {
+                { Constants.Flux.Templates.RESOURCES_KEY, "" }
+            };
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
+                .Select(x => new KeyValuePair<string, FluxTemplateFile>(template, new FluxTemplateFile(templateValue)));
+
+            // Act
+            gitOpsConfigRepository.GetConfigAsync<FluxTeamConfig>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTeamConfig);
+            gitOpsConfigRepository.GetConfigAsync<FluxTenant>(Arg.Any<string>(), Arg.Any<GitRepo>()).Returns(fluxTenantConfig);
+            gitOpsConfigRepository.GetAllFilesAsync(fluxTemplateRepo, Constants.Flux.Templates.GIT_REPO_TEMPLATE_PATH).Returns(templates);
+            gitOpsConfigRepository.GetBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns((Reference?)default);
+            var commit = fixture.Build<Commit>().Create();
+            gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(commit);
+
+            // Assert
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await service.GenerateManifestAsync("tenant1", "team1", serviceName, "env1"));
+        }
+
+        [Test]
+        [TestCase("service1", "templates/programme/team/service/deploy-kustomize.yaml", true)]
+        public async Task GenerateManifest_UpdateServiceKustomizationFiles_ForDictionaryObjects(string? serviceName, string template, bool helmOnly)
         {
             // Arrange
             var envList = fixture.Build<FluxEnvironment>().CreateMany(2).ToList();
@@ -339,7 +375,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                                     .With(x => x.ConfigVariables, [new FluxConfig { Key = Constants.Flux.Templates.POSTGRES_DB_KEY, Value = "db" }]).CreateMany(1).ToList();
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
-            var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
+            var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList.Select(x => new FluxEnvironment { Manifest = x.Manifest, Name = x.Name }).ToList()).Create();
             var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
                 .Select(x => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/pre-deploy/{x.Key}", x.Value));
             var serviceEnvTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)

@@ -5,7 +5,6 @@ using ADP.Portal.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
-using Octokit;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services
@@ -390,12 +389,12 @@ namespace ADP.Portal.Core.Git.Services
                                 };
                                 tokens.ForEach(newFile.Content.ReplaceToken);
 
-                                tokens =
-                                [
-                                    new() { Key = Constants.Flux.Templates.ENVIRONMENT_TOKEN, Value = environment.Name[..3]},
-                                    new() { Key = Constants.Flux.Templates.ENV_INSTANCE_TOKEN, Value = environment.Name[3..]},
-                                ];
-                                var tenantConfigVariables = tenantConfig.Environments.First(x => x.Name.Equals(environment.Name)).ConfigVariables ?? [];
+                            tokens =
+                            [
+                                new() { Key = Constants.Flux.Templates.ENVIRONMENT_TOKEN, Value = environment.Name[..3]},
+                                new() { Key = Constants.Flux.Templates.ENV_INSTANCE_TOKEN, Value = environment.Name[3..]},
+                            ];
+                            var tenantConfigVariables = tenantConfig.Environments.First(x => x.Name.Equals(environment.Name)).ConfigVariables;
 
                                 tokens.Union(environment.ConfigVariables).Union(tenantConfigVariables).ForEach(newFile.Content.ReplaceToken);
                                 finalFiles.Add(key, newFile);
@@ -456,9 +455,9 @@ namespace ADP.Portal.Core.Git.Services
 
         private static void CreateTeamVariables(FluxTeamConfig teamConfig)
         {
-            teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.PROGRAMME_NAME_TOKEN, Value = teamConfig.ProgrammeName ?? string.Empty });
-            teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.TEAM_NAME_TOKEN, Value = teamConfig.TeamName ?? string.Empty });
-            teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.SERVICE_CODE_TOKEN, Value = teamConfig.ServiceCode ?? string.Empty });
+            teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.PROGRAMME_NAME_TOKEN, Value = teamConfig.ProgrammeName });
+            teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.TEAM_NAME_TOKEN, Value = teamConfig.TeamName });
+            teamConfig.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.SERVICE_CODE_TOKEN, Value = teamConfig.ServiceCode });
         }
 
         private static void FilterEnvironmentsByName(List<FluxService> services, string environment)
