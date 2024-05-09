@@ -1089,7 +1089,6 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var environment = "env1";
             var generate = true;
 
-
             var fulxTeamServices = fixture.Build<FluxService>()
                 .With(i => i.Name, serviceName)
                 .With(i => i.Environments, fixture.Build<FluxEnvironment>().With(i => i.Name, environment).CreateMany(1).ToList())
