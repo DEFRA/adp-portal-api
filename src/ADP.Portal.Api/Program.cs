@@ -7,7 +7,6 @@ using ADP.Portal.Core.Ado.Infrastructure;
 using ADP.Portal.Core.Ado.Services;
 using ADP.Portal.Core.Azure.Infrastructure;
 using ADP.Portal.Core.Azure.Services;
-using Entities = ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Git.Jwt;
 using ADP.Portal.Core.Git.Services;
@@ -19,7 +18,7 @@ using Microsoft.OpenApi.Models;
 using Octokit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using Microsoft.ApplicationInsights.Extensibility;
+using Entities = ADP.Portal.Core.Git.Entities;
 
 namespace ADP.Portal.Api
 {
@@ -121,11 +120,6 @@ namespace ADP.Portal.Api
 
             builder.Services.AddControllers();
             builder.Services.AddApplicationInsightsTelemetry();
-
-            builder.Services.Configure<TelemetryConfiguration>((o) =>
-            {
-                o.TelemetryInitializers.Add(new AppInsightsTelemetryInitializer());
-            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
