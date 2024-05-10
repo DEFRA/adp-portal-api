@@ -551,16 +551,16 @@ namespace ADP.Portal.Core.Git.Services
             foreach (var envName in services.SelectMany(services => services.Environments.Select(env => env.Name)).Distinct())
             {
                 var fileName = string.Format(Constants.Flux.Services.TEAM_SERVICE_ENV_KUSTOMIZATION_FILE, programmeName, teamName, $"{envName[..3]}/0{envName[3..]}");
-                if (generatedFiles.ContainsKey(fileName))
+                if (generatedFiles.TryGetValue(fileName, out var file))
                 {
                     var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
                     foreach (var serviceName in services.Where(service => service.Environments.Exists(env => env.Name == envName)).Select(service => service.Name))
                     {
-                        var item = new YamlQuery(config ?? generatedFiles[fileName].Content)
+                        var item = new YamlQuery(config ?? file.Content)
                             .On(Constants.Flux.Templates.RESOURCES_KEY)
                             .Get().ToList<List<object>>();
                         AddItemToList(item.First(), $"../../{serviceName}");
-                        generatedFiles[fileName] = new FluxTemplateFile(config ?? generatedFiles[fileName].Content);
+                        generatedFiles[fileName] = new FluxTemplateFile(config ?? file.Content);
                     }
                 }
             }
