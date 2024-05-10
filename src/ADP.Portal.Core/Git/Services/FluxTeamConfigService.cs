@@ -556,17 +556,11 @@ namespace ADP.Portal.Core.Git.Services
                     var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
                     foreach (var serviceName in services.Where(service => service.Environments.Exists(env => env.Name == envName)).Select(service => service.Name))
                     {
-                        if (config != null)
-                        {
-                            var content = config[Constants.Flux.Templates.RESOURCES_KEY];
-                            AddItemToList(content, $"../../{serviceName}");
-                            generatedFiles[fileName] = new FluxTemplateFile(config);
-                        }
-                        else
-                        {
-                            var content = generatedFiles[fileName].Content[Constants.Flux.Templates.RESOURCES_KEY];
-                            AddItemToList(content, $"../../{serviceName}");
-                        }
+                        var item = new YamlQuery(config ?? generatedFiles[fileName].Content)
+                            .On(Constants.Flux.Templates.RESOURCES_KEY)
+                            .Get().ToList<List<object>>();
+                        AddItemToList(item.First(), $"../../{serviceName}");
+                        generatedFiles[fileName] = new FluxTemplateFile(config ?? generatedFiles[fileName].Content);
                     }
                 }
             }
@@ -578,10 +572,13 @@ namespace ADP.Portal.Core.Git.Services
             {
                 var fileName = string.Format(Constants.Flux.Services.TEAM_ENV_BASE_KUSTOMIZATION_FILE, envName);
                 var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
+
                 if (config != null)
                 {
-                    var content = config[Constants.Flux.Templates.RESOURCES_KEY];
-                    AddItemToList(content, $"../../../{programmeName}/{teamName}/base/patch");
+                    var item = new YamlQuery(config)
+                            .On(Constants.Flux.Templates.RESOURCES_KEY)
+                            .Get().ToList<List<object>>();
+                    AddItemToList(item.First(), $"../../../{programmeName}/{teamName}/base/patch");
                     generatedFiles[fileName] = new FluxTemplateFile(config);
                 }
             }
