@@ -19,6 +19,7 @@ using Microsoft.OpenApi.Models;
 using Octokit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace ADP.Portal.Api
 {
@@ -119,6 +120,12 @@ namespace ADP.Portal.Api
             builder.Services.Configure();
 
             builder.Services.AddControllers();
+            builder.Services.AddApplicationInsightsTelemetry();
+
+            builder.Services.Configure<TelemetryConfiguration>((o) =>
+            {
+                o.TelemetryInitializers.Add(new AppInsightsTelemetryInitializer());
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {

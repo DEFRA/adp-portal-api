@@ -39,7 +39,10 @@ properties:
         identity: {{userAssignedIdentity}} 
       - name: git-repo-org
         keyVaultUrl: https://{{appKeyVaultName}}.vault.azure.net/secrets/GIT-REPO-ORG
-        identity: {{userAssignedIdentity}}         
+        identity: {{userAssignedIdentity}}
+      - name: app-insight-key
+        keyVaultUrl: https://{{appKeyVaultName}}.vault.azure.net/secrets/APP-INSIGHT-KEY
+        identity: {{userAssignedIdentity}}
   template:
     containers:
       - image: {{acrName}}.azurecr.io/image/{{imageRepoName}}:{{appVersion}}
@@ -95,6 +98,8 @@ properties:
             secretRef: github-app-id
           - name: GitHubAppAuth__PrivateKeyBase64
             secretRef: github-privatekey-base64
+          - name: ApplicationInsights__InstrumentationKey
+            secretRef: app-insight-key
         resources:
           cpu: 0.5
           memory: 1Gi
