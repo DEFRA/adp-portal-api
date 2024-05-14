@@ -81,6 +81,11 @@ namespace ADP.Portal.Core.Git.Services
                 return result;
             }
 
+            foreach (var service in teamConfig.Services)
+            {
+                service.Environments = service.Environments.Where(env => tenantConfig.Environments.Exists(x => x.Name.Equals(env.Name))).ToList();
+            }
+
             logger.LogInformation("Reading flux templates.");
 
             var cacheKey = $"flux-templates-{fluxTemplatesRepo.Reference}";
@@ -108,7 +113,9 @@ namespace ADP.Portal.Core.Git.Services
                 if (generatedFiles.Count > 0)
                 {
                     logger.LogDebug("Merging manifests for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", teamName, serviceName, environment);
-                    await MergeManifests(teamConfig.ProgrammeName, teamConfig.TeamName, services, generatedFiles);
+                    await MergeEnvServicesManifestsAsync(teamConfig.ProgrammeName, teamConfig.TeamName, services, generatedFiles);
+
+                    await MergeEnvTeamsManifestsAsync(teamConfig.ProgrammeName, teamConfig.TeamName, services, generatedFiles);
 
                     logger.LogDebug("Pushing manifests to the repository:{FluxServiceRepo} for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", fluxServiceRepo.Name, teamName, serviceName, environment);
                     await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, generatedFiles);
@@ -140,6 +147,11 @@ namespace ADP.Portal.Core.Git.Services
             logger.LogInformation("Adding service '{ServiceName}' to the team:'{TeamName}'.", fluxService.Name, teamName);
 
             fluxService.Environments.ForEach(e => e.Manifest = new FluxManifest { Generate = true });
+
+            if (fluxService.Type == FluxServiceType.Frontend && !fluxService.ConfigVariables.Exists(config => config.Key == Constants.Flux.Templates.INGRESS_ENDPOINT_TOKEN_KEY))
+            {
+                fluxService.ConfigVariables.Add(new FluxConfig { Key = Constants.Flux.Templates.INGRESS_ENDPOINT_TOKEN_KEY, Value = fluxService.Name });
+            }
 
             teamConfig.Services.Add(fluxService);
             var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
@@ -366,8 +378,7 @@ namespace ADP.Portal.Core.Git.Services
             {
                 foreach (var template in templates)
                 {
-                    service.Environments.Where(env => tenantConfig.Environments.Exists(x => x.Name.Equals(env.Name)))
-                        .ForEach(environment =>
+                    service.Environments.ForEach(environment =>
                         {
 
                             var key = template.Key.Replace(Constants.Flux.Templates.PROGRAMME_FOLDER, teamConfig.ProgrammeName)
@@ -539,28 +550,40 @@ namespace ADP.Portal.Core.Git.Services
             dictionary.Remove(item);
         }
 
-        private async Task MergeManifests(string programmeName, string teamName, IEnumerable<FluxService> services, Dictionary<string, FluxTemplateFile> generatedFiles)
+        private async Task MergeEnvServicesManifestsAsync(string programmeName, string teamName, IEnumerable<FluxService> services, Dictionary<string, FluxTemplateFile> generatedFiles)
         {
             foreach (var envName in services.SelectMany(services => services.Environments.Select(env => env.Name)).Distinct())
             {
-                var fileName = string.Format(Constants.Flux.Services.TEAM_ENV_KUSTOMIZATION_FILE, programmeName, teamName, $"{envName[..3]}/0{envName[3..]}");
-                if (generatedFiles.ContainsKey(fileName))
+                var fileName = string.Format(Constants.Flux.Services.TEAM_SERVICE_ENV_KUSTOMIZATION_FILE, programmeName, teamName, $"{envName[..3]}/0{envName[3..]}");
+                if (generatedFiles.TryGetValue(fileName, out var file))
                 {
                     var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
-                    foreach (var serviceName in services.Where(service => service.Environments.Exists(env => env.Name == envName)).Select(service=> service.Name))
+                    foreach (var serviceName in services.Where(service => service.Environments.Exists(env => env.Name == envName)).Select(service => service.Name))
                     {
-                        if (config != null)
-                        {
-                            var content = config[Constants.Flux.Templates.RESOURCES_KEY];
-                            AddItemToList(content, $"../../{serviceName}");
-                            generatedFiles[fileName] = new FluxTemplateFile(config);
-                        }
-                        else
-                        {
-                            var content = generatedFiles[fileName].Content[Constants.Flux.Templates.RESOURCES_KEY];
-                            AddItemToList(content, $"../../{serviceName}");
-                        }
+                        var item = new YamlQuery(config ?? file.Content)
+                            .On(Constants.Flux.Templates.RESOURCES_KEY)
+                            .Get().ToList<List<object>>();
+                        AddItemToList(item[0], $"../../{serviceName}");
+                        generatedFiles[fileName] = new FluxTemplateFile(config ?? file.Content);
                     }
+                }
+            }
+        }
+
+        private async Task MergeEnvTeamsManifestsAsync(string programmeName, string teamName, IEnumerable<FluxService> services, Dictionary<string, FluxTemplateFile> generatedFiles)
+        {
+            foreach (var envName in services.SelectMany(service => service.Environments.Select(env => env.Name[..3])).Distinct())
+            {
+                var fileName = string.Format(Constants.Flux.Services.TEAM_ENV_BASE_KUSTOMIZATION_FILE, envName);
+                var config = await gitHubRepository.GetConfigAsync<Dictionary<object, object>>(fileName, fluxServiceRepo);
+
+                if (config != null)
+                {
+                    var item = new YamlQuery(config)
+                            .On(Constants.Flux.Templates.RESOURCES_KEY)
+                            .Get().ToList<List<object>>();
+                    AddItemToList(item[0], $"../../../{programmeName}/{teamName}/base/patch");
+                    generatedFiles[fileName] = new FluxTemplateFile(config);
                 }
             }
         }
