@@ -1,5 +1,4 @@
 ﻿using ADP.Portal.Core.Git.Entities;
-using ADP.Portal.Core.Git.Extensions;
 using ADP.Portal.Core.Git.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,7 +17,7 @@ public class FluxTemplateService : IFluxTemplateService
         this.logger = logger;
         this.fluxTemplatesRepo = gitRepoOptions.Get(Constants.GitRepo.TEAM_FLUX_TEMPLATES_CONFIG);
     }
- 
+
     public async Task<IEnumerable<KeyValuePair<string, FluxTemplateFile>>> GetFluxTemplatesAsync()
     {
         var cacheKey = $"flux-templates-{fluxTemplatesRepo.Reference}";
