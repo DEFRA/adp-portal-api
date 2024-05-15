@@ -19,6 +19,7 @@ using Octokit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Entities = ADP.Portal.Core.Git.Entities;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 namespace ADP.Portal.Api
 {
@@ -119,7 +120,14 @@ namespace ADP.Portal.Api
             builder.Services.Configure();
 
             builder.Services.AddControllers();
-            builder.Services.AddApplicationInsightsTelemetry();
+            builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
+            {
+                o.ConnectionString = builder.Configuration["AzureMonitor:ConnectionString"];
+                var tokenCredential = new ChainedTokenCredential(
+                    new ManagedIdentityCredential(),
+                    new DefaultAzureCredential());
+                o.Credential = tokenCredential;
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
