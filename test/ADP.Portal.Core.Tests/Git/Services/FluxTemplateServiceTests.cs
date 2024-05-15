@@ -18,7 +18,7 @@ public class FluxTemplateServiceTests
     private ILogger<FluxTemplateService> logger = null!;
     private readonly IOptionsSnapshot<GitRepo> gitRepoOptions = Substitute.For<IOptionsSnapshot<GitRepo>>();
     private GitRepo fluxTemplateRepo = null!;
-    private IFixture fixture = null!;
+    private Fixture fixture = null!;
     [SetUp]
     public void SetUp()
     {
