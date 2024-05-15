@@ -110,7 +110,7 @@ namespace ADP.Portal.Core.Git.Services
                     await MergeEnvTeamsManifestsAsync(teamConfig.ProgrammeName, teamConfig.TeamName, services, generatedFiles);
 
                     logger.LogDebug("Pushing manifests to the repository:{FluxServiceRepo} for the team:'{TeamName}', service:'{ServiceName}' and environment:'{Environment}'.", fluxServiceRepo.Name, teamName, serviceName, environment);
-                    await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, generatedFiles);
+                    await PushFilesToFluxRepository(fluxServiceRepo, teamName, serviceName, environment, generatedFiles);
                 }
             }
 
@@ -472,15 +472,20 @@ namespace ADP.Portal.Core.Git.Services
             }
         }
 
-        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, Dictionary<string, FluxTemplateFile> generatedFiles)
+        private async Task PushFilesToFluxRepository(GitRepo gitRepoFluxServices, string teamName, string? serviceName, string? environment, Dictionary<string, FluxTemplateFile> generatedFiles)
         {
-            var branchName = $"refs/heads/features/{teamName}{(string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}")}";
+            var branchName = string.Concat("refs/heads/features/", teamName,
+                                    string.IsNullOrEmpty(serviceName) ? "" : $"-{serviceName}",
+                                    string.IsNullOrEmpty(environment) ? "" : $"-{environment}");
+
             var branchRef = await gitHubRepository.GetBranchAsync(gitRepoFluxServices, branchName);
 
             string message;
             if (branchRef == null)
             {
-                message = string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()} Manifest" : $"{serviceName.ToUpper()} Manifest";
+                message = string.Concat(string.IsNullOrEmpty(serviceName) ? $"{teamName.ToUpper()}" : $"{serviceName.ToUpper()}",
+                    string.IsNullOrEmpty(environment) ? "" : $" {environment.ToUpper()}",
+                    " Manifest");
             }
             else
             {

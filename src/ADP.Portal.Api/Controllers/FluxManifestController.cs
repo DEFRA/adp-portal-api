@@ -1,7 +1,6 @@
 ﻿using ADP.Portal.Api.Models.Flux;
 using ADP.Portal.Core.Git.Services;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ADP.Portal.Api.Controllers;
@@ -17,13 +16,17 @@ public class FluxManifestController : ControllerBase
 
     public FluxManifestController(IFluxManifestService fluxManifestService, ILogger<FluxManifestController> logger)
     {
-
         this.fluxManifestService = fluxManifestService;
         this.logger = logger;
     }
 
+    /// <summary>
+    /// Get Patch values for Flux service template.
+    /// </summary>
+    /// <param name="templateType"></param>
+    /// <returns></returns>
     [HttpGet("templates/service/{templateType}/patch-values")]
-    public async Task<ActionResult> GetFluxServiceTemplateManifest( [FromRoute] string templateType)
+    public async Task<ActionResult> GetFluxServiceTemplateManifest([FromRoute] string templateType)
     {
         if (!Enum.TryParse<ServiceTemplateType>(templateType, true, out var parsedTemplateType))
         {
