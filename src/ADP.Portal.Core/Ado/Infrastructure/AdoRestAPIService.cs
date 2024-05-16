@@ -20,7 +20,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
         public async Task<List<AdoSecurityRole>> GetRoleAssignmentAsync(string projectId, string envId)
         {
-            var adoRestHttpClient = vssConnection.GetClient<AdoRestHttpClient>();
+            var adoRestHttpClient = await vssConnection.GetClientAsync<AdoRestHttpClient>();
             var client = adoRestHttpClient.GetHttpClient();
             var uri = adoRestHttpClient.BaseAddress + "/_apis/securityroles/scopes/distributedtask.environmentreferencerole/roleassignments/resources/" + projectId + "_" + envId + "?api-version=7.1-preview.1";
             List<AdoSecurityRole> adoSecurityRoleList = new();
@@ -55,7 +55,7 @@ namespace ADP.Portal.Core.Ado.Infrastructure
 
         public async Task<bool> UpdateRoleAssignmentAsync(string projectId, string envId, List<AdoSecurityRole> adoSecurityRoleList)
         {
-            var adoRestHttpClient = vssConnection.GetClient<AdoRestHttpClient>();
+            var adoRestHttpClient = await vssConnection.GetClientAsync<AdoRestHttpClient>();
             var client = adoRestHttpClient.GetHttpClient();
             var uri = adoRestHttpClient.BaseAddress + "/_apis/securityroles/scopes/distributedtask.environmentreferencerole/roleassignments/resources/" + projectId + "_" + envId + "?api-version=7.1-preview.1";
             var postRequest = new HttpRequestMessage(HttpMethod.Put, uri)
