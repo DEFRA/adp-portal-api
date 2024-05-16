@@ -9,6 +9,21 @@ using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Api.Tests
 {
+    public static class AppBuilder
+    {
+        public static WebApplicationBuilder Create()
+        {
+            IEnumerable<KeyValuePair<string, string?>> appInsightConfigList = [new KeyValuePair<string, string?>("APPLICATIONINSIGHTS_CONNECTION_STRING", "InstrumentationKey=" + Guid.NewGuid().ToString())];
+            var appInsightConfig = new ConfigurationBuilder()
+                            .AddInMemoryCollection(appInsightConfigList)
+                            .Build();
+            var builder = WebApplication.CreateBuilder();
+            builder.Configuration.AddConfiguration(appInsightConfig);
+            Program.ConfigureApp(builder);
+            return builder;
+        }
+    }
+
     [TestFixture]
     public class ProgramTests
     {
@@ -16,9 +31,8 @@ namespace ADP.Portal.Api.Tests
         [Test]
         public void TestConfigureApp()
         {
-            // Arrange
-            var builder = WebApplication.CreateBuilder();
-            Program.ConfigureApp(builder);
+            // Arrange                       
+            var builder = AppBuilder.Create();
 
             // Act
             var result = builder.Build();
@@ -31,8 +45,7 @@ namespace ADP.Portal.Api.Tests
         public void TestAzureCredentialResolution()
         {
             // Arrange
-            var builder = WebApplication.CreateBuilder();
-            Program.ConfigureApp(builder);
+            var builder = AppBuilder.Create();
 
             // Act
             var app = builder.Build();
@@ -46,7 +59,7 @@ namespace ADP.Portal.Api.Tests
         public void TestVssConnectionResolution()
         {
             // Arrange
-            var builder = WebApplication.CreateBuilder();
+            var builder = AppBuilder.Create();
             KeyValuePair<string, string?>[] adoConfig =
                 [
                    new KeyValuePair<string, string?>("Ado:UsePatToken", "true"),
@@ -56,8 +69,7 @@ namespace ADP.Portal.Api.Tests
             IEnumerable<KeyValuePair<string, string?>> adoConfigList = adoConfig;
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(adoConfigList)
-                .Build();
-
+                .Build();            
             builder.Configuration.AddConfiguration(configuration);
             Program.ConfigureApp(builder);
 
@@ -75,7 +87,7 @@ namespace ADP.Portal.Api.Tests
         public void TestGraphServiceClientResolution()
         {
             // Arrange
-            var builder = WebApplication.CreateBuilder();
+            var builder = AppBuilder.Create();
             KeyValuePair<string, string?>[] aadConfig =
                 [
                    new KeyValuePair<string, string?>("AzureAd:TenantId", Guid.NewGuid().ToString()),
@@ -86,8 +98,7 @@ namespace ADP.Portal.Api.Tests
             IEnumerable<KeyValuePair<string, string?>> aadConfigList = aadConfig;
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(aadConfigList)
-                .Build();
-
+                .Build();        
             builder.Configuration.AddConfiguration(configuration);
             Program.ConfigureApp(builder);
 
@@ -104,8 +115,7 @@ namespace ADP.Portal.Api.Tests
         public void TestApiVersioningConfiguration()
         {
             // Arrange
-            var builder = WebApplication.CreateBuilder();
-            Program.ConfigureApp(builder);
+            var builder = AppBuilder.Create();
 
             // Act
             var app = builder.Build();
@@ -125,8 +135,7 @@ namespace ADP.Portal.Api.Tests
                 { "IsValid", true },
                 { "Counter", 5 }
             };
-            var builder = WebApplication.CreateBuilder();
-            Program.ConfigureApp(builder);
+            var builder = AppBuilder.Create();
 
             // Act
             var app = builder.Build();
@@ -146,8 +155,7 @@ namespace ADP.Portal.Api.Tests
                     isValid: 'true'
                     counter: 5
                 ");
-            var builder = WebApplication.CreateBuilder();
-            Program.ConfigureApp(builder);
+            var builder = AppBuilder.Create();
 
             // Act
             var app = builder.Build();

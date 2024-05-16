@@ -122,7 +122,7 @@ namespace ADP.Portal.Api
             builder.Services.AddControllers();
             builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
             {
-                o.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+                o.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
                 var tokenCredential = new ChainedTokenCredential(
                     new ManagedIdentityCredential(),
                     new DefaultAzureCredential());
