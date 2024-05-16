@@ -1,12 +1,14 @@
-﻿namespace ADP.Portal.Api.Models.Ado
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ADP.Portal.Api.Models.Ado
 {
     public sealed class OnBoardAdoProjectRequest
     {
-        public required List<AdoEnvironment> Environments { get; set; }
+        [Required]public required List<AdoEnvironment> Environments { get; set; }
 
-        public required List<string> ServiceConnections { get; set; }
+        [Required]public required List<string> ServiceConnections { get; set; }
 
-        public required List<string> AgentPools { get; set; }
+        [Required]public required List<string> AgentPools { get; set; }
 
         public List<AdoVariableGroup>? VariableGroups { get; set; }
     }

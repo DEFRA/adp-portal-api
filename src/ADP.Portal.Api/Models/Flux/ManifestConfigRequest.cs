@@ -1,7 +1,9 @@
-﻿namespace ADP.Portal.Api.Models.Flux
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ADP.Portal.Api.Models.Flux
 {
     public sealed class ManifestConfigRequest
     {
-        public bool Generate { get; set; }
+        [Required]public required bool Generate { get; set; }
     }
 }
