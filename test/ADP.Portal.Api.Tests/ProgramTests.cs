@@ -13,7 +13,7 @@ namespace ADP.Portal.Api.Tests
     {
         public static WebApplicationBuilder Create()
         {
-            IEnumerable<KeyValuePair<string, string?>> appInsightConfigList = [new KeyValuePair<string, string?>("APPLICATIONINSIGHTS_CONNECTION_STRING", "InstrumentationKey=" + Guid.NewGuid().ToString())];
+            IEnumerable<KeyValuePair<string, string?>> appInsightConfigList = [new KeyValuePair<string, string?>("AppInsights:ConnectionString", "InstrumentationKey=" + Guid.NewGuid().ToString())];
             var appInsightConfig = new ConfigurationBuilder()
                             .AddInMemoryCollection(appInsightConfigList)
                             .Build();
