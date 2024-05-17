@@ -102,7 +102,7 @@ properties:
             secretRef: github-app-id
           - name: GitHubAppAuth__PrivateKeyBase64
             secretRef: github-privatekey-base64
-          - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          - name: AppInsights__ConnectionString
             secretRef: app-insights-connectionstring
         resources:
           cpu: 0.5

@@ -20,6 +20,8 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Entities = ADP.Portal.Core.Git.Entities;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace ADP.Portal.Api
 {
@@ -122,11 +124,12 @@ namespace ADP.Portal.Api
             builder.Services.AddControllers();
             builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
             {
-                o.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
-                var tokenCredential = new ChainedTokenCredential(
-                    new ManagedIdentityCredential(),
-                    new DefaultAzureCredential());
-                o.Credential = tokenCredential;
+                o.ConnectionString = builder.Configuration.GetValue<string>("AppInsights:ConnectionString");
+                o.Credential = new DefaultAzureCredential();
+            });            
+            builder.Services.ConfigureOpenTelemetryTracerProvider((sp, b) =>
+            {
+                b.ConfigureResource(resourceBuilder => resourceBuilder.AddAttributes(new Dictionary<string, object> { { "service.name", "adp-portal-api" } }));
             });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
@@ -141,8 +144,7 @@ namespace ADP.Portal.Api
                 config.ReportApiVersions = true;
                 config.ApiVersionReader = new HeaderApiVersionReader("api-version");
             });
-        }
-
+        }        
         private static GitHubClient GetGitHubClient(GitHubAppAuthConfig gitHubAppAuth)
         {
             var gitHubAppName = gitHubAppAuth.AppName.Replace(" ", "");
