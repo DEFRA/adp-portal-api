@@ -140,6 +140,56 @@ public class GitHubServiceTests
     [Test]
     [TestCase(true, TeamPrivacy.Closed)]
     [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_IgnoresAllUsersWhenFailingToGetListOfOrgMembers(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(3).ToArray();
+        request.Members = fixture.CreateMany<string>(3).ToArray();
+        request.Id = null;
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Create(default, default)
+            .ReturnsForAnyArgs(team);
+        client.Organization.Member.GetAll(options.Organisation)
+            .ThrowsAsync(new ApiException());
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(0).Get(Arg.Any<int>());
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.Count == 0));
+
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
+
+        actual.Should().BeEquivalentTo(new GithubTeamDetails()
+        {
+            Description = team.Description,
+            Id = team.Id,
+            IsPublic = isPublic,
+            Name = team.Name,
+            Slug = team.Slug,
+            Maintainers = [],
+            Members = request.Members
+        });
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
     public async Task SyncTeamAsync_CreatesATeamWhenTheTeamExistsButIsInAnotherOrg(bool isPublic, TeamPrivacy privacy)
     {
         // arrange
