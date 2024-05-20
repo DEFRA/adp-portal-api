@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Octokit;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ADP.Portal.Core.Git.Services;
@@ -58,6 +59,7 @@ public class GitHubService : IGitHubService
 
         await SyncTeamMembers(
             currentTeam.Id,
+            await GetOrgTeamMembers(),
             BuildTeamRoleDictionary(currentTeam.Maintainers, currentTeam.Members),
             BuildTeamRoleDictionary(team.Maintainers, team.Members));
 
@@ -97,16 +99,17 @@ public class GitHubService : IGitHubService
         maintainers ??= [];
         members ??= [];
 
-        members = members.Except(maintainers);
+        members = members.Except(maintainers, StringComparer.OrdinalIgnoreCase);
 
         return Enumerable.Concat(
             maintainers.Select(m => KeyValuePair.Create(m, TeamRole.Maintainer)),
             members.Select(m => KeyValuePair.Create(m, TeamRole.Member)))
-            .ToDictionary();
+            .ToDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
     private async Task<GithubTeamDetails?> CreateTeamAsync(GithubTeamUpdate team)
     {
+        var allowedMembers = await GetOrgTeamMembers();
         var request = new NewTeam(team.Name)
         {
             Description = team.Description,
@@ -114,7 +117,12 @@ public class GitHubService : IGitHubService
         };
 
         foreach (var member in team.Maintainers ?? [])
-            request.Maintainers.Add(member);
+        {
+            if (allowedMembers.Contains(member))
+                request.Maintainers.Add(member);
+            else
+                logger.LogInformation("Skipping {Member} membership of {TeamName} as they are not already a member of the organisation", member, team.Name);
+        }
 
         logger.LogInformation("Creating team {TeamName}.", team.Name);
         var newTeam = await TryCreateTeam(request);
@@ -122,7 +130,7 @@ public class GitHubService : IGitHubService
             return await TryAdoptTeamAsync(team);
 
         logger.LogInformation("Team {TeamId} ({TeamName}) has been created, syncing members.", newTeam.Id, newTeam.Name);
-        await SyncTeamMembers(newTeam.Id, [], BuildTeamRoleDictionary(null, team.Members));
+        await SyncTeamMembers(newTeam.Id, allowedMembers, [], BuildTeamRoleDictionary(null, team.Members));
 
         return new()
         {
@@ -148,14 +156,15 @@ public class GitHubService : IGitHubService
         return await UpdateTeamAsync(toAdopt, team);
     }
 
-    private async Task SyncTeamMembers(int teamId, Dictionary<string, TeamRole> currentMembers, Dictionary<string, TeamRole> targetMembers)
+    private async Task SyncTeamMembers(int teamId, IReadOnlyCollection<string> allowedMembers, Dictionary<string, TeamRole> currentMembers, Dictionary<string, TeamRole> targetMembers)
     {
         targetMembers[options.Value.AdminLogin] = TeamRole.Maintainer;
         var setMembers = targetMembers
             .Where(kvp => !currentMembers.TryGetValue(kvp.Key, out var currentRole) || currentRole < kvp.Value)
-            .Select(m => SetMemberRole(m.Key, m.Value));
-        var removeMembers = currentMembers.Keys.Except(targetMembers.Keys)
-            .Select(RemoveMember);
+            .Select(kvp => SetMemberRole(kvp.Key, kvp.Value));
+        var removeMembers = currentMembers
+            .Where(kvp => !targetMembers.ContainsKey(kvp.Key))
+            .Select(kvp => RemoveMember(kvp.Key));
         var mutations = setMembers.Concat(removeMembers);
 
         // If we want to run the changes in parallel, change to `await Task.WhenAll(mutations)`
@@ -164,6 +173,12 @@ public class GitHubService : IGitHubService
 
         async Task SetMemberRole(string member, TeamRole role)
         {
+            if (!allowedMembers.Contains(member))
+            {
+                logger.LogInformation("Skipping {Member} membership of {TeamId} as they are not already a member of the organisation", member, teamId);
+                return;
+            }
+
             logger.LogInformation("Setting {Member} membership of {TeamId} to {Role}", member, teamId, role);
             try
             {
@@ -277,6 +292,19 @@ public class GitHubService : IGitHubService
         catch (NotFoundException)
         {
             return default;
+        }
+    }
+
+    private async Task<ImmutableHashSet<string>> GetOrgTeamMembers()
+    {
+        try
+        {
+            var members = await client.Organization.Member.GetAll(options.Value.Organisation);
+            return members.Select(m => m.Login).ToImmutableHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (ApiException)
+        {
+            return [];
         }
     }
 }
