@@ -167,5 +167,30 @@ namespace ADP.Portal.Api.Tests
             Assert.That(result, Is.Not.Null);
             Assert.That(result?.GetType(), Is.EqualTo(typeof(Dictionary<object, object>)));
         }
+
+        [Test]
+        public void TestOpenTelemetry()
+        {
+            // Arrange
+            var builder = AppBuilder.Create();
+            KeyValuePair<string, string?>[] appEnvConfig =
+                [
+                   new KeyValuePair<string, string?>("ASPNETCORE_ENVIRONMENT", "Production"),
+                   new KeyValuePair<string, string?>("UserAssignedIdentityResourceId", Guid.NewGuid().ToString()),
+                ];
+            IEnumerable<KeyValuePair<string, string?>> appEnvConfigList = appEnvConfig;            
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(appEnvConfigList)
+                .Build();
+            builder.Configuration.AddConfiguration(configuration);
+            Program.ConfigureApp(builder);
+
+
+            // Act
+            var app = builder.Build();            
+
+            // Assert
+            Assert.That(app, Is.Not.Null);
+        }
     }
 }
