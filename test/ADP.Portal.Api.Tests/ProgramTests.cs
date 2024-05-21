@@ -195,5 +195,32 @@ namespace ADP.Portal.Api.Tests
             Assert.That(app, Is.Not.Null);
         }
 
+        [Test]
+        public void TestGitHub()
+        {
+            // Arrange
+            var builder = AppBuilder.Create();
+            KeyValuePair<string, string?>[] appEnvConfig =
+                [
+                   new KeyValuePair<string, string?>("GitHubAppAuth:Owner", "defra"),
+                   new KeyValuePair<string, string?>("GitHubAppAuth:AppName", "test"),
+                   new KeyValuePair<string, string?>("GitHubAppAuth:AppId", "test"),
+                   new KeyValuePair<string, string?>("GitHubAppAuth:PrivateKeyBase64", Guid.NewGuid().ToString()),
+                ];
+            IEnumerable<KeyValuePair<string, string?>> appEnvConfigList = appEnvConfig;
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(appEnvConfigList)
+                .Build();
+            builder.Configuration.AddConfiguration(configuration);
+            Program.ConfigureApp(builder);
+
+
+            // Act
+            var app = builder.Build();
+
+            // Assert
+            Assert.That(app, Is.Not.Null);
+        }
+
     }
 }
