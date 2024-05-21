@@ -127,8 +127,12 @@ namespace ADP.Portal.Api
             builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
             {
                 o.ConnectionString = builder.Configuration.GetValue<string>("AppInsights:ConnectionString");
-                o.Credential = new DefaultAzureCredential();
-            });            
+                string env = builder.Configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") ?? "Development";
+                if (!env.Equals("Development"))
+                {
+                    o.Credential = new ManagedIdentityCredential(new (builder.Configuration.GetValue<string>("UserAssignedIdentityResourceId") ?? ""), new ());
+                }
+            });
             builder.Services.ConfigureOpenTelemetryTracerProvider((sp, b) =>
             {
                 b.ConfigureResource(resourceBuilder => resourceBuilder.AddAttributes(new Dictionary<string, object> { { "service.name", "adp-portal-api" } }));
@@ -146,7 +150,7 @@ namespace ADP.Portal.Api
                 config.ReportApiVersions = true;
                 config.ApiVersionReader = new HeaderApiVersionReader("api-version");
             });
-        }        
+        }
         private static GitHubClient GetGitHubClient(GitHubAppAuthConfig gitHubAppAuth)
         {
             var gitHubAppName = gitHubAppAuth.AppName.Replace(" ", "");

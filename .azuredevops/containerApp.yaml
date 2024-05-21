@@ -104,6 +104,8 @@ properties:
             secretRef: github-privatekey-base64
           - name: AppInsights__ConnectionString
             secretRef: app-insights-connectionstring
+          - name: UserAssignedIdentityResourceId
+            value: {{userAssignedIdentity}}
         resources:
           cpu: 0.5
           memory: 1Gi
