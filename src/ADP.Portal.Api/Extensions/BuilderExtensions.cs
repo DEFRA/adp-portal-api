@@ -3,8 +3,9 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Diagnostics.CodeAnalysis;
+using ADP.Portal.Api.Config;
 
-namespace ADP.Portal.Api.Config;
+namespace ADP.Portal.Api.Extensions;
 
 [ExcludeFromCodeCoverage]
 public static class BuilderExtensions

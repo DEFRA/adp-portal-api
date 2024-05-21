@@ -19,6 +19,7 @@ using Octokit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Entities = ADP.Portal.Core.Git.Entities;
+using ADP.Portal.Api.Extensions;
 
 namespace ADP.Portal.Api
 {
