@@ -19,14 +19,9 @@ using Octokit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Entities = ADP.Portal.Core.Git.Entities;
-using Azure.Monitor.OpenTelemetry.AspNetCore;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ADP.Portal.Api
 {
-    [ExcludeFromCodeCoverage]
     public static class Program
     {
         public static void Main(string[] args)
@@ -126,19 +121,13 @@ namespace ADP.Portal.Api
             builder.Services.Configure();
 
             builder.Services.AddControllers();
-            builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
+
+            var appInsightsConfig = builder.Configuration.GetSection("AppInsights").Get<AppInsightsConfig>();
+
+            if (appInsightsConfig != null)
             {
-                o.ConnectionString = builder.Configuration.GetValue<string>("AppInsights:ConnectionString");
-                string env = builder.Configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") ?? "Development";
-                if (!env.Equals("Development"))
-                {
-                    o.Credential = new ManagedIdentityCredential(new (builder.Configuration.GetValue<string>("UserAssignedIdentityResourceId") ?? ""), new ());
-                }
-            });
-            builder.Services.ConfigureOpenTelemetryTracerProvider((sp, b) =>
-            {
-                b.ConfigureResource(resourceBuilder => resourceBuilder.AddAttributes(new Dictionary<string, object> { { "service.name", "adp-portal-api" } }));
-            });
+                builder.ConfigureOpenTelemetry(appInsightsConfig);
+            }
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {

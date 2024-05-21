@@ -104,6 +104,8 @@ properties:
             secretRef: github-privatekey-base64
           - name: AppInsights__ConnectionString
             secretRef: app-insights-connectionstring
+          - name: AppInsights__CloudRole
+            value: "adp-portal-api"
           - name: UserAssignedIdentityResourceId
             value: {{userAssignedIdentity}}
         resources:
