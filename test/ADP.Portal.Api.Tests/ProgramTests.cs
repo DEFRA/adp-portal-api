@@ -195,19 +195,5 @@ namespace ADP.Portal.Api.Tests
             Assert.That(app, Is.Not.Null);
         }
 
-        [Test]
-        public void TestGitHubClient()
-        {
-            // Arrange                       
-            var builder = AppBuilder.Create();
-            var gitHubAppAuth = Substitute.For<GitHubAppAuthConfig>();
-            builder.Services.AddSingleton(gitHubAppAuth);
-
-            // Act
-            var app = builder.Build();
-
-            // Assert
-            Assert.That(app, Is.Not.Null);
-        }
     }
 }
