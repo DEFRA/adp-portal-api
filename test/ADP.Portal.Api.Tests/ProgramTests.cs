@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph;
 using NUnit.Framework;
 using YamlDotNet.Serialization;
+using NSubstitute;
+using ADP.Portal.Api.Config;
 
 namespace ADP.Portal.Api.Tests
 {
@@ -187,7 +189,22 @@ namespace ADP.Portal.Api.Tests
 
 
             // Act
-            var app = builder.Build();            
+            var app = builder.Build();
+
+            // Assert
+            Assert.That(app, Is.Not.Null);
+        }
+
+        [Test]
+        public void TestGitHubClient()
+        {
+            // Arrange                       
+            var builder = AppBuilder.Create();
+            var gitHubAppAuth = Substitute.For<GitHubAppAuthConfig>();
+            builder.Services.AddSingleton(gitHubAppAuth);
+
+            // Act
+            var app = builder.Build();
 
             // Assert
             Assert.That(app, Is.Not.Null);
