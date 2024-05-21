@@ -211,7 +211,7 @@ namespace ADP.Portal.Api.Tests
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(appEnvConfigList)
                 .Build();
-            builder.Configuration.AddConfiguration(configuration);
+            builder.Services.Configure<GitHubAppAuthConfig>(configuration);
             Program.ConfigureApp(builder);
 
 
