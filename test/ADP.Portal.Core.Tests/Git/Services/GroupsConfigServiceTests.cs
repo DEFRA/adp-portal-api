@@ -355,9 +355,10 @@ public class GroupsConfigServiceTests
     {
         // Arrange
         gitOpsConfigRepositoryMock.CreateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("sha");
+        var members = fixture.Build<string>().CreateMany(2);
 
         // Act
-        var response = await gitOpsConfigService.CreateGroupsConfigAsync("defra", "teamName", fixture.Build<string>().CreateMany(2));
+        var response = await gitOpsConfigService.CreateGroupsConfigAsync("defra", "teamName", members, members, members);
 
         // Assert
         Assert.That(response, Is.Not.Null);
@@ -369,9 +370,10 @@ public class GroupsConfigServiceTests
     {
         // Arrange
         gitOpsConfigRepositoryMock.CreateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns(string.Empty);
+        var members = fixture.Build<string>().CreateMany(2);
 
         // Act
-        var response = await gitOpsConfigService.CreateGroupsConfigAsync("defradev", "teamName", fixture.Build<string>().CreateMany(2));
+        var response = await gitOpsConfigService.CreateGroupsConfigAsync("defradev", "teamName", members, members, members);
 
         // Assert
         Assert.That(response, Is.Not.Null);

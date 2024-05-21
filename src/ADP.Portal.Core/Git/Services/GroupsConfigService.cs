@@ -36,12 +36,12 @@ public partial class GroupsConfigService : IGroupsConfigService
         return await GetGroupsConfigAsync(tenantName, teamName, null);
     }
 
-    public async Task<GroupConfigResult> CreateGroupsConfigAsync(string tenantName, string teamName, IEnumerable<string> groupMembers)
+    public async Task<GroupConfigResult> CreateGroupsConfigAsync(string tenantName, string teamName, IEnumerable<string> adminGroupMembers, IEnumerable<string> techUserGroupMembers, IEnumerable<string> nonTechUserGroupMembers)
     {
         var result = new GroupConfigResult();
 
         var fileName = $"{tenantName}/{teamName}.yaml";
-        var groups = BuildTeamGroups(tenantName, teamName, groupMembers);
+        var groups = BuildTeamGroups(tenantName, teamName, adminGroupMembers, techUserGroupMembers, nonTechUserGroupMembers);
 
         logger.LogInformation("Create groups config for the team({TeamName})", teamName);
         var response = await gitHubRepository.CreateConfigAsync(teamGitRepo, fileName, serializer.Serialize(groups));
@@ -52,7 +52,7 @@ public partial class GroupsConfigService : IGroupsConfigService
         return result;
     }
 
-    public async Task<GroupConfigResult> SetGroupMembersAsync(string tenantName, string teamName, IEnumerable<string> techUserMembers, IEnumerable<string> nonTechUserMembers, IEnumerable<string> adminMembers)
+    public async Task<GroupConfigResult> SetGroupMembersAsync(string tenantName, string teamName, IEnumerable<string> adminGroupMembers, IEnumerable<string> techUserGroupMembers, IEnumerable<string> nonTechUserGroupMembers)
     {
         var result = new GroupConfigResult();
 
@@ -65,7 +65,7 @@ public partial class GroupsConfigService : IGroupsConfigService
         }
 
         var fileName = $"{tenantName}/{teamName}.yaml";
-        var groups = BuildTeamGroups(tenantName, teamName, adminMembers);
+        var groups = BuildTeamGroups(tenantName, teamName, adminGroupMembers, techUserGroupMembers, nonTechUserGroupMembers);
         logger.LogInformation("Update groups config for the team {TeamName}", teamName);
         var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, fileName, serializer.Serialize(groups));
         if (string.IsNullOrEmpty(response))
@@ -75,7 +75,7 @@ public partial class GroupsConfigService : IGroupsConfigService
         return result;
     }
 
-    private static GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> groupMembers)
+    private static GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> adminGroupMembers, IEnumerable<string> techUserGroupMembers, IEnumerable<string> nonTechUserGroupMembers)
     {
         var environments = new List<string>();
         switch (tenantName)
@@ -94,17 +94,19 @@ public partial class GroupsConfigService : IGroupsConfigService
                 new Group {
                     DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_TechUser",
                     Type = GroupType.UserGroup,
-                    GroupMemberships = [GLOBAL_READ_GROUP]
+                    GroupMemberships = [GLOBAL_READ_GROUP],
+                    Members = techUserGroupMembers.ToList()
                 },
                 new Group {
                     DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_NonTechUser",
                     Type = GroupType.UserGroup,
-                    GroupMemberships = [GLOBAL_READ_GROUP]
+                    GroupMemberships = [GLOBAL_READ_GROUP],
+                    Members = nonTechUserGroupMembers.ToList()
                 },
                 new Group {
                     DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_Admin",
                     Type = GroupType.UserGroup,
-                    Members = groupMembers.ToList()
+                    Members = adminGroupMembers.ToList()
                 }
             ]
         };

@@ -152,13 +152,20 @@ public class AadGroupControllerTests
     {
         // Arrange
         var groups = fixture.Build<string>().CreateMany(2).ToList();
-        groupsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IEnumerable<string>>()).Returns(new GroupConfigResult());
+        groupsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(),
+                                                        Arg.Any<IEnumerable<string>>(), Arg.Any<IEnumerable<string>>(),
+                                                        Arg.Any<IEnumerable<string>>()).Returns(new GroupConfigResult());
         groupsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), null).Returns(new GroupSyncResult());
 
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
-        var result = await controller.CreateGroupsConfigAsync("teamName", new Models.Group.CreateGroupsConfigRequest { Members = groups });
+        var result = await controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
+        {
+            AdminMembers = groups,
+            NonTechUserMembers = groups,
+            TechUserMembers = groups
+        });
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -170,13 +177,20 @@ public class AadGroupControllerTests
     {
         // Arrange
         var groups = fixture.Build<string>().CreateMany(2).ToList();
-        groupsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IEnumerable<string>>())
+        groupsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(),
+                                                        Arg.Any<IEnumerable<string>>(), Arg.Any<IEnumerable<string>>(),
+                                                        Arg.Any<IEnumerable<string>>())
             .Returns(new GroupConfigResult { Errors = ["Failed to save groups"] });
 
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
-        var result = await controller.CreateGroupsConfigAsync("teamName", new Models.Group.CreateGroupsConfigRequest { Members = groups });
+        var result = await controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
+        {
+            AdminMembers = groups,
+            NonTechUserMembers = groups,
+            TechUserMembers = groups
+        });
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -188,7 +202,9 @@ public class AadGroupControllerTests
     {
         // Arrange
         var groups = fixture.Build<string>().CreateMany(2).ToList();
-        groupsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IEnumerable<string>>())
+        groupsConfigServiceMock.CreateGroupsConfigAsync(Arg.Any<string>(), Arg.Any<string>(),
+                                                        Arg.Any<IEnumerable<string>>(), Arg.Any<IEnumerable<string>>(),
+                                                        Arg.Any<IEnumerable<string>>())
             .Returns(new GroupConfigResult());
         groupsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), null)
             .Returns(new GroupSyncResult { Errors = ["Failed to save groups"] });
@@ -196,7 +212,12 @@ public class AadGroupControllerTests
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
-        var result = await controller.CreateGroupsConfigAsync("teamName", new Models.Group.CreateGroupsConfigRequest { Members = groups });
+        var result = await controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
+        {
+            AdminMembers = groups,
+            NonTechUserMembers = groups,
+            TechUserMembers = groups
+        });
 
         // Assert
         Assert.That(result, Is.Not.Null);

@@ -1,7 +1,15 @@
-﻿namespace ADP.Portal.Api.Models.Group
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ADP.Portal.Api.Models.Group;
+
+public sealed class CreateGroupsConfigRequest
 {
-    public sealed class CreateGroupsConfigRequest
-    {
-        public required List<string> Members { get; set; }
-    }
+    [Required]
+    public required IEnumerable<string> TechUserMembers { get; set; }
+
+    [Required]
+    public required IEnumerable<string> NonTechUserMembers { get; set; }
+
+    [Required]
+    public required IEnumerable<string> AdminMembers { get; set; }
 }

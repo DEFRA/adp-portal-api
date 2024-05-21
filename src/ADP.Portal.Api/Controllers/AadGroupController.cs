@@ -60,7 +60,10 @@ public class AadGroupController : ControllerBase
         teamName = teamName.ToLower();
 
         logger.LogInformation("Creating Groups Config for the Team:'{TeamName}'", teamName);
-        var result = await groupsConfigService.CreateGroupsConfigAsync(tenantName, teamName, createGroupsConfigRequest.Members);
+        var result = await groupsConfigService.CreateGroupsConfigAsync(tenantName, teamName,
+                                                                       createGroupsConfigRequest.AdminMembers,
+                                                                       createGroupsConfigRequest.TechUserMembers,
+                                                                       createGroupsConfigRequest.NonTechUserMembers);
         if (result.Errors.Count != 0)
         {
             logger.LogError("Error while creating groups config for the Team:'{TeamName}'", teamName);
@@ -88,7 +91,10 @@ public class AadGroupController : ControllerBase
         teamName = teamName.ToLower();
 
         logger.LogInformation("Setting group members for team: {TeamName}", teamName);
-        var result = await groupsConfigService.SetGroupMembersAsync(tenantName, teamName, setGroupMembersRequest.TechUserMembers, setGroupMembersRequest.NonTechUserMembers, setGroupMembersRequest.AdminMembers);
+        var result = await groupsConfigService.SetGroupMembersAsync(tenantName, teamName,
+                                                                    setGroupMembersRequest.AdminMembers,
+                                                                    setGroupMembersRequest.TechUserMembers,
+                                                                    setGroupMembersRequest.NonTechUserMembers);
         if (result.Errors.Count != 0)
         {
             logger.LogError("Error while creating groups config for the Team:'{TeamName}'", teamName);
