@@ -5,9 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph;
 using NUnit.Framework;
+using Octokit;
 using YamlDotNet.Serialization;
-using NSubstitute;
-using ADP.Portal.Api.Config;
 
 namespace ADP.Portal.Api.Tests
 {
@@ -204,22 +203,21 @@ namespace ADP.Portal.Api.Tests
                 [
                    new KeyValuePair<string, string?>("GitHubAppAuth:Owner", "defra"),
                    new KeyValuePair<string, string?>("GitHubAppAuth:AppName", "test"),
-                   new KeyValuePair<string, string?>("GitHubAppAuth:AppId", "test"),
-                   new KeyValuePair<string, string?>("GitHubAppAuth:PrivateKeyBase64", Guid.NewGuid().ToString()),
+                   new KeyValuePair<string, string?>("GitHubAppAuth:AppId", "12"),
+                   new KeyValuePair<string, string?>("GitHubAppAuth:PrivateKeyBase64", "dGVzdA=="),
                 ];
             IEnumerable<KeyValuePair<string, string?>> appEnvConfigList = appEnvConfig;
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(appEnvConfigList)
                 .Build();
-            builder.Services.Configure<GitHubAppAuthConfig>(configuration);
+            builder.Configuration.AddConfiguration(configuration);
             Program.ConfigureApp(builder);
-
 
             // Act
             var app = builder.Build();
-
+            
             // Assert
-            Assert.That(app, Is.Not.Null);
+            Assert.Throws<ArgumentException>(() => app.Services.GetService<IGitHubClient>());
         }
 
     }
