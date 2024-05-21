@@ -1,4 +1,5 @@
 using ADP.Portal.Api.Config;
+using ADP.Portal.Api.Extensions;
 using ADP.Portal.Api.Mapster;
 using ADP.Portal.Api.Providers;
 using ADP.Portal.Api.Swagger;
@@ -19,7 +20,6 @@ using Octokit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Entities = ADP.Portal.Core.Git.Entities;
-using ADP.Portal.Api.Extensions;
 
 namespace ADP.Portal.Api
 {
