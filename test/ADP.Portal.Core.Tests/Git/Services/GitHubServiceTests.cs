@@ -26,7 +26,12 @@ public class GitHubServiceTests
         var logger = Substitute.For<ILogger<GitHubService>>();
         options = new()
         {
-            Organisation = Guid.NewGuid().ToString()
+            Organisation = Guid.NewGuid().ToString(),
+            AdminLogin = "adp-platform",
+            BlacklistedTeams =
+            {
+                "ADP-Platform-Admins"
+            }
         };
         client = Substitute.For<IGitHubClient>();
         sut = new GitHubService(client, Options.Create(options), logger);
@@ -50,6 +55,8 @@ public class GitHubServiceTests
 
         client.Organization.Team.Create(default, default)
             .ReturnsForAnyArgs(team);
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
 
         // act
         var actual = await sut.SyncTeamAsync(request, cts.Token);
@@ -65,6 +72,8 @@ public class GitHubServiceTests
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
 
         actual.Should().BeEquivalentTo(new GithubTeamDetails()
         {
@@ -74,6 +83,106 @@ public class GitHubServiceTests
             Name = team.Name,
             Slug = team.Slug,
             Maintainers = request.Maintainers,
+            Members = request.Members
+        });
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_IgnoresUsersWhoAreNotPartOfTheOrganisation(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(3).ToArray();
+        request.Members = fixture.CreateMany<string>(3).ToArray();
+        request.Id = null;
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Create(default, default)
+            .ReturnsForAnyArgs(team);
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers.Take(2), .. request.Members.Take(2)]));
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(0).Get(Arg.Any<int>());
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.SequenceEqual(request.Maintainers.Take(2))));
+
+        _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
+
+        actual.Should().BeEquivalentTo(new GithubTeamDetails()
+        {
+            Description = team.Description,
+            Id = team.Id,
+            IsPublic = isPublic,
+            Name = team.Name,
+            Slug = team.Slug,
+            Maintainers = request.Maintainers.Take(2),
+            Members = request.Members
+        });
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_IgnoresAllUsersWhenFailingToGetListOfOrgMembers(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(3).ToArray();
+        request.Members = fixture.CreateMany<string>(3).ToArray();
+        request.Id = null;
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Create(default, default)
+            .ReturnsForAnyArgs(team);
+        client.Organization.Member.GetAll(options.Organisation)
+            .ThrowsAsync(new ApiException());
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(0).Get(Arg.Any<int>());
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.Count == 0));
+
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
+
+        actual.Should().BeEquivalentTo(new GithubTeamDetails()
+        {
+            Description = team.Description,
+            Id = team.Id,
+            IsPublic = isPublic,
+            Name = team.Name,
+            Slug = team.Slug,
+            Maintainers = [],
             Members = request.Members
         });
     }
@@ -99,6 +208,8 @@ public class GitHubServiceTests
 
         client.Organization.Team.Create(default, default)
             .ReturnsForAnyArgs(team);
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
 
         // act
         var actual = await sut.SyncTeamAsync(request, cts.Token);
@@ -114,6 +225,8 @@ public class GitHubServiceTests
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
 
         actual.Should().BeEquivalentTo(new GithubTeamDetails()
         {
@@ -148,6 +261,9 @@ public class GitHubServiceTests
         client.Organization.Team.Create(default, default)
             .ReturnsForAnyArgs(team);
 
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
+
         // act
         var actual = await sut.SyncTeamAsync(request, cts.Token);
 
@@ -161,6 +277,8 @@ public class GitHubServiceTests
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(1).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
 
         actual.Should().BeEquivalentTo(new GithubTeamDetails()
         {
@@ -191,9 +309,14 @@ public class GitHubServiceTests
 
         client.Organization.Team.Get(request.Id!.Value)
             .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
+        client.Organization.Team.GetByName(options.Organisation, request.Name)
+            .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
 
         client.Organization.Team.Create(default, default)
             .ThrowsAsyncForAnyArgs(new ApiValidationException());
+
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
 
         // act
         var actual = await sut.SyncTeamAsync(request, cts.Token);
@@ -204,10 +327,173 @@ public class GitHubServiceTests
             && t.Description == request.Description
             && t.Privacy == privacy
             && t.Maintainers.SequenceEqual(request.Maintainers)));
+        _ = client.Organization.Team.Received(0).Update(Arg.Any<int>(), Arg.Any<UpdateTeam>());
+        _ = client.Organization.Team.Received(1).GetByName(options.Organisation, request.Name);
 
         _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
         _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
+
+        actual.Should().BeNull();
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_ReturnsNullWhenCreateFails_AndExistingTeamIsBlacklisted(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        request.Name = "adp-platform-admins";
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(3).ToArray();
+        request.Members = fixture.CreateMany<string>(3).ToArray();
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Get(request.Id!.Value)
+            .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
+
+        client.Organization.Team.Create(default, default)
+            .ThrowsAsyncForAnyArgs(new ApiValidationException());
+
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.SequenceEqual(request.Maintainers)));
+        _ = client.Organization.Team.Received(0).Update(Arg.Any<int>(), Arg.Any<UpdateTeam>());
+        _ = client.Organization.Team.Received(0).GetByName(options.Organisation, request.Name);
+
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
+
+        actual.Should().BeNull();
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_ReturnsNullWhenCreateFails_AndExistingTeamDoesntHaveAdminMember(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        var currentMaintainers = fixture.CreateMany<string>(3).ToArray();
+        var currentMembers = fixture.CreateMany<string>(3).ToArray();
+        request.IsPublic = isPublic;
+        request.Maintainers = fixture.CreateMany<string>(3).ToArray();
+        request.Members = fixture.CreateMany<string>(3).ToArray();
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Get(request.Id!.Value)
+            .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
+        client.Organization.Team.GetByName(options.Organisation, request.Name)
+            .Returns(team);
+        client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
+            t.Role == TeamRoleFilter.Member))
+            .Returns(currentMembers.Select(x => CreateUser(login: x)).ToList());
+        client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
+            t.Role == TeamRoleFilter.Maintainer))
+            .Returns(currentMaintainers.Select(x => CreateUser(login: x)).ToList());
+
+        client.Organization.Team.Create(default, default)
+            .ThrowsAsyncForAnyArgs(new ApiValidationException());
+
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.SequenceEqual(request.Maintainers)));
+        _ = client.Organization.Team.Received(0).Update(Arg.Any<int>(), Arg.Any<UpdateTeam>());
+        _ = client.Organization.Team.Received(1).GetByName(options.Organisation, request.Name);
+
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(0), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(1), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Team.Received(0).AddOrEditMembership(team.Id, request.Members.ElementAt(2), Arg.Is<UpdateTeamMembership>(m => m.Role == TeamRole.Member));
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
+
+        actual.Should().BeNull();
+    }
+
+    [Test]
+    [TestCase(true, TeamPrivacy.Closed)]
+    [TestCase(false, TeamPrivacy.Secret)]
+    public async Task SyncTeamAsync_AdoptsATeamThatAlreadyExistsWithTheCorrectMember(bool isPublic, TeamPrivacy privacy)
+    {
+        // arrange
+        using var cts = new CancellationTokenSource();
+        var request = fixture.Create<GithubTeamUpdate>();
+        var currentMaintainers = fixture.CreateMany<string>(3).ToArray();
+        var currentMembers = fixture.CreateMany<string>(3).ToArray();
+        currentMembers = [.. currentMembers, "adp-platform"];
+        request.IsPublic = isPublic;
+
+        var org = CreateOrganization(login: options.Organisation);
+        var team = CreateTeam(privacy: privacy, organization: org);
+
+        client.Organization.Team.Get(request.Id!.Value)
+            .ThrowsAsync(new NotFoundException("TESTING", HttpStatusCode.NotFound));
+        client.Organization.Team.GetByName(options.Organisation, request.Name)
+            .Returns(team);
+        client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
+            t.Role == TeamRoleFilter.Member))
+            .Returns(currentMembers.Select(x => CreateUser(login: x)).ToList());
+        client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
+            t.Role == TeamRoleFilter.Maintainer))
+            .Returns(currentMaintainers.Select(x => CreateUser(login: x)).ToList());
+
+        client.Organization.Team.Create(default, default)
+            .ThrowsAsyncForAnyArgs(new ApiValidationException());
+        client.Organization.Team.Update(team.Id, Arg.Is<UpdateTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy))
+            .ThrowsAsync(new ApiValidationException());
+
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members]));
+
+        // act
+        var actual = await sut.SyncTeamAsync(request, cts.Token);
+
+        // assert
+        _ = client.Organization.Team.Received(1).Create(options.Organisation, Arg.Is<NewTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy
+            && t.Maintainers.SequenceEqual(request.Maintainers ?? Enumerable.Empty<string>())));
+        _ = client.Organization.Team.Received(1).Update(team.Id, Arg.Is<UpdateTeam>(t =>
+            t.Name == request.Name
+            && t.Description == request.Description
+            && t.Privacy == privacy));
+        _ = client.Organization.Team.Received(1).GetByName(options.Organisation, request.Name);
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
 
         actual.Should().BeNull();
     }
@@ -233,10 +519,10 @@ public class GitHubServiceTests
             .Returns(team);
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Member))
-            .Returns(currentMembers.Select(CreateUserWithLogin).ToList());
+            .Returns(currentMembers.Select(x => CreateUser(login: x)).ToList());
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Maintainer))
-            .Returns(currentMaintainers.Select(CreateUserWithLogin).ToList());
+            .Returns(currentMaintainers.Select(x => CreateUser(login: x)).ToList());
         client.Organization.Team.Update(team.Id, Arg.Is<UpdateTeam>(t =>
             t.Name == request.Name
             && t.Description == request.Description
@@ -266,9 +552,6 @@ public class GitHubServiceTests
         _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMaintainers[2]);
 
         actual.Should().BeNull();
-
-        static User CreateUserWithLogin(string login)
-            => new(default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, login: login, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!);
     }
 
     [Test]
@@ -292,15 +575,17 @@ public class GitHubServiceTests
             .Returns(team);
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Member))
-            .Returns(currentMembers.Select(CreateUserWithLogin).ToList());
+            .Returns(currentMembers.Select(x => CreateUser(login: x)).ToList());
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Maintainer))
-            .Returns(currentMaintainers.Select(CreateUserWithLogin).ToList());
+            .Returns(currentMaintainers.Select(x => CreateUser(login: x)).ToList());
         client.Organization.Team.Update(team.Id, Arg.Is<UpdateTeam>(t =>
             t.Name == request.Name
             && t.Description == request.Description
             && t.Privacy == privacy))
             .Returns(team);
+        client.Organization.Member.GetAll(options.Organisation)
+            .Returns(CreateUsers([.. request.Maintainers, .. request.Members, .. currentMaintainers, .. currentMembers]));
 
         // act
         var actual = await sut.SyncTeamAsync(request, cts.Token);
@@ -323,6 +608,8 @@ public class GitHubServiceTests
         _ = client.Organization.Team.Received(0).RemoveMembership(team.Id, currentMaintainers[0]);
         _ = client.Organization.Team.Received(1).RemoveMembership(team.Id, currentMaintainers[1]);
         _ = client.Organization.Team.Received(1).RemoveMembership(team.Id, currentMaintainers[2]);
+        _ = client.Organization.Member.Received(1).GetAll(Arg.Any<string>());
+        _ = client.Organization.Member.Received(1).GetAll(options.Organisation);
 
         actual.Should().BeEquivalentTo(new GithubTeamDetails()
         {
@@ -334,9 +621,6 @@ public class GitHubServiceTests
             Maintainers = request.Maintainers,
             Members = request.Members
         });
-
-        static User CreateUserWithLogin(string login)
-            => new(default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, login: login, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!);
     }
 
     [Test]
@@ -362,10 +646,10 @@ public class GitHubServiceTests
             .Returns(team);
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Member))
-            .Returns(request.Members.Select(CreateUserWithLogin).ToList());
+            .Returns(request.Members.Select(x => CreateUser(login: x)).ToList());
         client.Organization.Team.GetAllMembers(team.Id, Arg.Is<TeamMembersRequest>(t =>
             t.Role == TeamRoleFilter.Maintainer))
-            .Returns(request.Maintainers.Select(CreateUserWithLogin).ToList());
+            .Returns(request.Maintainers.Select(x => CreateUser(login: x)).ToList());
 
         // act
         var actual = await sut.SyncTeamAsync(request, cts.Token);
@@ -399,9 +683,69 @@ public class GitHubServiceTests
             Maintainers = request.Maintainers,
             Members = request.Members
         });
+    }
 
-        static User CreateUserWithLogin(string login)
-            => new(default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, login: login, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!, default!);
+    private static User CreateUser(
+        string? avatarUrl = default,
+        string? bio = default,
+        string? blog = default,
+        int? collaborators = default,
+        string? company = default,
+        DateTimeOffset? createdAt = default,
+        DateTimeOffset? updatedAt = default,
+        int? diskUsage = default,
+        string? email = default,
+        int? followers = default,
+        int? following = default,
+        bool? hireable = default,
+        string? htmlUrl = default,
+        int? totalPrivateRepos = default,
+        int? id = default,
+        string? location = default,
+        string? login = default,
+        string? name = default,
+        string? nodeId = default,
+        int? ownedPrivateRepos = default,
+        Plan? plan = default,
+        int? privateGists = default,
+        int? publicGists = default,
+        int? publicRepos = default,
+        string? url = default,
+        RepositoryPermissions? permissions = default,
+        bool? siteAdmin = default,
+        string? ldapDistinguishedName = default,
+        DateTimeOffset? suspendedAt = default)
+    {
+        return new User(
+            avatarUrl ?? fixture.Create<string>(),
+            bio ?? fixture.Create<string>(),
+            blog ?? fixture.Create<string>(),
+            collaborators ?? fixture.Create<int>(),
+            company ?? fixture.Create<string>(),
+            createdAt ?? fixture.Create<DateTimeOffset>(),
+            updatedAt ?? fixture.Create<DateTimeOffset>(),
+            diskUsage ?? fixture.Create<int>(),
+            email ?? fixture.Create<string>(),
+            followers ?? fixture.Create<int>(),
+            following ?? fixture.Create<int>(),
+            hireable ?? fixture.Create<bool>(),
+            htmlUrl ?? fixture.Create<string>(),
+            totalPrivateRepos ?? fixture.Create<int>(),
+            id ?? fixture.Create<int>(),
+            location ?? fixture.Create<string>(),
+            login ?? fixture.Create<string>(),
+            name ?? fixture.Create<string>(),
+            nodeId ?? fixture.Create<string>(),
+            ownedPrivateRepos ?? fixture.Create<int>(),
+            plan ?? fixture.Create<Plan>(),
+            privateGists ?? fixture.Create<int>(),
+            publicGists ?? fixture.Create<int>(),
+            publicRepos ?? fixture.Create<int>(),
+            url ?? fixture.Create<string>(),
+            permissions ?? fixture.Create<RepositoryPermissions>(),
+            siteAdmin ?? fixture.Create<bool>(),
+            ldapDistinguishedName ?? fixture.Create<string>(),
+            suspendedAt ?? fixture.Create<DateTimeOffset>());
     }
 
     private static Team CreateTeam(
@@ -514,5 +858,10 @@ public class GitHubServiceTests
             hasOrganizationProjects ?? fixture.Create<bool>(),
             hasRepositoryProjects ?? fixture.Create<bool>(),
             updatedAt ?? fixture.Create<DateTimeOffset>());
+    }
+
+    private static IReadOnlyList<User> CreateUsers(IEnumerable<string> logins)
+    {
+        return logins.Distinct().Select(login => CreateUser(login: login)).ToArray();
     }
 }
