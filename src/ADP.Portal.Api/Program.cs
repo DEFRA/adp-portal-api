@@ -18,12 +18,14 @@ using Microsoft.Graph;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using Octokit;
+using System.Diagnostics.CodeAnalysis;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Entities = ADP.Portal.Core.Git.Entities;
 
 namespace ADP.Portal.Api;
 
+[ExcludeFromCodeCoverage]
 public static class Program
 {
     public static void Main(string[] args)
