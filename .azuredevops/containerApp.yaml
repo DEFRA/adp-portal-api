@@ -120,6 +120,8 @@ properties:
             secretRef: backstage-issuer
           - name: Authentication__backstage__TokenValidationParameters__ValidAudience
             value: backstage
+          - name: Authentication__backstage__RequireHttpsMetadata
+            value: false
         resources:
           cpu: 0.5
           memory: 1Gi
