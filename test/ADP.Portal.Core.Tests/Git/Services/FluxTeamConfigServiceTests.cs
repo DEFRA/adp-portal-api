@@ -53,8 +53,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
-        [TestCase(null, null)]
-        [TestCase("", "")]
+        [TestCase("service1", "")]
+        [TestCase("", "dev")]
+        [TestCase(null, "dev")]
         public async Task GenerateManifest_ShouldReturn_ConfigNotExists_WhenTeamConfig_NotFound(string? serviceName, string? environment)
         {
             // Arrange
@@ -75,7 +76,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
-        [TestCase(null, null)]
+        [TestCase("service1", "")]
+        [TestCase("", "dev")]
+        [TestCase(null, "dev")]
         public async Task GenerateManifest_ShouldReturn_ConfigNotExists_WhenTenantConfig_NotFound(string? serviceName, string? environment)
         {
             // Arrange
@@ -96,8 +99,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
-        [TestCase(null, null)]
-        [TestCase("", "")]
+        [TestCase("service1", "")]
+        [TestCase("", "dev")]
+        [TestCase(null, "dev")]
         public async Task GenerateManifest_GetFluxTemplates_WhenConfig_Found(string? serviceName, string? environment)
         {
             // Arrange
@@ -121,8 +125,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
-        [TestCase(null, null)]
-        [TestCase("", "")]
+        [TestCase("service1", "")]
+        [TestCase("", "dev")]
+        [TestCase(null, "dev")]
         public async Task GenerateManifest_DoNotRegerate_WhenService_NotFound(string? serviceName, string? environment)
         {
             // Arrange
@@ -172,8 +177,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
-        [TestCase(null, null)]
-        [TestCase("", "")]
+        [TestCase("service1", "")]
+        [TestCase("", "dev")]
+        [TestCase(null, "dev")]
         public async Task GenerateManifest_RegerateConfig_UpdateBranch_OneServices_WhenTemplates_Found(string? serviceName, string? environment)
         {
             // Arrange
@@ -219,8 +225,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
-        [TestCase(null, null)]
-        [TestCase("", "")]
+        [TestCase("service1", "")]
+        [TestCase("", "dev")]
+        [TestCase(null, "dev")]
         public async Task GenerateManifest_ServiceAndEnvironmentTemplates_Found(string? serviceName, string? environment)
         {
             // Arrange
