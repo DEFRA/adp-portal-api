@@ -2,17 +2,11 @@
 using ADP.Portal.Core.Git.Infrastructure;
 using ADP.Portal.Core.Git.Services;
 using AutoFixture;
-using FluentAssertions;
-using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Octokit;
-using System.Collections.Generic;
-using System.Net;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Tests.Git.Services
@@ -37,7 +31,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             logger = Substitute.For<ILogger<FluxTeamConfigService>>();
             fluxTemplateService = Substitute.For<IFluxTemplateService>();
 
-            var  templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(20).ToList();
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(20).ToList();
             fluxTemplateService.GetFluxTemplatesAsync().Returns(templates);
             teamRepo = fixture.Build<GitRepo>().Create();
             fluxServicesRepo = fixture.Build<GitRepo>().Create();
@@ -56,6 +50,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "")]
         [TestCase("", "dev")]
         [TestCase(null, "dev")]
+        [TestCase(null, null)]
+        [TestCase("", "")]
         public async Task GenerateManifest_ShouldReturn_ConfigNotExists_WhenTeamConfig_NotFound(string? serviceName, string? environment)
         {
             // Arrange
@@ -79,6 +75,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "")]
         [TestCase("", "dev")]
         [TestCase(null, "dev")]
+        [TestCase(null, null)]
+        [TestCase("", "")]
         public async Task GenerateManifest_ShouldReturn_ConfigNotExists_WhenTenantConfig_NotFound(string? serviceName, string? environment)
         {
             // Arrange
@@ -102,6 +100,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "")]
         [TestCase("", "dev")]
         [TestCase(null, "dev")]
+        [TestCase(null, null)]
+        [TestCase("", "")]
         public async Task GenerateManifest_GetFluxTemplates_WhenConfig_Found(string? serviceName, string? environment)
         {
             // Arrange
@@ -128,6 +128,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "")]
         [TestCase("", "dev")]
         [TestCase(null, "dev")]
+        [TestCase(null, null)]
+        [TestCase("", "")]
         public async Task GenerateManifest_DoNotRegerate_WhenService_NotFound(string? serviceName, string? environment)
         {
             // Arrange
@@ -180,6 +182,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "")]
         [TestCase("", "dev")]
         [TestCase(null, "dev")]
+        [TestCase(null, null)]
+        [TestCase("", "")]
         public async Task GenerateManifest_RegerateConfig_UpdateBranch_OneServices_WhenTemplates_Found(string? serviceName, string? environment)
         {
             // Arrange
@@ -228,6 +232,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "")]
         [TestCase("", "dev")]
         [TestCase(null, "dev")]
+        [TestCase(null, null)]
+        [TestCase("", "")]
         public async Task GenerateManifest_ServiceAndEnvironmentTemplates_Found(string? serviceName, string? environment)
         {
             // Arrange
@@ -636,7 +642,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             Assert.That(result.IsConfigExists, Is.True);
             Assert.That(result.Errors.Count, Is.EqualTo(0));
 
-            if(type == FluxServiceType.Frontend)
+            if (type == FluxServiceType.Frontend)
             {
                 Assert.That(fluxService.ConfigVariables[0].Key, Is.EqualTo(Constants.Flux.Templates.INGRESS_ENDPOINT_TOKEN_KEY));
                 Assert.That(fluxService.ConfigVariables[0].Value, Is.EqualTo(fluxService.Name));
