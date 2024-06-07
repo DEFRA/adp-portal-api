@@ -163,8 +163,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -192,8 +191,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -247,8 +245,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -287,8 +284,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -363,8 +359,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -401,8 +396,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -498,8 +492,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
             if (configExists && resources != null)
             {
                 Assert.That(((List<object>)resources)[0], Is.EqualTo($"../../{serviceName}"));
@@ -542,8 +535,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(fluxServicesRepo, Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
             if (configExists && resources != null)
             {
                 Assert.That(((List<object>)resources)[0], Is.EqualTo($"../../../{fluxTeamConfig.ProgrammeName}/{fluxTeamConfig.TeamName}/base/patch"));
@@ -726,8 +718,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -771,8 +762,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -803,8 +793,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -960,8 +949,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            await gitOpsConfigRepository.Received().CreateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
-            await gitOpsConfigRepository.Received().CreatePullRequestAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
+            await gitOpsConfigRepository.Received().UpdateBranchAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
