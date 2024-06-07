@@ -964,13 +964,36 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
             var fluxTenantConfig = fixture.Build<FluxTenant>().With(x => x.Environments, envList).Create();
-            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(2)
+
+            var substituteFromValue = new List<object>
+                {
+                    new Dictionary<object, object>()
+                    {
+                        { "kind", "ConfigMap" },
+                        { "name", "__SERVICE_NAME__-mi-credential" }
+                    }
+                };
+            var postBuildValue = new Dictionary<object, object>
+                {
+                    {Constants.Flux.Templates.SUBSTITUTE_FROM_KEY, substituteFromValue }
+                };
+            var specValue = new Dictionary<object, object>
+                {
+                    {Constants.Flux.Templates.POST_BUILD_KEY, postBuildValue }
+                };
+            var deployKustomizeTemplateValue = new Dictionary<object, object>
+                {
+                    { Constants.Flux.Templates.SPEC_KEY, specValue  }
+                };
+
+            var serviceTemplates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(3)
                 .Select((x, index) =>
                 {
                     return index switch
                     {
                         0 => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/deploy/{x.Key}", x.Value),
                         1 => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/kustomization.yaml", new FluxTemplateFile(new Dictionary<object, object>() { { "resources", new List<string>() { "infra-kustomize.yaml", "deploy-kustomize.yaml" } } })),
+                        2 => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/deploy-kustomize.yaml", new FluxTemplateFile(deployKustomizeTemplateValue)),
                         _ => new KeyValuePair<string, FluxTemplateFile>($"flux/templates/programme/team/service/deploy/{x.Key}", x.Value),
                     };
                 });
