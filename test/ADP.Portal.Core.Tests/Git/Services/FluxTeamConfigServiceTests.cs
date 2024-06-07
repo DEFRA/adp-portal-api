@@ -170,7 +170,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [TestCase("service1", "dev")]
         [TestCase("service1", null)]
         [TestCase(null, null)]
-        public async Task GenerateManifest_RegerateConfig_Create_BranchPullRequest_OneServices_WhenTemplates_Found(string? serviceName, string? environment)
+        public async Task GenerateManifest_RegerateConfig_UpdateBranch_OneServices_WhenTemplates_Found(string? serviceName, string? environment)
         {
             // Arrange
 
