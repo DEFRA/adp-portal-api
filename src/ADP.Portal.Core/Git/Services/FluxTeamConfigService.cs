@@ -476,9 +476,9 @@ namespace ADP.Portal.Core.Git.Services
         {
             var branchName = $"refs/heads/{gitRepoFluxServices.Reference}";
 
-            string message = string.Concat(string.IsNullOrEmpty(serviceName) ? $"{teamName.ToLower()}" : $"{serviceName.ToLower()}",
-                    string.IsNullOrEmpty(environment) ? "" : $" {environment.ToLower()}",
-                    " manifest");
+            string message = (string.IsNullOrEmpty(serviceName) ? teamName.ToLower() : serviceName.ToLower()) +
+                             (string.IsNullOrEmpty(environment) ? "" : $" {environment.ToLower()}") +
+                             " manifest";
 
             logger.LogInformation("Creating commit for the branch:'{BranchName}'.", branchName);
             var commitRef = await gitHubRepository.CreateCommitAsync(gitRepoFluxServices, generatedFiles, message, branchName);

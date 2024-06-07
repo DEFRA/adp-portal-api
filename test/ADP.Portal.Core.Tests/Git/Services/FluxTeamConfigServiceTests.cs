@@ -153,7 +153,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
         }
 
         [Test]
-        public async Task GenerateManifest_RegerateConfig_Create_BranchPullRequest_AllServices_WhenTemplates_Found()
+        public async Task GenerateManifest_RegerateConfig_UpdateBranch_AllServices_WhenTemplates_Found()
         {
             // Arrange
             var fluxServices = fixture.Build<FluxService>().CreateMany(1).ToList();
