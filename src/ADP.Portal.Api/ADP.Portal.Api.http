@@ -64,7 +64,7 @@ POST {{ADP.Portal.Api_HostAddress}}/api/fluxteamconfig/test-demo/services
 Content-Type: application/json
 
 {
-    "Name": "test-ingress-4",
+    "Name": "test-ingress-5",
     "IsFrontend": true,
     "IsHelmOnly": true,
     "Environments": [
@@ -77,7 +77,7 @@ Content-Type: application/json
 
 ###
 # Generate flux service manifest for helm only app
-POST {{ADP.Portal.Api_HostAddress}}/api/fluxteamconfig/test-demo/generate?serviceName=test-ingress-4
+POST {{ADP.Portal.Api_HostAddress}}/api/fluxteamconfig/test-demo/generate?serviceName=test-ingress-5
 
 ###
 # Frontend app
