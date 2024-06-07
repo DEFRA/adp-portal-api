@@ -37,7 +37,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             logger = Substitute.For<ILogger<FluxTeamConfigService>>();
             fluxTemplateService = Substitute.For<IFluxTemplateService>();
 
-            var  templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(20).ToList();
+            var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(20).ToList();
             fluxTemplateService.GetFluxTemplatesAsync().Returns(templates);
             teamRepo = fixture.Build<GitRepo>().Create();
             fluxServicesRepo = fixture.Build<GitRepo>().Create();
@@ -254,6 +254,9 @@ namespace ADP.Portal.Core.Tests.Git.Services
         [Test]
         [TestCase("service1", "templates/programme/team/service/kustomization.yaml", true)]
         [TestCase("service1", "templates/programme/team/service/kustomization.yaml", false)]
+        [TestCase("service1", "templates/programme/team/service/deploy-kustomize.yaml", true)]
+        [TestCase("service1", "templates/programme/team/service/deploy-kustomize.yaml", false)]
+        [TestCase("service1", "templates/programme/team/service/helm-only-deploy/base/kustomization.yaml", true)]
         public async Task GenerateManifest_UpdateServiceKustomizationFiles_ForListObjects(string serviceName, string template, bool helmOnly)
         {
             // Arrange
@@ -270,6 +273,30 @@ namespace ADP.Portal.Core.Tests.Git.Services
             {
                 { Constants.Flux.Templates.RESOURCES_KEY, new List<string>() }
             };
+
+            if (template.StartsWith(Constants.Flux.Templates.DEPLOY_KUSTOMIZE_FILE))
+            {
+                var substituteFromValue = new List<object>
+                {
+                    new Dictionary<object, object>()
+                    {
+                        { "kind", "ConfigMap" },
+                        { "name", "__SERVICE_NAME__-mi-credential" }
+                    }
+                };
+                var postBuildValue = new Dictionary<object, object>
+                {
+                    {Constants.Flux.Templates.SUBSTITUTE_FROM_KEY, substituteFromValue }
+                };
+                var specValue = new Dictionary<object, object>
+                {
+                    {Constants.Flux.Templates.POST_BUILD_KEY, postBuildValue }
+                };
+                templateValue = new Dictionary<object, object>
+                {
+                    { Constants.Flux.Templates.SPEC_KEY, specValue  }
+                };
+            }
             var templates = fixture.Build<KeyValuePair<string, FluxTemplateFile>>().CreateMany(1)
                 .Select(x => new KeyValuePair<string, FluxTemplateFile>(template, new FluxTemplateFile(templateValue)));
 
@@ -281,6 +308,8 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var commit = fixture.Build<Commit>().Create();
             gitOpsConfigRepository.CreateCommitAsync(fluxServicesRepo, Arg.Any<Dictionary<string, FluxTemplateFile>>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(commit);
+
+            fluxTemplateService.GetFluxTemplatesAsync().Returns(templates);
 
             // Act
             var result = await service.GenerateManifestAsync("tenant1", "team1", serviceName, "env1");
@@ -632,7 +661,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             Assert.That(result.IsConfigExists, Is.True);
             Assert.That(result.Errors.Count, Is.EqualTo(0));
 
-            if(type == FluxServiceType.Frontend)
+            if (type == FluxServiceType.Frontend)
             {
                 Assert.That(fluxService.ConfigVariables[0].Key, Is.EqualTo(Constants.Flux.Templates.INGRESS_ENDPOINT_TOKEN_KEY));
                 Assert.That(fluxService.ConfigVariables[0].Value, Is.EqualTo(fluxService.Name));
