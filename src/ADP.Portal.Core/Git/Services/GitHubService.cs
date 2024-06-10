@@ -147,11 +147,17 @@ public class GitHubService : IGitHubService
     private async Task<GithubTeamDetails?> TryAdoptTeamAsync(GithubTeamUpdate team)
     {
         if (options.Value.BlacklistedTeams.Contains(team.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            logger.LogError("Cannot adopt team {TeamName} ({TeamId}) as it has been explicitly blacklisted from being managed by ADP.", team.Name, team.Id);
             return null;
+        }
 
         var toAdopt = await GetTeamDetails(team.Name);
         if (toAdopt is null || !toAdopt.Members.Concat(toAdopt.Maintainers).Contains(options.Value.AdminLogin))
+        {
+            logger.LogError("Cannot adopt team {TeamName} ({TeamId}) as it does not have {AdminLogin} as a member.", team.Name, team.Id, options.Value.AdminLogin);
             return null;
+        }
 
         return await UpdateTeamAsync(toAdopt, team);
     }
