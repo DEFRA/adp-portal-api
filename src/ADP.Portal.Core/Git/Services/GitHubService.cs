@@ -146,9 +146,9 @@ public class GitHubService : IGitHubService
 
     private async Task<GithubTeamDetails?> TryAdoptTeamAsync(GithubTeamUpdate team)
     {
-        if (options.Value.BlacklistedTeams.Contains(team.Name, StringComparer.OrdinalIgnoreCase))
+        if (options.Value.TeamDenyList.Contains(team.Name, StringComparer.OrdinalIgnoreCase))
         {
-            logger.LogError("Cannot adopt team {TeamName} ({TeamId}) as it has been explicitly blacklisted from being managed by ADP.", team.Name, team.Id);
+            logger.LogError("Cannot adopt team {TeamName} ({TeamId}) as it has been explicitly added to the ADP team denylist.", team.Name, team.Id);
             return null;
         }
 
