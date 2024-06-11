@@ -142,7 +142,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             var existingTree = await client.Git.Tree.GetRecursive(repository.Owner.Login, repository.Name, parentSha);
             var existingTreeDict = existingTree.Tree.ToDictionary(item => item.Path, item => item.Sha);
 
-            var tasks = treeContents.Select(treeContent => ProcessTreeContent(client, gitRepo, repository, treeContent, existingTreeDict));
+            var tasks = treeContents.Select(treeContent => ProcessTreeContent(client, gitRepo, repository, treeContent));
 
             var newTreeItems = await Task.WhenAll(tasks);
 
@@ -155,7 +155,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return default;
         }
 
-        private async Task<NewTreeItem> ProcessTreeContent(IGitHubClient client, GitRepo gitRepo, Repository repository, KeyValuePair<string, FluxTemplateFile> treeContent, Dictionary<string, string> existingTreeDict)
+        private async Task<NewTreeItem> ProcessTreeContent(IGitHubClient client, GitRepo gitRepo, Repository repository, KeyValuePair<string, FluxTemplateFile> treeContent)
         {
             var content = serializer.Serialize(treeContent.Value.Content).Replace(Constants.Flux.Templates.IMAGEPOLICY_KEY, Constants.Flux.Templates.IMAGEPOLICY_KEY_VALUE);
             var fluxImagePolicies = GetFluxImagePolicies(content);
