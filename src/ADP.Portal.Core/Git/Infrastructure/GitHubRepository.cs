@@ -1,6 +1,8 @@
 ﻿using ADP.Portal.Core.Git.Entities;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
+using System.Text;
+using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Infrastructure
@@ -126,7 +128,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
             var latestCommit = await gitHubClient.Git.Commit.Get(repository.Owner.Login, repository.Name, branchRef.Object.Sha);
 
-            var branchTree = await CreateTree(gitHubClient, repository, generatedFiles, latestCommit.Sha);
+            var branchTree = await CreateTree(gitHubClient, gitRepo, repository, generatedFiles, latestCommit.Sha);
             if (branchTree != null)
             {
                 return await CreateCommit(gitHubClient, repository, message, branchTree.Sha, branchRef.Object.Sha);
@@ -134,17 +136,45 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return default;
         }
 
-        private async Task<TreeResponse?> CreateTree(IGitHubClient client, Repository repository, Dictionary<string, FluxTemplateFile> treeContents, string parentSha)
+        private async Task<TreeResponse?> CreateTree(IGitHubClient client, GitRepo gitRepo, Repository repository, Dictionary<string, FluxTemplateFile> treeContents, string parentSha)
         {
             var newTree = new NewTree() { BaseTree = parentSha };
 
             var existingTree = await client.Git.Tree.GetRecursive(repository.Owner.Login, repository.Name, parentSha);
+            var existingTreeDict = existingTree.Tree.ToDictionary(item => item.Path, item => item.Sha);
 
             var tasks = treeContents.Select(async treeContent =>
             {
+                var content = serializer.Serialize(treeContent.Value.Content).Replace(Constants.Flux.Templates.IMAGEPOLICY_KEY, Constants.Flux.Templates.IMAGEPOLICY_KEY_VALUE);
+                var fluxImagePolicies = GetFluxImagePolicies(content);
+
+                if (fluxImagePolicies.Any())
+                {
+                    var file = await GetFileContentAsync(gitRepo, treeContent.Key);
+
+                    if (!string.IsNullOrEmpty(file))
+                    {
+                        var fluxImagePoliciesToReplace = GetFluxImagePolicies(file);
+
+                        var policiesToReplaceDict = fluxImagePoliciesToReplace.GroupBy(p => p.Name).ToDictionary(group => group.Key, p => p.First().PolicyString);
+
+                        var updatedContent = new StringBuilder(content);
+
+                        foreach (var policy in fluxImagePolicies)
+                        {
+                            if (policiesToReplaceDict.TryGetValue(policy.Name, out var replacementPolicyString))
+                            {
+                                updatedContent.Replace(policy.PolicyString, replacementPolicyString);
+                            }
+                        }
+
+                        content = updatedContent.ToString();
+                    }
+                }
+
                 var baselineBlob = new NewBlob
                 {
-                    Content = serializer.Serialize(treeContent.Value.Content).Replace(Constants.Flux.Templates.IMAGEPOLICY_KEY, Constants.Flux.Templates.IMAGEPOLICY_KEY_VALUE),
+                    Content = content,
                     Encoding = EncodingType.Utf8
                 };
 
@@ -161,7 +191,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
             var newTreeItems = await Task.WhenAll(tasks);
 
-            newTree.Tree.AddRange(newTreeItems.Where(newItem => !existingTree.Tree.Any(existingItem => existingItem.Path == newItem.Path && existingItem.Sha == newItem.Sha)));
+            newTree.Tree.AddRange(newTreeItems.Where(newItem => !existingTreeDict.ContainsKey(newItem.Path) || existingTreeDict[newItem.Path] != newItem.Sha));
 
             if (newTree.Tree.Count > 0)
             {
@@ -178,6 +208,44 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private async Task<IReadOnlyList<RepositoryContent>> GetRepositoryFiles(GitRepo gitRepo, string filePathOrName)
         {
             return await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, filePathOrName, gitRepo.Reference);
+        }
+
+        private async Task<string> GetFileContentAsync(GitRepo gitRepo, string filePathOrName)
+        {
+            try
+            {
+                var file = await gitHubClient.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, filePathOrName, gitRepo.Reference);
+                return file[0].Content;
+            }
+
+            catch (NotFoundException)
+            {
+                return string.Empty;
+            }
+        }
+
+        private static List<FluxImagePolicy> GetFluxImagePolicies(string content)
+        {
+            var policies = new List<FluxImagePolicy>();
+            var regex = new Regex(@"(\d+(?:\.\d+\.\d+)?)(?:-([A-Za-z0-9.-]+))?\s*#\s*\{""\$imagepolicy"":\s*""([^""]+)(:tag)?""\}", RegexOptions.Compiled);
+            using (var reader = new StringReader(content))
+            {
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var match = regex.Match(line);
+                    if (match.Success)
+                    {
+                        policies.Add(new FluxImagePolicy
+                        {
+                            PolicyString = match.Value,
+                            Name = match.Groups[3].Value
+                        });
+                    }
+                }
+            }
+
+            return policies;
         }
     }
 }
