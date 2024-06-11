@@ -5,7 +5,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 {
     public interface IGitHubRepository
     {
-        Task<T?> GetConfigAsync<T>(string fileName, GitRepo gitRepo);
+        Task<T?> GetFileContentAsync<T>(string fileName, GitRepo gitRepo);
 
         Task<string> CreateConfigAsync(GitRepo gitRepo, string fileName, string content);
 

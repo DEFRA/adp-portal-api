@@ -32,7 +32,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         }
 
         [Test]
-        public async Task GetConfigAsync_WhenCalledWithStringType_ReturnsStringContent_Test()
+        public async Task GetFileContentAsync_WhenCalledWithStringType_ReturnsStringContent_Test()
         {
             // Arrange
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
@@ -41,14 +41,14 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
                 .Returns([contentFile]);
 
             // Act
-            var result = await repository.GetConfigAsync<string>("fileName", gitRepo);
+            var result = await repository.GetFileContentAsync<string>("fileName", gitRepo);
 
             // Assert
             Assert.That(result, Is.EqualTo("fileContent"));
         }
 
         [Test]
-        public async Task GetConfigAsync_WhenCalledWithNonStringType_DeserializesContent_Test()
+        public async Task GetFileContentAsync_WhenCalledWithNonStringType_DeserializesContent_Test()
         {
             // Arrange
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
@@ -58,7 +58,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
                 .Returns([contentFile]);
 
             // Act
-            var result = await repository.GetConfigAsync<TestType>("fileName", gitRepo);
+            var result = await repository.GetFileContentAsync<TestType>("fileName", gitRepo);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -66,7 +66,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         }
 
         [Test]
-        public async Task GetConfigAsync_NotFound_Test()
+        public async Task GetFileContentAsync_NotFound_Test()
         {
             // Arrange
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
@@ -74,7 +74,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
                 .Throws(new NotFoundException("", System.Net.HttpStatusCode.NotFound));
 
             // Act
-            var result = await repository.GetConfigAsync<TestType>("fileName", gitRepo);
+            var result = await repository.GetFileContentAsync<TestType>("fileName", gitRepo);
 
             // Assert
             Assert.That(result, Is.Null);

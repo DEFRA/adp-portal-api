@@ -181,7 +181,7 @@ public partial class GroupsConfigService : IGroupsConfigService
             var fileName = $"{tenantName}/{teamName}.yaml";
 
             logger.LogInformation("Getting groups config for the team({TeamName})", teamName);
-            var result = await gitHubRepository.GetConfigAsync<GroupsRoot>(fileName, teamGitRepo);
+            var result = await gitHubRepository.GetFileContentAsync<GroupsRoot>(fileName, teamGitRepo);
 
             return result?.Groups.Where(g => groupType == null || g.Type == groupType) ?? [];
         }
