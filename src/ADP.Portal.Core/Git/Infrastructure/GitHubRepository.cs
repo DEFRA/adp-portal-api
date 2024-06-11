@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using System.Text;
-using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Infrastructure
@@ -139,23 +138,23 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private async Task<TreeResponse?> CreateTree(IGitHubClient client, GitRepo gitRepo, Repository repository, Dictionary<string, FluxTemplateFile> treeContents, string parentSha)
         {
             var newTree = new NewTree() { BaseTree = parentSha };
-        
+
             var existingTree = await client.Git.Tree.GetRecursive(repository.Owner.Login, repository.Name, parentSha);
             var existingTreeDict = existingTree.Tree.ToDictionary(item => item.Path, item => item.Sha);
-        
+
             var tasks = treeContents.Select(treeContent => ProcessTreeContent(client, gitRepo, repository, treeContent, existingTreeDict));
-        
+
             var newTreeItems = await Task.WhenAll(tasks);
-        
+
             newTree.Tree.AddRange(newTreeItems.Where(newItem => !existingTreeDict.ContainsKey(newItem.Path) || existingTreeDict[newItem.Path] != newItem.Sha));
-        
+
             if (newTree.Tree.Count > 0)
             {
                 return await client.Git.Tree.Create(repository.Owner.Login, repository.Name, newTree);
             }
             return default;
         }
-        
+
         private async Task<NewTreeItem> ProcessTreeContent(IGitHubClient client, GitRepo gitRepo, Repository repository, KeyValuePair<string, FluxTemplateFile> treeContent, Dictionary<string, string> existingTreeDict)
         {
             var content = serializer.Serialize(treeContent.Value.Content).Replace(Constants.Flux.Templates.IMAGEPOLICY_KEY, Constants.Flux.Templates.IMAGEPOLICY_KEY_VALUE);
