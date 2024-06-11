@@ -37,7 +37,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             }
         }
 
-        public async Task<string> CreateConfigAsync(GitRepo gitRepo, string fileName, string content)
+        public async Task<string> CreateFileAsync(GitRepo gitRepo, string fileName, string content)
         {
             var response = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
             return response.Commit.Sha;

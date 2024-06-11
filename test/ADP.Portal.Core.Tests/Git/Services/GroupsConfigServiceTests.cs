@@ -354,7 +354,7 @@ public class GroupsConfigServiceTests
     public async Task CreateGroupsConfigAsync_ConfigCreated()
     {
         // Arrange
-        gitOpsConfigRepositoryMock.CreateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("sha");
+        gitOpsConfigRepositoryMock.CreateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("sha");
         var members = fixture.Build<string>().CreateMany(2);
 
         // Act
@@ -369,7 +369,7 @@ public class GroupsConfigServiceTests
     public async Task CreateGroupsConfigAsync_Returns_Error()
     {
         // Arrange
-        gitOpsConfigRepositoryMock.CreateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns(string.Empty);
+        gitOpsConfigRepositoryMock.CreateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns(string.Empty);
         var members = fixture.Build<string>().CreateMany(2);
 
         // Act

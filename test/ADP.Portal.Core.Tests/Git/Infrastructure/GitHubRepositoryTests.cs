@@ -271,7 +271,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         }
 
         [Test]
-        public async Task CreateConfigAsync_Success_Test()
+        public async Task CreateFileAsync_Success_Test()
         {
             // Arrange
             var reference = new GitReference(default, default, default, default, "sha", default, default);
@@ -282,7 +282,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             gitHubClientMock.Repository.Content.CreateFile(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CreateFileRequest>()).Returns(content);
 
             // Act
-            var response = await repository.CreateConfigAsync(gitRepo, "test", yamlContent);
+            var response = await repository.CreateFileAsync(gitRepo, "test", yamlContent);
 
             // Assert
             Assert.That(response, Is.Not.Null);
