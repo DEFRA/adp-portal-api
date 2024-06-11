@@ -632,7 +632,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Create();
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
             var result = await service.AddServiceAsync(teamName, fluxService);
@@ -662,7 +662,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Create();
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(gitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
+            gitOpsConfigRepository.UpdateFileAsync(gitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
             var result = await service.AddServiceAsync(teamName, fluxServices[0]);
@@ -683,7 +683,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxService = fixture.Build<FluxService>().Create();
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
 
             // Act
             var result = await service.AddServiceAsync(teamName, fluxService);
@@ -842,7 +842,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxEnvironment = "dev";
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
             var result = await service.AddServiceEnvironmentAsync(teamName, serviceName, fluxEnvironment);
@@ -868,7 +868,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
 
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("sha");
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("sha");
 
             // Act
             var result = await service.AddServiceEnvironmentAsync(teamName, serviceName, fluxEnvironment);
@@ -894,7 +894,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .With(c => c.Services, fulxTeamServices)
                 .Create();
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
             var result = await service.AddServiceEnvironmentAsync(teamName, serviceName, envName);
@@ -919,7 +919,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Create();
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
 
             // Act
             var result = await service.AddServiceEnvironmentAsync(teamName, serviceName, fluxEnvironment);
@@ -1141,7 +1141,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Create();
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("response");
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("response");
 
             // Act
             var result = await service.UpdateServiceEnvironmentManifestAsync(teamName, serviceName, environment, generate);
@@ -1171,7 +1171,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
                 .Create();
 
             gitOpsConfigRepository.GetFileContentAsync<FluxTeamConfig>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(fluxTeamConfig);
-            gitOpsConfigRepository.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("");
+            gitOpsConfigRepository.UpdateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("");
 
             // Act
             var result = await service.UpdateServiceEnvironmentManifestAsync(teamName, serviceName, environment, generate);

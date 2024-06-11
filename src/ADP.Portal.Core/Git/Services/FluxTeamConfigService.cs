@@ -146,7 +146,7 @@ namespace ADP.Portal.Core.Git.Services
             }
 
             teamConfig.Services.Add(fluxService);
-            var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
+            var response = await gitHubRepository.UpdateFileAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
             {
@@ -218,7 +218,7 @@ namespace ADP.Portal.Core.Git.Services
             service.Environments.Add(newEnvironment);
 
             logger.LogInformation("Adding environment '{EnvironmentName}' to the service:'{ServiceName}' in the team:'{TeamName}'.", newEnvironment.Name, serviceName, teamName);
-            var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
+            var response = await gitHubRepository.UpdateFileAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
             {
@@ -262,7 +262,7 @@ namespace ADP.Portal.Core.Git.Services
             env.Manifest ??= new FluxManifest() { Generate = generate };
             env.Manifest.Generate = generate;
             env.Manifest.GeneratedVersion = fluxTemplatesRepo.Reference;
-            var response = await gitHubRepository.UpdateConfigAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
+            var response = await gitHubRepository.UpdateFileAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(teamConfig));
 
             if (string.IsNullOrEmpty(response))
             {

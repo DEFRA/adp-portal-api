@@ -386,7 +386,7 @@ public class GroupsConfigServiceTests
         // Arrange
         var groups = fixture.Build<Group>().CreateMany(3);
         gitOpsConfigRepositoryMock.GetFileContentAsync<GroupsRoot>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(new GroupsRoot { Groups = groups.ToList() });
-        gitOpsConfigRepositoryMock.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("response");
+        gitOpsConfigRepositoryMock.UpdateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns("response");
         var members = fixture.Build<string>().CreateMany(2);
 
         // Act
@@ -418,7 +418,7 @@ public class GroupsConfigServiceTests
         // Arrange
         var groups = fixture.Build<Group>().CreateMany(3);
         gitOpsConfigRepositoryMock.GetFileContentAsync<GroupsRoot>(Arg.Any<GitRepo>(),Arg.Any<string>()).Returns(new GroupsRoot { Groups = groups.ToList() });
-        gitOpsConfigRepositoryMock.UpdateConfigAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns(string.Empty);
+        gitOpsConfigRepositoryMock.UpdateFileAsync(Arg.Any<GitRepo>(), Arg.Any<string>(), Arg.Any<string>()).Returns(string.Empty);
         var members = fixture.Build<string>().CreateMany(2);
 
         // Act

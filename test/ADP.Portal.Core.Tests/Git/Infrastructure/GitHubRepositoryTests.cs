@@ -291,21 +291,21 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         }
 
         [Test]
-        public async Task UpdateConfigAsync_Skip_FileNotFound_Test()
+        public async Task UpdateFileAsync_Skip_FileNotFound_Test()
         {
             // Arrange
             var yamlContent = "property:\n - name: \"test\"";
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
 
             // Act
-            await repository.UpdateConfigAsync(gitRepo, "test", yamlContent);
+            await repository.UpdateFileAsync(gitRepo, "test", yamlContent);
 
             // Assert
             await gitHubClientMock.Repository.Content.DidNotReceive().UpdateFile(gitRepo.Organisation, gitRepo.Name, "test", Arg.Any<UpdateFileRequest>());
         }
 
         [Test]
-        public async Task UpdateConfigAsync_UpdateFile_Success_Test()
+        public async Task UpdateFileAsync_UpdateFile_Success_Test()
         {
             // Arrange
             var reference = new GitReference(default, default, default, default, "sha", default, default);
@@ -319,7 +319,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             gitHubClientMock.Repository.Content.UpdateFile(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UpdateFileRequest>()).Returns(content);
 
             // Act
-            var response = await repository.UpdateConfigAsync(gitRepo, "test", yamlContent);
+            var response = await repository.UpdateFileAsync(gitRepo, "test", yamlContent);
 
             // Assert
             Assert.That(response, Is.Not.Null);

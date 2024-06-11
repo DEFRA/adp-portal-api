@@ -43,7 +43,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             return response.Commit.Sha;
         }
 
-        public async Task<string> UpdateConfigAsync(GitRepo gitRepo, string fileName, string content)
+        public async Task<string> UpdateFileAsync(GitRepo gitRepo, string fileName, string content)
         {
             var existingFile = await GetRepositoryFiles(gitRepo, fileName);
 

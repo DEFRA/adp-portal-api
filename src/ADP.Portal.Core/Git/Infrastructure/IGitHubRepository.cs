@@ -9,7 +9,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
         Task<string> CreateFileAsync(GitRepo gitRepo, string fileName, string content);
 
-        Task<string> UpdateConfigAsync(GitRepo gitRepo, string fileName, string content);
+        Task<string> UpdateFileAsync(GitRepo gitRepo, string fileName, string content);
 
         Task<IEnumerable<KeyValuePair<string, FluxTemplateFile>>> GetAllFilesAsync(GitRepo gitRepo, string path);
 
