@@ -139,65 +139,67 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private async Task<TreeResponse?> CreateTree(IGitHubClient client, GitRepo gitRepo, Repository repository, Dictionary<string, FluxTemplateFile> treeContents, string parentSha)
         {
             var newTree = new NewTree() { BaseTree = parentSha };
-
+        
             var existingTree = await client.Git.Tree.GetRecursive(repository.Owner.Login, repository.Name, parentSha);
             var existingTreeDict = existingTree.Tree.ToDictionary(item => item.Path, item => item.Sha);
-
-            var tasks = treeContents.Select(async treeContent =>
-            {
-                var content = serializer.Serialize(treeContent.Value.Content).Replace(Constants.Flux.Templates.IMAGEPOLICY_KEY, Constants.Flux.Templates.IMAGEPOLICY_KEY_VALUE);
-                var fluxImagePolicies = GetFluxImagePolicies(content);
-
-                if (fluxImagePolicies.Any())
-                {
-                    var file = await GetFileContentAsync(gitRepo, treeContent.Key);
-
-                    if (!string.IsNullOrEmpty(file))
-                    {
-                        var fluxImagePoliciesToReplace = GetFluxImagePolicies(file);
-
-                        var policiesToReplaceDict = fluxImagePoliciesToReplace.GroupBy(p => p.Name).ToDictionary(group => group.Key, p => p.First().PolicyString);
-
-                        var updatedContent = new StringBuilder(content);
-
-                        foreach (var policy in fluxImagePolicies)
-                        {
-                            if (policiesToReplaceDict.TryGetValue(policy.Name, out var replacementPolicyString))
-                            {
-                                updatedContent.Replace(policy.PolicyString, replacementPolicyString);
-                            }
-                        }
-
-                        content = updatedContent.ToString();
-                    }
-                }
-
-                var baselineBlob = new NewBlob
-                {
-                    Content = content,
-                    Encoding = EncodingType.Utf8
-                };
-
-                var baselineBlobResult = await client.Git.Blob.Create(repository.Owner.Login, repository.Name, baselineBlob);
-
-                return new NewTreeItem
-                {
-                    Type = TreeType.Blob,
-                    Mode = Octokit.FileMode.File,
-                    Path = treeContent.Key,
-                    Sha = baselineBlobResult.Sha
-                };
-            });
-
+        
+            var tasks = treeContents.Select(treeContent => ProcessTreeContent(client, gitRepo, repository, treeContent, existingTreeDict));
+        
             var newTreeItems = await Task.WhenAll(tasks);
-
+        
             newTree.Tree.AddRange(newTreeItems.Where(newItem => !existingTreeDict.ContainsKey(newItem.Path) || existingTreeDict[newItem.Path] != newItem.Sha));
-
+        
             if (newTree.Tree.Count > 0)
             {
                 return await client.Git.Tree.Create(repository.Owner.Login, repository.Name, newTree);
             }
             return default;
+        }
+        
+        private async Task<NewTreeItem> ProcessTreeContent(IGitHubClient client, GitRepo gitRepo, Repository repository, KeyValuePair<string, FluxTemplateFile> treeContent, Dictionary<string, string> existingTreeDict)
+        {
+            var content = serializer.Serialize(treeContent.Value.Content).Replace(Constants.Flux.Templates.IMAGEPOLICY_KEY, Constants.Flux.Templates.IMAGEPOLICY_KEY_VALUE);
+            var fluxImagePolicies = GetFluxImagePolicies(content);
+
+            if (fluxImagePolicies.Count != 0)
+            {
+                var file = await GetFileContentAsync(gitRepo, treeContent.Key);
+
+                if (!string.IsNullOrEmpty(file))
+                {
+                    var fluxImagePoliciesToReplace = GetFluxImagePolicies(file);
+
+                    var policiesToReplaceDict = fluxImagePoliciesToReplace.GroupBy(p => p.Name).ToDictionary(group => group.Key, p => p.First().PolicyString);
+
+                    var updatedContent = new StringBuilder(content);
+
+                    foreach (var policy in fluxImagePolicies)
+                    {
+                        if (policiesToReplaceDict.TryGetValue(policy.Name, out var replacementPolicyString))
+                        {
+                            updatedContent.Replace(policy.PolicyString, replacementPolicyString);
+                        }
+                    }
+
+                    content = updatedContent.ToString();
+                }
+            }
+
+            var baselineBlob = new NewBlob
+            {
+                Content = content,
+                Encoding = EncodingType.Utf8
+            };
+
+            var baselineBlobResult = await client.Git.Blob.Create(repository.Owner.Login, repository.Name, baselineBlob);
+
+            return new NewTreeItem
+            {
+                Type = TreeType.Blob,
+                Mode = Octokit.FileMode.File,
+                Path = treeContent.Key,
+                Sha = baselineBlobResult.Sha
+            };
         }
 
         private static async Task<Commit> CreateCommit(IGitHubClient client, Repository repository, string message, string sha, string parent)
@@ -227,7 +229,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private static List<FluxImagePolicy> GetFluxImagePolicies(string content)
         {
             var policies = new List<FluxImagePolicy>();
-            var regex = new Regex(@"(\d+(?:\.\d+\.\d+)?)(?:-([A-Za-z0-9.-]+))?\s*#\s*\{""\$imagepolicy"":\s*""([^""]+)(:tag)?""\}", RegexOptions.Compiled);
+            var regex = FluxImagePolicyRegex.PolicyRegex();
             using (var reader = new StringReader(content))
             {
                 string? line;
