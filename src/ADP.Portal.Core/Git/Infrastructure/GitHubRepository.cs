@@ -18,7 +18,7 @@ namespace ADP.Portal.Core.Git.Infrastructure
             this.serializer = serializer;
         }
 
-        public async Task<T?> GetFileContentAsync<T>(string fileName, GitRepo gitRepo)
+        public async Task<T?> GetFileContentAsync<T>(GitRepo gitRepo, string fileName)
         {
             try
             {

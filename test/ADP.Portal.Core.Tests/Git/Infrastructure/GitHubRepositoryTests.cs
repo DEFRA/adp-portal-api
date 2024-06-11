@@ -35,13 +35,14 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         public async Task GetFileContentAsync_WhenCalledWithStringType_ReturnsStringContent_Test()
         {
             // Arrange
+            var fileName = "file1.yaml";
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
             var contentFile = CreateRepositoryContent("fileContent");
-            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, "fileName", gitRepo.Reference)
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, fileName, gitRepo.Reference)
                 .Returns([contentFile]);
 
             // Act
-            var result = await repository.GetFileContentAsync<string>("fileName", gitRepo);
+            var result = await repository.GetFileContentAsync<string>(gitRepo, fileName);
 
             // Assert
             Assert.That(result, Is.EqualTo("fileContent"));
@@ -51,14 +52,15 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         public async Task GetFileContentAsync_WhenCalledWithNonStringType_DeserializesContent_Test()
         {
             // Arrange
+            var fileName = "file1.yaml";
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
             var yamlContent = "property:\n - name: \"test\"";
             var contentFile = CreateRepositoryContent(yamlContent);
-            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, "fileName", gitRepo.Reference)
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, fileName, gitRepo.Reference)
                 .Returns([contentFile]);
 
             // Act
-            var result = await repository.GetFileContentAsync<TestType>("fileName", gitRepo);
+            var result = await repository.GetFileContentAsync<TestType>(gitRepo, fileName);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -69,12 +71,13 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         public async Task GetFileContentAsync_NotFound_Test()
         {
             // Arrange
+            var fileName = "file1.yaml";
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
-            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, "fileName", gitRepo.Reference)
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, fileName, gitRepo.Reference)
                 .Throws(new NotFoundException("", System.Net.HttpStatusCode.NotFound));
 
             // Act
-            var result = await repository.GetFileContentAsync<TestType>("fileName", gitRepo);
+            var result = await repository.GetFileContentAsync<TestType>( gitRepo, fileName);
 
             // Assert
             Assert.That(result, Is.Null);
