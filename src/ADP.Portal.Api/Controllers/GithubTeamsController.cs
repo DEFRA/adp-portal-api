@@ -8,7 +8,7 @@ namespace ADP.Portal.Api.Controllers;
 
 [Route("api/github/teams")]
 [ApiVersion("1.0")]
-//[Authorize(AuthenticationSchemes = "backstage")]
+[Authorize(AuthenticationSchemes = "backstage")]
 [ApiController]
 public class GithubTeamsController : ControllerBase
 {
