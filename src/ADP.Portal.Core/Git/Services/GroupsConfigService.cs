@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
+using System.Reflection;
+using System.Text;
 using YamlDotNet.Serialization;
 
 namespace ADP.Portal.Core.Git.Services;
@@ -76,13 +78,17 @@ public partial class GroupsConfigService : IGroupsConfigService
         }
         return result;
     }
+    
 
-    private static GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> adminGroupMembers, IEnumerable<string> techUserGroupMembers, IEnumerable<string> nonTechUserGroupMembers, IDeserializer deserializer = null)
+    private static GroupsRoot BuildTeamGroups(string tenantName, string teamName, IEnumerable<string> adminGroupMembers, IEnumerable<string> techUserGroupMembers, IEnumerable<string> nonTechUserGroupMembers, IDeserializer deserializer)
     {
-
-        var fileName = $"./UserGroupMemberShip/UserGroupMemberShip.{tenantName}.yml"; 
-        var contents = File.ReadAllText(fileName);
-        var userGroupMemberships = deserializer.Deserialize<UserGroupMembership>(contents);
+        var assemblyName = Assembly.GetExecutingAssembly().GetName();
+        using var stream = Assembly
+            .GetExecutingAssembly()
+            .GetManifestResourceStream($"{assemblyName.Name}.Git.template.UserGroupMemberShip.{tenantName.ToLower()}.yml")!;
+        using var streamReader = new StreamReader(stream, Encoding.UTF8);
+        var data = streamReader.ReadToEnd();
+        var userGroupMemberships = deserializer.Deserialize<UserGroupMembership>(data);
 
         var environments = new List<string>();
         switch (tenantName)

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Version>0.2.11</Version>
+    <Version>0.2.13</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
@@ -31,15 +31,6 @@
 
   <ItemGroup>
     <Folder Include="Properties\PublishProfiles\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="UserGroupMemberShip\UserGroupMemberShip.Defra.yml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="UserGroupMemberShip\UserGroupMemberShip.DefraDev.yml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
