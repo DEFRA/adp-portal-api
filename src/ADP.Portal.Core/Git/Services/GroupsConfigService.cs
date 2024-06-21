@@ -21,7 +21,6 @@ public partial class GroupsConfigService : IGroupsConfigService
     private readonly IGroupService groupService;
     private readonly ISerializer serializer;
     private readonly IDeserializer deserializer;
-    private const string GLOBAL_READ_GROUP = "AAG-Azure-ADP-GlobalRead";
     private const string PLATFORM_ENGINEERS_GROUP = "AG-Azure-CDO-ADP-PlatformEngineers";
 
     public GroupsConfigService(IGitHubRepository gitHubRepository, IOptionsSnapshot<GitRepo> gitRepoOptions,
