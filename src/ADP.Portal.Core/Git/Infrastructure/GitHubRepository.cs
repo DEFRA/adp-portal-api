@@ -1,4 +1,5 @@
 ﻿using ADP.Portal.Core.Git.Entities;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Octokit;
 using System.Text;
@@ -11,12 +12,14 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private readonly IGitHubClient gitHubClient;
         private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
+        private readonly ILogger<GitHubRepository> logger;
 
-        public GitHubRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer)
+        public GitHubRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer, ILogger<GitHubRepository> logger)
         {
             this.gitHubClient = gitHubClient;
             this.deserializer = deserializer;
             this.serializer = serializer;
+            this.logger = logger;
         }
 
         public async Task<T?> GetFileContentAsync<T>(GitRepo gitRepo, string fileName)
@@ -38,10 +41,21 @@ namespace ADP.Portal.Core.Git.Infrastructure
             }
         }
 
-        public async Task<string> CreateFileAsync(GitRepo gitRepo, string fileName, string content)
+        public async Task<string> CreateOrUpdateFileAsync(GitRepo gitRepo, string fileName, string content)
         {
-            var response = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
-            return response.Commit.Sha;
+            var existingFile = await GetRepositoryFiles(gitRepo, fileName);
+            string? response;
+            if (existingFile.Any())
+            {
+                logger.LogWarning("Config file already exists : {fileName}", fileName);
+                response = await UpdateFileAsync(gitRepo, fileName, content);
+            }
+            else
+            {
+                var fileCreateResponse = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
+                response = fileCreateResponse.Commit.Sha;
+            }
+            return response;
         }
 
         public async Task<string> UpdateFileAsync(GitRepo gitRepo, string fileName, string content)

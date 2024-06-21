@@ -58,7 +58,7 @@ namespace ADP.Portal.Core.Git.Services
 
             fluxTeamConfig.Services.ForEach(service => service.Environments.ForEach(env => env.Manifest = new FluxManifest { Generate = true }));
 
-            var response = await gitHubRepository.CreateFileAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
+            var response = await gitHubRepository.CreateOrUpdateFileAsync(teamGitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), serializer.Serialize(fluxTeamConfig));
             if (string.IsNullOrEmpty(response))
             {
                 result.Errors.Add($"Failed to save the config for the team: {teamName}");

@@ -1,6 +1,7 @@
 ﻿using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using AutoFixture;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -18,6 +19,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         private GitHubRepository repository = null!;
         private IDeserializer deserializer = null!;
         private ISerializer serializer = null!;
+        private ILogger<GitHubRepository> loggerMock = null!;
         private Fixture fixture = null!;
 
 
@@ -27,7 +29,8 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             gitHubClientMock = Substitute.For<IGitHubClient>();
             serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             deserializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-            repository = new GitHubRepository(gitHubClientMock, deserializer, serializer);
+            loggerMock = Substitute.For<ILogger<GitHubRepository>>();
+            repository = new GitHubRepository(gitHubClientMock, deserializer, serializer, loggerMock);
             fixture = new Fixture();
         }
 
@@ -77,7 +80,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
                 .Throws(new NotFoundException("", System.Net.HttpStatusCode.NotFound));
 
             // Act
-            var result = await repository.GetFileContentAsync<TestType>( gitRepo, fileName);
+            var result = await repository.GetFileContentAsync<TestType>(gitRepo, fileName);
 
             // Assert
             Assert.That(result, Is.Null);
@@ -322,7 +325,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         }
 
         [Test]
-        public async Task CreateFileAsync_Success_Test()
+        public async Task CreateOrUpdateFileAsync_Success_Creates_File()
         {
             // Arrange
             var reference = new GitReference(default, default, default, default, "sha", default, default);
@@ -330,15 +333,40 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             var content = new RepositoryContentChangeSet(default, commit);
             var yamlContent = "property:\n - name: \"test\"";
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns([]);
             gitHubClientMock.Repository.Content.CreateFile(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CreateFileRequest>()).Returns(content);
 
             // Act
-            var response = await repository.CreateFileAsync(gitRepo, "test", yamlContent);
+            var response = await repository.CreateOrUpdateFileAsync(gitRepo, "test", yamlContent);
 
             // Assert
             Assert.That(response, Is.Not.Null);
             Assert.That(response, Is.EqualTo(commit.Sha));
             await gitHubClientMock.Repository.Content.Received().CreateFile(gitRepo.Organisation, gitRepo.Name, "test", Arg.Any<CreateFileRequest>());
+        }
+
+        [Test]
+        public async Task CreateOrUpdateFileAsync_Success_Updates_Existing_File()
+        {
+            // Arrange
+            var reference = new GitReference(default, default, default, default, "sha", default, default);
+            var commit = new Commit(default, default, default, default, "sha", default, default, default, default, default, reference, Enumerable.Empty<GitReference>(), 0, default);
+            var content = new RepositoryContentChangeSet(default, commit);
+            var yamlContent = "property:\n - name: \"test\"";
+            var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
+            var files = CreateRepositoryContent(yamlContent);
+
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns([files]);
+            gitHubClientMock.Repository.Content.UpdateFile(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UpdateFileRequest>()).Returns(content);
+
+            // Act
+            var response = await repository.CreateOrUpdateFileAsync(gitRepo, "test", yamlContent);
+
+            // Assert
+            Assert.That(response, Is.Not.Null);
+            Assert.That(response, Is.EqualTo(commit.Sha));
+            await gitHubClientMock.Repository.Content.Received().GetAllContentsByRef(gitRepo.Organisation, gitRepo.Name, "test", gitRepo.Reference);
+            await gitHubClientMock.Repository.Content.Received().UpdateFile(gitRepo.Organisation, gitRepo.Name, "test", Arg.Any<UpdateFileRequest>());
         }
 
         [Test]

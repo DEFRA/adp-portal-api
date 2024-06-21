@@ -598,7 +598,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).CreateMany(2).ToList();
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
-            gitOpsConfigRepository.CreateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
+            gitOpsConfigRepository.CreateOrUpdateFileAsync(Arg.Any<GitRepo>(), string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns("sha");
 
             // Act
             var result = await service.CreateConfigAsync(teamName, fluxTeamConfig);
@@ -619,7 +619,7 @@ namespace ADP.Portal.Core.Tests.Git.Services
             var fluxServices = fixture.Build<FluxService>().With(p => p.Name, serviceName).CreateMany(2).ToList();
             var fluxTeamConfig = fixture.Build<FluxTeamConfig>().With(p => p.Services, fluxServices).Create();
 
-            gitOpsConfigRepository.CreateFileAsync(gitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
+            gitOpsConfigRepository.CreateOrUpdateFileAsync(gitRepo, string.Format(Constants.Flux.Templates.GIT_REPO_TEAM_CONFIG_PATH, teamName), Arg.Any<string>()).Returns(string.Empty);
 
             // Act
             var result = await service.CreateConfigAsync(teamName, fluxTeamConfig);
