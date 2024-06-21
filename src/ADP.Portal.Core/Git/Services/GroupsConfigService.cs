@@ -44,7 +44,7 @@ public partial class GroupsConfigService : IGroupsConfigService
         var groups = BuildTeamGroups(tenantName, teamName, adminGroupMembers, techUserGroupMembers, nonTechUserGroupMembers);
 
         logger.LogInformation("Create groups config for the team({TeamName})", teamName);
-        var response = await gitHubRepository.CreateOrUpdateFileAsync(teamGitRepo, fileName, serializer.Serialize(groups));
+        var response = await gitHubRepository.CreateFileAsync(teamGitRepo, fileName, serializer.Serialize(groups));
         if (string.IsNullOrEmpty(response))
         {
             result.Errors.Add($"Failed to save the config for the team: {teamName}");

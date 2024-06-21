@@ -41,21 +41,16 @@ namespace ADP.Portal.Core.Git.Infrastructure
             }
         }
 
-        public async Task<string> CreateOrUpdateFileAsync(GitRepo gitRepo, string fileName, string content)
+        public async Task<string> CreateFileAsync(GitRepo gitRepo, string fileName, string content)
         {
             var existingFile = await GetRepositoryFiles(gitRepo, fileName);
-            string? response;
-            if (existingFile.Any())
-            {
-                logger.LogWarning("Config file already exists : {fileName}", fileName);
-                response = await UpdateFileAsync(gitRepo, fileName, content);
-            }
-            else
+            if (!existingFile.Any())
             {
                 var fileCreateResponse = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
-                response = fileCreateResponse.Commit.Sha;
+                return fileCreateResponse.Commit.Sha;
             }
-            return response;
+            logger.LogWarning($"Config file already exists: {fileName}");
+            return existingFile.FirstOrDefault()?.Sha ?? string.Empty;
         }
 
         public async Task<string> UpdateFileAsync(GitRepo gitRepo, string fileName, string content)
