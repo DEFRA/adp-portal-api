@@ -1,0 +1,14 @@
+techUser:
+  - AAG-Azure-ADP-GlobalRead
+  - AAG-Azure-ADP-SND4-AKS-Cluster-Custom-Resources-Reader 
+  - AAG-Azure-ADP-{teamName}-SND4-PostgresDB_Writer
+  - AAG-Azure-ADP-{teamName}-DEV-PostgresDB_Reader
+  - AAG-Azure-ADP-{teamName}-TST-PostgresDB_Reader
+nontechUser:
+  - AAG-Azure-ADP-GlobalReads
+admin:
+  - AAG-Azure-ADP-GlobalRead
+  - AAG-Azure-ADP-SND4-AKS-Cluster-Custom-Resources-Reader 
+  - AAG-Azure-ADP-{teamName}-SND4-PostgresDB_Writer
+  - AAG-Azure-ADP-{teamName}-DEV-PostgresDB_Reader
+  - AAG-Azure-ADP-{teamName}-TST-PostgresDB_Reader  

@@ -35,7 +35,7 @@ public class GroupsConfigServiceTests
         loggerMock = Substitute.For<ILogger<GroupsConfigService>>();
         groupServiceMock = Substitute.For<IGroupService>();
         gitRepoOptionsMock = Substitute.For<IOptionsSnapshot<GitRepo>>();
-        gitOpsConfigService = new GroupsConfigService(gitOpsConfigRepositoryMock, gitRepoOptionsMock, loggerMock, groupServiceMock, Substitute.For<ISerializer>());
+        gitOpsConfigService = new GroupsConfigService(gitOpsConfigRepositoryMock, gitRepoOptionsMock, loggerMock, groupServiceMock, Substitute.For<ISerializer>(), Substitute.For<IDeserializer>());
         fixture = new Fixture();
     }
 

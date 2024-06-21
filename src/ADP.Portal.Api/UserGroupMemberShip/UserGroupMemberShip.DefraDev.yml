@@ -1,0 +1,8 @@
+﻿techUser: 
+  - AAG-Azure-ADP-GlobalRead 
+  - AAG-Azure-ADP-SND3-AKS-Cluster-Custom-Resources-Reader
+nontechUser: 
+  - AAG-Azure-ADP-GlobalRead
+admin: 
+  - AAG-Azure-ADP-GlobalRead 
+  - AAG-Azure-ADP-SND3-AKS-Cluster-Custom-Resources-Reader
