@@ -43,8 +43,12 @@ namespace ADP.Portal.Core.Git.Infrastructure
 
         public async Task<string> CreateFileAsync(GitRepo gitRepo, string fileName, string content)
         {
-            var existingFile = await GetRepositoryFiles(gitRepo, fileName);
-            if (!existingFile.Any())
+            IEnumerable<RepositoryContent>? existingFile;
+            try
+            {
+                existingFile = await GetRepositoryFiles(gitRepo, fileName);
+            }
+            catch (Octokit.NotFoundException)
             {
                 var fileCreateResponse = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
                 return fileCreateResponse.Commit.Sha;

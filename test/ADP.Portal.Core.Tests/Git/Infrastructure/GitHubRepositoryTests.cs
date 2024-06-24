@@ -333,7 +333,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             var content = new RepositoryContentChangeSet(default, commit);
             var yamlContent = "property:\n - name: \"test\"";
             var gitRepo = new GitRepo { Name = "repo", Reference = "branch", Organisation = "org" };
-            gitHubClientMock.Repository.Content.GetAllContentsByRef(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns([]);
+            gitHubClientMock.Repository.Content.GetAllContentsByRef(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Throws(new Octokit.NotFoundException("File not found", System.Net.HttpStatusCode.NotFound));
             gitHubClientMock.Repository.Content.CreateFile(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CreateFileRequest>()).Returns(content);
 
             // Act
