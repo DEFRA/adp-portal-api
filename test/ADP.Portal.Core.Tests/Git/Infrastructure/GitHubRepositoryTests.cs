@@ -1,7 +1,6 @@
 ﻿using ADP.Portal.Core.Git.Entities;
 using ADP.Portal.Core.Git.Infrastructure;
 using AutoFixture;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -19,7 +18,6 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
         private GitHubRepository repository = null!;
         private IDeserializer deserializer = null!;
         private ISerializer serializer = null!;
-        private ILogger<GitHubRepository> loggerMock = null!;
         private Fixture fixture = null!;
 
 
@@ -29,8 +27,7 @@ namespace ADP.Portal.Core.Tests.Git.Infrastructure
             gitHubClientMock = Substitute.For<IGitHubClient>();
             serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             deserializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-            loggerMock = Substitute.For<ILogger<GitHubRepository>>();
-            repository = new GitHubRepository(gitHubClientMock, deserializer, serializer, loggerMock);
+            repository = new GitHubRepository(gitHubClientMock, deserializer, serializer);
             fixture = new Fixture();
         }
 

@@ -12,14 +12,12 @@ namespace ADP.Portal.Core.Git.Infrastructure
         private readonly IGitHubClient gitHubClient;
         private readonly IDeserializer deserializer;
         private readonly ISerializer serializer;
-        private readonly ILogger<GitHubRepository> logger;
 
-        public GitHubRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer, ILogger<GitHubRepository> logger)
+        public GitHubRepository(IGitHubClient gitHubClient, IDeserializer deserializer, ISerializer serializer)
         {
             this.gitHubClient = gitHubClient;
             this.deserializer = deserializer;
             this.serializer = serializer;
-            this.logger = logger;
         }
 
         public async Task<T?> GetFileContentAsync<T>(GitRepo gitRepo, string fileName)
@@ -53,7 +51,6 @@ namespace ADP.Portal.Core.Git.Infrastructure
                 var fileCreateResponse = await gitHubClient.Repository.Content.CreateFile(gitRepo.Organisation, gitRepo.Name, fileName, new CreateFileRequest($"Create config file: {fileName}", content, gitRepo.Reference));
                 return fileCreateResponse.Commit.Sha;
             }
-            logger.LogWarning($"Config file already exists: {fileName}");
             return existingFile.FirstOrDefault()?.Sha ?? string.Empty;
         }
 
