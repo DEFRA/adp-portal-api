@@ -88,7 +88,10 @@ public partial class GroupsConfigService : IGroupsConfigService
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
         var data = streamReader.ReadToEnd();
         var userGroupMemberships = deserializer.Deserialize<UserGroupMembership>(data);
-
+        var allUsers = new List<string>();
+        allUsers.AddRange(adminGroupMembers);
+        allUsers.AddRange(techUserGroupMembers);
+        allUsers.AddRange(nonTechUserGroupMembers);
         var environments = new List<string>();
         switch (tenantName)
         {
@@ -119,6 +122,12 @@ public partial class GroupsConfigService : IGroupsConfigService
                     DisplayName = $"AAG-Users-ADP-{teamName.ToUpper()}_Admin",
                     Type = GroupType.UserGroup,
                     GroupMemberships = BuildGroupMembership(teamName, userGroupMemberships.Admin),
+                    Members = adminGroupMembers.ToList()
+                },
+                new Group {
+                    DisplayName = $"DemoGroup-To-Test-AddUserfromAPI",
+                    Type = GroupType.OpenVpnGroup,                    
+                    GroupMemberships = BuildGroupMembership(teamName, allUsers),
                     Members = adminGroupMembers.ToList()
                 }
             ]
