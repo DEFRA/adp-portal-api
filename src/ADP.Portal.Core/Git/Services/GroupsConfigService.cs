@@ -182,8 +182,12 @@ public partial class GroupsConfigService : IGroupsConfigService
         await Task.WhenAll(accessGroupstasks);
 
         //UserGroups and Others
-        var tasks = groups.Where(x => x.Type != GroupType.AccessGroup).Select(group => ProcessGroupAsync(group, ownerId, result));
-        await Task.WhenAll(tasks);
+        var UserGroupTasks = groups.Where(x => x.Type == GroupType.UserGroup).Select(group => ProcessGroupAsync(group, ownerId, result));
+        await Task.WhenAll(UserGroupTasks);
+
+        //UserGroups and Others
+        var OpenVpnGroupTasks = groups.Where(x => x.Type == GroupType.OpenVpnGroup).Select(group => ProcessGroupAsync(group, ownerId, result));
+        await Task.WhenAll(OpenVpnGroupTasks);
 
         return result;
     }
