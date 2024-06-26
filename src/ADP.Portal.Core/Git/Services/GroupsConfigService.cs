@@ -127,8 +127,8 @@ public partial class GroupsConfigService : IGroupsConfigService
                 new Group {
                     DisplayName = $"DemoGroup-To-Test-AddUserfromAPI",
                     Type = GroupType.OpenVpnGroup,                    
-                    GroupMemberships = BuildGroupMembership(teamName, allUsers),
-                    Members = adminGroupMembers.ToList()
+                    GroupMemberships = [],
+                    Members = allUsers
                 }
             ]
         };
