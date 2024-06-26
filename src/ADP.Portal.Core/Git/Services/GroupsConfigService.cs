@@ -125,10 +125,10 @@ public partial class GroupsConfigService : IGroupsConfigService
                     Members = adminGroupMembers.ToList()
                 },
                 new Group {
-                    DisplayName = $"DemoGroup-To-Test-AddUserfromAPI",
+                    DisplayName = $"AAG-APP-Defra-Azure-OpenVPN-ADP-Users",
                     Type = GroupType.OpenVpnGroup,                    
                     GroupMemberships = [],
-                    Members = allUsers
+                    Members = allUsers.Select(x => x.ToLower()).Distinct().ToList()
                 }
             ]
         };
