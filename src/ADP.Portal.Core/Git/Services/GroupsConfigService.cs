@@ -125,7 +125,7 @@ public partial class GroupsConfigService : IGroupsConfigService
                     Members = adminGroupMembers.ToList()
                 },
                 new Group {
-                    DisplayName = $"DemoGroup-To-Test-AddUserfromAPI",
+                    DisplayName = $"AAG-APP-Defra-Azure-OpenVPN-ADP-Users",
                     Type = GroupType.OpenVpnGroup,                    
                     GroupMemberships = [],
                     Members = allUsers.Select(x => x.ToLower()).Distinct().ToList()
@@ -273,7 +273,7 @@ public partial class GroupsConfigService : IGroupsConfigService
 
         foreach (var member in existingMembers)
         {
-            if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase))
+            if (!group.Members.Contains(member.UserPrincipalName, StringComparer.OrdinalIgnoreCase) && group.Type != GroupType.OpenVpnGroup)
             {
                 await groupService.RemoveGroupMemberAsync(groupId, member.Id);
             }
