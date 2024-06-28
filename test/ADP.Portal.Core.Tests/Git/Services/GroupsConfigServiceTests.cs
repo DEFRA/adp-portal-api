@@ -238,9 +238,11 @@ public class GroupsConfigServiceTests
 
         // Act
         var result = await gitOpsConfigService.SyncGroupsAsync("tenantName", "teamName", "ownerId", GroupType.UserGroup);
+        var vpnGroupSyncResult = await gitOpsConfigService.SyncGroupsAsync("tenantName", "teamName", "ownerId", GroupType.OpenVpnGroup);
 
         // Assert
         Assert.That(result.Errors, Is.Not.Empty);
+        Assert.That(vpnGroupSyncResult.Errors, Is.Not.Empty);
     }
 
 
