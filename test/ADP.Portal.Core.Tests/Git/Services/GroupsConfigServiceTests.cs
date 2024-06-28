@@ -238,10 +238,29 @@ public class GroupsConfigServiceTests
 
         // Act
         var result = await gitOpsConfigService.SyncGroupsAsync("tenantName", "teamName", "ownerId", GroupType.UserGroup);
-        var vpnGroupSyncResult = await gitOpsConfigService.SyncGroupsAsync("tenantName", "teamName", "ownerId", GroupType.OpenVpnGroup);
 
         // Assert
         Assert.That(result.Errors, Is.Not.Empty);
+    }
+
+    [Test]
+    public async Task SyncGroupsAsync_ErrorOccursWhileCreating_OpenVpnGroup_ReturnsErrorResult()
+    {
+        // Arrange
+        var groupsRoot = new GroupsRoot
+        {
+            Groups = [
+               new() { DisplayName = "group1" , Type= GroupType.OpenVpnGroup }
+           ]
+        };
+
+        gitOpsConfigRepositoryMock.GetFileContentAsync<GroupsRoot>(Arg.Any<GitRepo>(), Arg.Any<string>()).Returns(groupsRoot);
+        groupServiceMock.GetGroupIdAsync(Arg.Any<string>()).Returns("");
+
+        // Act
+        var vpnGroupSyncResult = await gitOpsConfigService.SyncGroupsAsync("tenantName", "teamName", "ownerId", GroupType.OpenVpnGroup);
+
+        // Assert
         Assert.That(vpnGroupSyncResult.Errors, Is.Not.Empty);
     }
 
