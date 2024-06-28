@@ -115,8 +115,7 @@ public class AadGroupController : ControllerBase
 
         var vpnGroupSyncResult = await groupsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, GroupType.OpenVpnGroup);
         if (vpnGroupSyncResult.Errors.Count != 0)
-        {
-            logger.LogError("Error while syncing vpn groups for the Team:'{TeamName}' with errors: {Errors}", teamName, vpnGroupSyncResult.Errors);
+        {            
             return BadRequest(vpnGroupSyncResult.Errors);
         }
         return Created();
