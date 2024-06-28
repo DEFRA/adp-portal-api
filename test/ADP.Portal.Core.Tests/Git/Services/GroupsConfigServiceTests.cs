@@ -102,7 +102,7 @@ public class GroupsConfigServiceTests
 
         // Assert
         Assert.That(result.Errors, Is.Empty);
-        await groupServiceMock.Received().RemoveGroupMemberAsync(Arg.Is(groupId), Arg.Is(exstingMemberToberemoved[0].Id));
+        await groupServiceMock.DidNotReceive().RemoveGroupMemberAsync(Arg.Is(groupId), Arg.Is(exstingMemberToberemoved[0].Id)); //Member should not be removed
         await groupServiceMock.Received().AddGroupMemberAsync(Arg.Is(groupId), Arg.Is(memberId));
     }
 

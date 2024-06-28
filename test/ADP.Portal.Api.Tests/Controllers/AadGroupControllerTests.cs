@@ -238,6 +238,7 @@ public class AadGroupControllerTests
                                                      Arg.Any<IEnumerable<string>>(), Arg.Any<IEnumerable<string>>(),
                                                      Arg.Any<IEnumerable<string>>()).Returns(new GroupConfigResult());
         groupsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), GroupType.UserGroup).Returns(new GroupSyncResult());
+        groupsConfigServiceMock.SyncGroupsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), GroupType.OpenVpnGroup).Returns(new GroupSyncResult());
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
