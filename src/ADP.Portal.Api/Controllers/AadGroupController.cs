@@ -52,7 +52,7 @@ public class AadGroupController : ControllerBase
     /// <param name="createGroupsConfigRequest">Required: Collection of the users to set up as members in the Admin Group</param>
     /// <returns></returns>
     [HttpPost("{teamName}/groups-config", Name = "CreateGroupsConfigForTeam")]
-    //[Authorize(AuthenticationSchemes = "backstage")]
+    [Authorize(AuthenticationSchemes = "backstage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> CreateGroupsConfigAsync(string teamName, [FromBody] CreateGroupsConfigRequest createGroupsConfigRequest)
