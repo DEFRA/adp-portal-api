@@ -57,31 +57,8 @@ public class AadGroupController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> CreateGroupsConfigAsync(string teamName, [FromBody] CreateGroupsConfigRequest createGroupsConfigRequest)
     {
-        throw new Exception("Something broke...");
-        var tenantName = azureAdConfig.Value.TenantName;
-        var ownerId = azureAdConfig.Value.SpObjectId;
-        teamName = teamName.ToLower();
 
-        logger.LogInformation("Creating Groups Config for the Team:'{TeamName}'", teamName);
-        var result = await groupsConfigService.CreateGroupsConfigAsync(tenantName, teamName,
-                                                                       createGroupsConfigRequest.AdminMembers,
-                                                                       createGroupsConfigRequest.TechUserMembers,
-                                                                       createGroupsConfigRequest.NonTechUserMembers);
-        if (result.Errors.Count != 0)
-        {
-            logger.LogError("Error while creating groups config for the Team:'{TeamName}' with errors: {Errors}", teamName, result.Errors);
-            return BadRequest(result.Errors);
-        }
-
-        logger.LogInformation("Sync Groups for the Team:'{TeamName}'", teamName);
-        var syncResult = await groupsConfigService.SyncGroupsAsync(tenantName, teamName, ownerId, null);
-        if (syncResult.Errors.Count != 0)
-        {
-            logger.LogError("Error while syncing groups for the Team:'{TeamName}' with errors: {Errors}", teamName, syncResult.Errors);
-            return BadRequest(syncResult.Errors);
-        }
-
-        return NoContent();
+        return BadRequest("Something went wrong");
     }
 
     [HttpPatch("{teamName}/members", Name = "SetMembersForTeam")]
