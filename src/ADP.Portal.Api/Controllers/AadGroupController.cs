@@ -55,7 +55,7 @@ public class AadGroupController : ControllerBase
     [Authorize(AuthenticationSchemes = "backstage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> CreateGroupsConfigAsync(string teamName, [FromBody] CreateGroupsConfigRequest createGroupsConfigRequest)
+    public ActionResult CreateGroupsConfigAsync(string teamName, [FromBody] CreateGroupsConfigRequest createGroupsConfigRequest)
     {
 
         return BadRequest("Something went wrong");

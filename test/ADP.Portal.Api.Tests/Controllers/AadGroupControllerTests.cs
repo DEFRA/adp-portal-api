@@ -149,7 +149,7 @@ public class AadGroupControllerTests
 
     [Test]
     [Ignore("temporary exclusion for testing AB#366297")]
-    public async Task CreateGroupsConfigAsync_CreatesConfig_ReturnsCreated()
+    public void CreateGroupsConfigAsync_CreatesConfig_ReturnsCreated()
     {
         // Arrange
         var groups = fixture.Build<string>().CreateMany(2).ToList();
@@ -161,7 +161,7 @@ public class AadGroupControllerTests
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
-        var result = await controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
+        var result =  controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
         {
             AdminMembers = groups,
             NonTechUserMembers = groups,
@@ -175,7 +175,7 @@ public class AadGroupControllerTests
 
     [Test]
     [Ignore("temporary exclusion for testing AB#366297")]
-    public async Task CreateGroupsConfigAsync_CreatesConfig_OnConfigSave_ReturnsBadRequest()
+    public void CreateGroupsConfigAsync_CreatesConfig_OnConfigSave_ReturnsBadRequest()
     {
         // Arrange
         var groups = fixture.Build<string>().CreateMany(2).ToList();
@@ -187,7 +187,7 @@ public class AadGroupControllerTests
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
-        var result = await controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
+        var result = controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
         {
             AdminMembers = groups,
             NonTechUserMembers = groups,
@@ -201,7 +201,7 @@ public class AadGroupControllerTests
 
     [Test]
     [Ignore("temporary exclusion for testing AB#366297")]
-    public async Task CreateGroupsConfigAsync_CreatesConfig_OnGroupSync_ReturnsBadRequest()
+    public void CreateGroupsConfigAsync_CreatesConfig_OnGroupSync_ReturnsBadRequest()
     {
         // Arrange
         var groups = fixture.Build<string>().CreateMany(2).ToList();
@@ -215,7 +215,7 @@ public class AadGroupControllerTests
         azureAdConfigMock.Value.Returns(fixture.Create<AzureAdConfig>());
 
         // Act
-        var result = await controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
+        var result = controller.CreateGroupsConfigAsync("teamName", new CreateGroupsConfigRequest
         {
             AdminMembers = groups,
             NonTechUserMembers = groups,
