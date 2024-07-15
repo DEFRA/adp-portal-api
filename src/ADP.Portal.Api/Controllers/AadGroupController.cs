@@ -57,7 +57,7 @@ public class AadGroupController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> CreateGroupsConfigAsync(string teamName, [FromBody] CreateGroupsConfigRequest createGroupsConfigRequest)
     {
-
+        throw new Exception("Something broke...");
         var tenantName = azureAdConfig.Value.TenantName;
         var ownerId = azureAdConfig.Value.SpObjectId;
         teamName = teamName.ToLower();
